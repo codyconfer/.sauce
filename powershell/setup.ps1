@@ -6,6 +6,7 @@
 . .\powershell\install\install-profile.ps1
 . .\powershell\install\install-packages.ps1
 . .\powershell\install\install-distros.ps1
+. .\powershell\install\install-fonts.ps1
 . .\powershell\enable\enable-features.ps1
 
 ################################################################################
@@ -20,5 +21,6 @@ if (-not $skipPackages) {
 if (-not $skipDistros) {
   Install-Distros
 }
+Install-Fonts
 Install-Profile
 Write-Header "Done!"
