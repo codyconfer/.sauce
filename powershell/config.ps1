@@ -7,7 +7,7 @@
 $skipPackages = $true
 
 $dir = ".sauce"
-$repo = "https://github.com/codyconfer/.sauce.git"
+$gitUserUrl = "https://github.com/codyconfer"
 
 # windows features (id, name)
 $features = @(

@@ -2,16 +2,19 @@
 . .\powershell\lib\write.ps1
 
 $newProfile = "$dir\powershell\profile.ps1"
+$repo = "$gitUserUrl/.sauce.git"
 
 function Install-Profile {
   Write-Header "Installing profile..."
   $wd = (get-location).path
   Set-Location $env:USERPROFILE
   if (Test-Path -Path $dir) {
-    Write-Host "Removing $dir..."
-    Remove-Item -Recurse -Force $dir
+    git fetch
+    git pull
   }
-  git clone $repo
+  else {
+    git clone $repo
+  }
   if (Test-Path -Path $profile) {
     Write-Host "Removing $profile..."
     Remove-Item $profile
