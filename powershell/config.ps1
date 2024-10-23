@@ -7,6 +7,7 @@
 $skipFeatures = $false
 $skipPackages = $false
 $skipDistros = $false
+$skipFonts = $false
 
 $dir = ".sauce"
 $gitUserUrl = "https://github.com/codyconfer"
