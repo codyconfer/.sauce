@@ -21,6 +21,8 @@ if (-not $skipPackages) {
 if (-not $skipDistros) {
   Install-Distros
 }
-Install-Fonts
+if (-not $skipFonts) {
+  Install-Fonts
+}
 Install-Profile
 Write-Header "Done!"
