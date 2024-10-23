@@ -4,6 +4,8 @@
 
 . .\powershell\lib\packages.ps1
 
+$skipPackages = $true
+
 $dir = ".sauce"
 $repo = "https://github.com/codyconfer/.sauce.git"
 

@@ -11,11 +11,14 @@
 ################################################################################
 # LIFECYCLE
 ################################################################################
-
-Enable-Features
+if (-not $skipFeatures) {
+  Enable-Features
+}
 if (-not $skipPackages) {
   Install-Packages
 }
-Install-Distros
+if (-not $skipDistros) {
+  Install-Distros
+}
 Install-Profile
 Write-Header "Done!"
