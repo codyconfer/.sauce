@@ -19,7 +19,7 @@ $features = @(
 
 # wsl --list --online
 $distros = @(
-  "kali-linux",
+  "kali-linux"
   "Ubuntu-24.04"
 )
 

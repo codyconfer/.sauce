@@ -1,8 +1,15 @@
 . .\powershell\config.ps1
 . .\powershell\lib\write.ps1
 
-$newProfile = "$dir\powershell\profile.ps1"
-$repo = "$gitUserUrl/.sauce.git"
+function Write-Profile {
+  param([string]$url, [string]$newUrl)
+  if (Test-Path -Path $url) {
+    Write-Host "Removing $url..."
+    Remove-Item $url
+  }
+  Write-Host "Installing $url..."
+  Copy-Item $newUrl $url
+}
 
 function Install-Profile {
   Write-Header "Installing profile..."
@@ -12,14 +19,14 @@ function Install-Profile {
     Write-Host "Found $dir"
   }
   else {
+    $repo = "$gitUserUrl/.sauce.git"
     git clone $repo
   }
-  if (Test-Path -Path $profile) {
-    Write-Host "Removing $profile..."
-    Remove-Item $profile
-  }
-  Write-Host "Installing $profile..."
-  Copy-Item $newProfile $profile
+  $newProfile = "$dir\powershell\profile.ps1"
+  Write-Profile $profile $newProfile
   . $profile
+  $termSettings = ".\AppData\Local\Packages\Microsoft.WindowsTerminal_8wekyb3d8bbwe\LocalState\settings.json"
+  $newTermSettings = "$dir\configs\windows-terminal.json"
+  Write-Profile $termSettings $newTermSettings
   Set-Location $wd
 }

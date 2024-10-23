@@ -18,11 +18,11 @@ if (-not $skipFeatures) {
 if (-not $skipPackages) {
   Install-Packages
 }
-if (-not $skipDistros) {
-  Install-Distros
-}
 if (-not $skipFonts) {
   Install-Fonts
 }
 Install-Profile
+if (-not $skipDistros) {
+  Install-Distros
+}
 Write-Header "Done!"
