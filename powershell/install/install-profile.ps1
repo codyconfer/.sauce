@@ -9,8 +9,7 @@ function Install-Profile {
   $wd = (get-location).path
   Set-Location $env:USERPROFILE
   if (Test-Path -Path $dir) {
-    git fetch
-    git pull
+    Write-Host "Found $dir"
   }
   else {
     git clone $repo

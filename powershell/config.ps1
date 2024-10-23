@@ -4,7 +4,9 @@
 
 . .\powershell\lib\packages.ps1
 
-$skipPackages = $true
+$skipFeatures = $false
+$skipPackages = $false
+$skipDistros = $false
 
 $dir = ".sauce"
 $gitUserUrl = "https://github.com/codyconfer"

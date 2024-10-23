@@ -37,7 +37,7 @@ $dev = @(
 )
 $visualstudio = @(
   [tuple]::Create("Microsoft.VisualStudioCode", "Visual Studio Code")
-  [tuple]::Create("VisualStudio.VisualStudio2022Community", "Visual Studio 2022 Community")
+  [tuple]::Create("Microsoft.VisualStudio.2022.Community", "Visual Studio 2022 Community")
 )
 $desktop = @(
   [tuple]::Create("NZXT.CAM", "NZXT")
