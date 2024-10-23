@@ -170,7 +170,7 @@ function Install-Distros {
 
 function Install-Profile {
   Write-Header "Installing profile..."
-  Set-Location %USERPROFILE% 
+  Set-Location $env:USERPROFILE
   git clone https://github.com/codyconfer/.sauce.git
   Remove-Item $profile
   Copy-Item .sauce\profile.ps1 $profile
