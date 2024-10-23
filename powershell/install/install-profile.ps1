@@ -1,7 +1,7 @@
 . .\powershell\config.ps1
 . .\powershell\lib\write.ps1
 
-$newProfile = "$dir\profile.ps1"
+$newProfile = "$dir\powershell\profile.ps1"
 
 function Install-Profile {
   Write-Header "Installing profile..."
