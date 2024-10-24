@@ -1,5 +1,5 @@
-. .\powershell\config.ps1
-. .\powershell\lib\write.ps1
+. .\win\config.ps1
+. .\win\lib\write.ps1
 
 function Write-Profile {
   param([string]$url, [string]$newUrl)
@@ -22,7 +22,7 @@ function Install-Profile {
     $repo = "$gitUserUrl/.sauce.git"
     git clone $repo
   }
-  $newProfile = "$dir\powershell\profile.ps1"
+  $newProfile = "$dir\win\profile.ps1"
   Write-Profile $profile $newProfile
   . $profile
   $termSettings = ".\AppData\Local\Packages\Microsoft.WindowsTerminal_8wekyb3d8bbwe\LocalState\settings.json"

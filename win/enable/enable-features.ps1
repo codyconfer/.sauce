@@ -1,5 +1,6 @@
-. .\powershell\config.ps1
-. .\powershell\lib\write.ps1
+param([string]$config)
+
+. $config
 
 function Enable-Feature {
   param ([string]$id, [string]$name)
@@ -15,8 +16,13 @@ function Enable-Feature {
 }
 
 function Enable-Features {
-  Write-Header "Enabling Windows features..."
   foreach ($feature in $features) {
     Enable-Feature $($feature.item1) $($feature.item2)
   }
+  Write-Host "Done!"
+  $k = Read-Host "Press any key to continue..."
+  Write-Host ""
+  Exit-PSHostProcess
 }
+
+Enable-Features

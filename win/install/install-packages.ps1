@@ -1,5 +1,5 @@
-. .\powershell\config.ps1
-. .\powershell\lib\write.ps1
+. .\win\config.ps1
+. .\win\lib\write.ps1
 
 function Install-Package {
   param ([string]$id, [string]$name)

@@ -1,5 +1,14 @@
-. .\powershell\config.ps1
-. .\powershell\lib\write.ps1
+. .\win\config.ps1
+. .\win\lib\write.ps1
+
+function Set-DistroConfigs {
+  param([string]$distro)
+  if (Test-Path "$env:USERPROFILE\$dir\win\wsl\wsl-$distro.sh") {
+    $sh = "/mnt/c/Users/$env:USERNAME/$dir/win/wsl/wsl-$distro.sh"
+    Write-Host "running $sh..."
+    wsl -d $distro -e $sh
+  }
+}
 
 function Install-Distros {
   Write-Header "Installing WSL distros..."
@@ -11,8 +20,9 @@ function Install-Distros {
     }
     else {
       Write-Host "Launching $distro install..."
-      Start-Process powershell -WindowStyle Minimized -ArgumentList "&wsl --install $distro"
+      Start-Process powershell -Wait -ArgumentList "&wsl --install $distro"
       Write-Host "Fill out new user information for distro in the other terminal."
+      Set-DistroConfigs $distro
     }
   }
 }
