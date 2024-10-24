@@ -72,7 +72,7 @@ function LIST_DOCKER_CONTAINERS() {
 alias docker-containers=LIST_DOCKER_CONTAINERS
 
 export PATH=$PATH:/home/codyconfer/.local/bin
-oh-my-posh init zsh --config /home/codyconfer/.sauce/themes/ohmyposh-sauce.toml
+eval "$(oh-my-posh init zsh --config /home/codyconfer/.sauce/themes/ohmyposh-sauce.toml)"
 
 # print header
 dateColor=$cyan

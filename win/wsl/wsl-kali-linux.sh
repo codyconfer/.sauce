@@ -22,3 +22,4 @@ git clone git@github.com:codyconfer/.sauce.git
 curl -s https://ohmyposh.dev/install.sh | bash -s
 rm .zshrc
 cp ~/.sauce/configs/.wsl-zshrc .zshrc
+chsh -s $(which zsh)
