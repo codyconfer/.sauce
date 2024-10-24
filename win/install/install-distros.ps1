@@ -6,6 +6,7 @@ function Set-DistroConfigs {
   if (Test-Path "$env:USERPROFILE\$dir\win\wsl\wsl-$distro.sh") {
     $sh = "/mnt/c/Users/$env:USERNAME/$dir/win/wsl/wsl-$distro.sh"
     Write-Host "running $sh..."
+    wsl -d $distro -e 'sudo cp "/mnt/c/Users/$env:USERNAME/$dir/configs/wsl.conf" "/etc/wsl.conf"'
     wsl -d $distro -e $sh
   }
 }
