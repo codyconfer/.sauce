@@ -3,7 +3,7 @@
 
 function Install-Fonts {
   Write-Header "Installing fonts..."
-  choco feature enable -n allowGlobalConfirmation
+  sudo choco feature enable -n allowGlobalConfirmation
   foreach ($font in $fonts) {
     choco install $font
   }

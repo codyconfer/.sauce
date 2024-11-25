@@ -12,6 +12,7 @@ function Set-DistroConfigs {
     wsl --terminate $distro
     Write-Host "running $setup..."
     wsl -d $distro -e $setup
+    wsl --terminate $distro
   }
 }
 
