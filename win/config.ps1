@@ -3,9 +3,9 @@
 ################################################################################
 
 $skipFeatures = $false
-$skipPackages = $false
+$skipPackages = $true
 $skipDistros = $false
-$skipFonts = $false
+$skipFonts = $true
 
 $dir = ".sauce"
 $gitUserUrl = "https://github.com/codyconfer"
