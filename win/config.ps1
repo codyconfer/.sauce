@@ -3,9 +3,9 @@
 ################################################################################
 
 $skipFeatures = $false
-$skipPackages = $true
+$skipPackages = $false
 $skipDistros = $false
-$skipFonts = $true
+$skipFonts = $false
 
 $dir = ".sauce"
 $gitUserUrl = "https://github.com/codyconfer"
@@ -18,7 +18,23 @@ $features = @(
 # wsl --list --online
 $distros = @(
   "kali-linux"
-  #"Ubuntu-24.04"
+  "Ubuntu-24.04"
+)
+
+$fonts = @(
+  "nerd-fonts-hack"
+  "cascadia-code-nerd-font"
+  "nerd-fonts-firacode"
+  "nerd-fonts-jetbrainsmono"
+  "nerd-fonts-sourcecodepro"
+  "nerd-fonts-terminus"
+  "nerd-fonts-robotomono"
+  "nerd-fonts-ubuntumono"
+  "nerd-fonts-ubuntu"
+  "nerd-fonts-spacemono"
+  "nerd-fonts-go-mono"
+  "nerd-fonts-sharetechmono"
+  "terminal-icons.powershell"
 )
 
 ## will install packages below

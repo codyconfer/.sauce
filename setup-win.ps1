@@ -3,10 +3,10 @@
 ################################################################################
 
 . .\win\lib\write.ps1
-. .\win\install\install-profile.ps1
-. .\win\install\install-packages.ps1
-. .\win\install\install-distros.ps1
-. .\win\install\install-fonts.ps1
+. .\win\profile\install-profile.ps1
+. .\win\packages\install-packages.ps1
+. .\win\distros\install-distros.ps1
+. .\win\fonts\install-fonts.ps1
 
 ################################################################################
 # LIFECYCLE
@@ -14,7 +14,7 @@
 if (-not $skipFeatures) {
   Write-Header "Enabling Windows features..."
   Write-Host "launching admin window..."
-  $script = "-File `"" + $PSScriptRoot + "\enable\enable-features.ps1" + "`" $PSScriptRoot\config.ps1"
+  $script = "-File `"" + $PSScriptRoot + "\features\enable-features.ps1" + "`" $PSScriptRoot\config.ps1"
   Write-Host "..."
   Start-Process powershell -Wait -ArgumentList "-noprofile", "$script" -Verb Runas
   Write-Host "done!"

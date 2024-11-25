@@ -22,7 +22,7 @@ function Install-Profile {
     $repo = "$gitUserUrl/.sauce.git"
     git clone $repo
   }
-  $newProfile = "$dir\win\profile.ps1"
+  $newProfile = "$dir\win\profile\profile.ps1"
   Write-Profile $profile $newProfile
   . $profile
   $termSettings = ".\AppData\Local\Packages\Microsoft.WindowsTerminal_8wekyb3d8bbwe\LocalState\settings.json"
