@@ -1,131 +1,156 @@
 {
-  "$help": "https://aka.ms/terminal-documentation",
-  "$schema": "https://aka.ms/terminal-profiles-schema",
-  "actions": 
-  [
-      {
-          "command": 
-          {
-              "action": "copy",
-              "singleLine": false
-          },
-          "id": "User.copy.644BA8F2",
-          "keys": "ctrl+c"
-      },
-      {
-          "command": "paste",
-          "id": "User.paste",
-          "keys": "ctrl+v"
-      },
-      {
-          "command": 
-          {
-              "action": "splitPane",
-              "split": "auto",
-              "splitMode": "duplicate"
-          },
-          "id": "User.splitPane.A6751878",
-          "keys": "alt+shift+d"
-      },
-      {
-          "command": "find",
-          "id": "User.find",
-          "keys": "ctrl+shift+f"
-      }
-  ],
-  "centerOnLaunch": true,
-  "copyFormatting": "none",
-  "copyOnSelect": true,
-  "defaultProfile": "{5fb123f1-af88-5b5c-8953-d14a8def1978}",
-  "initialRows": 45,
-  "newTabMenu": 
-  [
-      {
-          "type": "remainingProfiles"
-      }
-  ],
-  "newTabPosition": "afterCurrentTab",
-  "profiles": 
-  {
-      "defaults": {},
-      "list": 
-      [
-          {
-              "antialiasingMode": "cleartype",
-              "bellStyle": 
-              [
-                  "audible",
-                  "taskbar"
-              ],
-              "colorScheme": "One Half Dark",
-              "commandline": "%USERPROFILE%\\.dotnet\\tools\\pwsh.exe",
-              "cursorShape": "vintage",
-              "experimental.retroTerminalEffect": false,
-              "font": 
-              {
-                  "cellHeight": "1.2",
-                  "face": "Terminess Nerd Font",
-                  "size": 10
-              },
-              "guid": "{5fb123f1-af88-5b5c-8953-d14a8def1978}",
-              "hidden": false,
-              "icon": "%USERPROFILE%\\.sauce\\assets\\powershell.ico",
-              "name": "PowerShell",
-              "opacity": 69,
-              "startingDirectory": "%USERPROFILE%",
-              "useAcrylic": true
-          },
-          {
-              "adjustIndistinguishableColors": "indexed",
-              "antialiasingMode": "cleartype",
-              "bellStyle": 
-              [
-                  "audible",
-                  "taskbar"
-              ],
-              "colorScheme": "Solarized Light",
-              "commandline": "%SystemRoot%\\System32\\cmd.exe",
-              "cursorShape": "vintage",
-              "experimental.retroTerminalEffect": false,
-              "font": 
-              {
-                  "face": "Terminess Nerd Font",
-                  "size": 10
-              },
-              "guid": "{0caa0dad-35be-5f56-a8ff-afceeeaa6101}",
-              "hidden": false,
-              "name": "Command Prompt",
-              "opacity": 80,
-              "useAcrylic": true
-          },
-          {
-              "adjustIndistinguishableColors": "indexed",
-              "antialiasingMode": "cleartype",
-              "bellStyle": 
-              [
-                  "audible",
-                  "taskbar"
-              ],
-              "colorScheme": "Solarized Dark",
-              "commandline": "C:\\Windows\\system32\\wsl.exe -d kali-linux",
-              "cursorShape": "vintage",
-              "experimental.retroTerminalEffect": false,
-              "font": 
-              {
-                  "face": "Terminess Nerd Font",
-                  "size": 10
-              },
-              "guid": "{f152340b-03d5-44cf-bf25-18884f979a0b}",
-              "hidden": false,
-              "icon": "\\\\wsl.localhost\\kali-linux\\home\\codyconfer\\.sauce\\assets\\kali.png",
-              "name": "Kali",
-              "opacity": 80,
-              "startingDirectory": "~",
-              "useAcrylic": true
-          }
-      ]
-  },
-  "schemes": [],
-  "tabWidthMode": "compact",
-  "themes": []
+    "$help": "https://aka.ms/terminal-documentation",
+    "$schema": "https://aka.ms/terminal-profiles-schema",
+    "actions": 
+    [
+        {
+            "command": 
+            {
+                "action": "copy",
+                "singleLine": false
+            },
+            "id": "User.copy.644BA8F2",
+            "keys": "ctrl+c"
+        },
+        {
+            "command": "paste",
+            "id": "User.paste",
+            "keys": "ctrl+v"
+        },
+        {
+            "command": 
+            {
+                "action": "splitPane",
+                "split": "auto",
+                "splitMode": "duplicate"
+            },
+            "id": "User.splitPane.A6751878",
+            "keys": "alt+shift+d"
+        },
+        {
+            "command": "find",
+            "id": "User.find",
+            "keys": "ctrl+shift+f"
+        }
+    ],
+    "centerOnLaunch": true,
+    "copyFormatting": "none",
+    "copyOnSelect": true,
+    "defaultProfile": "{5fb123f1-af88-5b5c-8953-d14a8def1978}",
+    "initialRows": 45,
+    "newTabMenu": 
+    [
+        {
+            "type": "remainingProfiles"
+        }
+    ],
+    "newTabPosition": "afterCurrentTab",
+    "profiles": 
+    {
+        "defaults": {},
+        "list": 
+        [
+            {
+                "antialiasingMode": "cleartype",
+                "bellStyle": 
+                [
+                    "audible",
+                    "taskbar"
+                ],
+                "colorScheme": "One Half Dark",
+                "commandline": "%USERPROFILE%\\.dotnet\\tools\\pwsh.exe",
+                "cursorShape": "vintage",
+                "experimental.retroTerminalEffect": false,
+                "font": 
+                {
+                    "cellHeight": "1.2",
+                    "face": "Terminess Nerd Font",
+                    "size": 10
+                },
+                "guid": "{5fb123f1-af88-5b5c-8953-d14a8def1978}",
+                "hidden": false,
+                "icon": "%USERPROFILE%\\.sauce\\assets\\powershell.ico",
+                "name": "PowerShell",
+                "opacity": 69,
+                "startingDirectory": "%USERPROFILE%",
+                "useAcrylic": true
+            },
+            {
+                "adjustIndistinguishableColors": "indexed",
+                "antialiasingMode": "cleartype",
+                "bellStyle": 
+                [
+                    "audible",
+                    "taskbar"
+                ],
+                "colorScheme": "Solarized Light",
+                "commandline": "%SystemRoot%\\System32\\cmd.exe",
+                "cursorShape": "vintage",
+                "experimental.retroTerminalEffect": false,
+                "font": 
+                {
+                    "face": "Terminess Nerd Font",
+                    "size": 10
+                },
+                "guid": "{0caa0dad-35be-5f56-a8ff-afceeeaa6101}",
+                "hidden": false,
+                "name": "Command Prompt",
+                "opacity": 80,
+                "useAcrylic": true
+            },
+            {
+                "adjustIndistinguishableColors": "indexed",
+                "antialiasingMode": "cleartype",
+                "bellStyle": 
+                [
+                    "audible",
+                    "taskbar"
+                ],
+                "colorScheme": "Solarized Dark",
+                "commandline": "C:\\Windows\\system32\\wsl.exe -d kali-linux",
+                "cursorShape": "vintage",
+                "experimental.retroTerminalEffect": false,
+                "font": 
+                {
+                    "face": "Terminess Nerd Font",
+                    "size": 10
+                },
+                "guid": "{f152340b-03d5-44cf-bf25-18884f979a0b}",
+                "hidden": false,
+                "icon": "\\\\wsl.localhost\\kali-linux\\home\\codyconfer\\.sauce\\assets\\kali.png",
+                "name": "Kali",
+                "opacity": 80,
+                "startingDirectory": "~",
+                "useAcrylic": true
+            },
+            {
+                "adjustIndistinguishableColors": "indexed",
+                "antialiasingMode": "cleartype",
+                "bellStyle": 
+                [
+                    "audible",
+                    "taskbar"
+                ],
+                "colorScheme": "Ubuntu-24.04-ColorScheme",
+                "commandline": "ubuntu2404.exe",
+                "cursorShape": "filledBox",
+                "font": 
+                {
+                    "face": "Terminess Nerd Font",
+                    "size": 10
+                },
+                "guid": "{a581b176-f171-4fed-b4f4-1c3c150e3749}",
+                "hidden": false,
+                "icon": "https://assets.ubuntu.com/v1/49a1a858-favicon-32x32.png",
+                "name": "Ubuntu",
+                "tabTitle": "Ubuntu",
+                "opacity": 80,
+                "startingDirectory": "~",
+                "useAcrylic": true
+            }
+        ]
+    },
+    "schemes": [],
+    "tabWidthMode": "compact",
+    "themes": []
 }
