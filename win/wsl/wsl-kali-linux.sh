@@ -14,7 +14,7 @@ sudo apt upgrade -y
 echo "done!"
 echo $DIV
 echo "installing nix..."
-sh < (curl -L https://nixos.org/nix/install) --daemon
+sh <(curl -L https://nixos.org/nix/install) --daemon
 echo "done!"
 echo $DIV
 echo "installing ohmyposh..."
