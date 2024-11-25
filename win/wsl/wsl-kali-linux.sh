@@ -14,7 +14,7 @@ sudo apt upgrade -y
 echo "done!"
 echo $DIV
 echo "installing nix..."
-sh <(curl -L https://nixos.org/nix/install) --daemon
+sh < (curl -L https://nixos.org/nix/install) --daemon
 echo "done!"
 echo $DIV
 echo "installing ohmyposh..."
@@ -35,6 +35,7 @@ rm .zshrc
 cp ~/.sauce/configs/.wsl-zshrc .zshrc
 echo "done!"
 echo $DIV
+echo "installing kali tools..."
 if [[ $(dpkg --print-architecture) == *arm64* ]]; then
   echo "arm64"
   sudo apt install kali-linux-arm -y
