@@ -6,7 +6,7 @@ EMAIL=mail@codyconfer.me
 sudo apt update
 sudo apt install zsh git gh curl wget xz-utils unzip -y
 sudo apt upgrade -y
-sh <(curl -L https://nixos.org/nix/install) --daemon
+sh <(curl -L https://nixos.org/nix/install)> --daemon
 curl -s https://ohmyposh.dev/install.sh | bash -s
 git config --global user.name $(whoami) \
   && git config --global user.email $EMAIL \
