@@ -11,7 +11,7 @@
 ################################################################################
 # LIFECYCLE
 ################################################################################
-if (-not $skipFeatures) {
+function Enable-Features {
   Write-Header "Enabling Windows features..."
   Write-Host "launching admin window..."
   $script = "-File `"" + $PSScriptRoot + "\features\enable-features.ps1" + "`" $PSScriptRoot\config.ps1"
@@ -19,14 +19,10 @@ if (-not $skipFeatures) {
   Start-Process powershell -Wait -ArgumentList "-noprofile", "$script" -Verb Runas
   Write-Host "done!"
 }
-if (-not $skipPackages) {
-  Install-Packages
-}
-if (-not $skipFonts) {
-  Install-Fonts
-}
+
+Enable-Features
+# Install-Packages
+# Install-Fonts
 Install-Profile
-if (-not $skipDistros) {
-  Install-Distros
-}
+Install-Distros
 Write-Header "Done!"

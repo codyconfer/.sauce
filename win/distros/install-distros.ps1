@@ -3,13 +3,17 @@
 
 function Set-DistroConfigs {
   param([string]$distro)
+  $shPath = "/mnt/c/users/$env:USERNAME/$dir/win/wsl"
+  $common = "$shPath/wsl-common.sh"
+  $setup = "$shPath/wsl-$distro.sh"
+  $systemd = "$shPath/wsl-systemd.sh"
+  Write-Host "running $systemd..."
+  wsl -u root -d $distro -e $systemd
+  wsl --terminate $distro
+  Write-Host "running $common..."
+  wsl -d $distro -e $common
+  wsl --terminate $distro
   if (Test-Path "$env:USERPROFILE\$dir\win\wsl\wsl-$distro.sh") {
-    $shPath = "/mnt/c/users/$env:USERNAME/$dir/win/wsl"
-    $systemd = "$shPath/wsl-systemd.sh"
-    $setup = "$shPath/wsl-$distro.sh"
-    Write-Host "running $systemd..."
-    wsl -u root -d $distro -e $systemd
-    wsl --terminate $distro
     Write-Host "running $setup..."
     wsl -d $distro -e $setup
     wsl --terminate $distro

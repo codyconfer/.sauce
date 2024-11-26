@@ -43,8 +43,9 @@ chsh -s $(which zsh)
 echo "done!"
 echo $DIV
 echo "installing dev tools..."
+curl -o- https://dotnet.microsoft.com/download/dotnet/scripts/v1/dotnet-install.sh | bash
 curl https://pyenv.run | bash
 curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash
-sudo apt install -y dotnet-sdk-9.0 dotnet-sdk-8.0 rustup golang
+sudo apt install -y rustup golang
 echo "done!"
 echo $DIV
