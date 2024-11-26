@@ -10,14 +10,14 @@ function Set-DistroConfigs {
   Write-Host "running $systemd..."
   wsl -u root -d $distro -e $systemd
   wsl --terminate $distro
-  Write-Host "running $common..."
-  wsl -d $distro -e $common
-  wsl --terminate $distro
   if (Test-Path "$env:USERPROFILE\$dir\win\wsl\wsl-$distro.sh") {
     Write-Host "running $setup..."
     wsl -d $distro -e $setup
     wsl --terminate $distro
   }
+  Write-Host "running $common..."
+  wsl -d $distro -e $common
+  wsl --terminate $distro
 }
 
 function Install-Distros {
