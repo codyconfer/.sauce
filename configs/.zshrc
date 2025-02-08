@@ -114,4 +114,5 @@ heading=$(cat <<-_END_
  ${yellow}${line}${clear}
 _END_
 )
+clear
 echo ${heading}
