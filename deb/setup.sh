@@ -21,6 +21,8 @@ function git-config() {
   gh auth login \
     -p ssh
   gh auth setup-git
+  cd ~
+  git clone git@github.com:codyconfer/.sauce.git
   echo-done
 }
 
