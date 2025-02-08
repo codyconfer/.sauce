@@ -1,18 +1,18 @@
 #!/bin/bash
 
-function p_done {
+p_done () {
   DIV="-------------------------------------------------------------------------------"
   echo "done!"
   echo $DIV
 }
 
-function hush_login {
+hush_login () {
   echo "hush login..."
   touch ~/.hushlogin
   p_done
 }
 
-function git_config {
+git_config () {
   echo "configuring git..."
   gh auth login \
     -p ssh
@@ -22,7 +22,7 @@ function git_config {
   p_done
 }
 
-function initial_packages {
+initial_packages () {
   echo "adding packages..."
   wget https://packages.microsoft.com/config/debian/12/packages-microsoft-prod.deb -O packages-microsoft-prod.deb
   sudo dpkg -i packages-microsoft-prod.deb
@@ -33,7 +33,7 @@ function initial_packages {
   p_done
 }
 
-function dev_tools {
+dev_tools () {
   echo "installing dev tools..."
   curl -o- https://dotnet.microsoft.com/download/dotnet/scripts/v1/dotnet-install.sh | bash
   curl https://pyenv.run | bash
@@ -42,7 +42,7 @@ function dev_tools {
   p_done
 }
 
-function configure_shell {
+configure_shell () {
   echo "installing ohmyposh..."
   curl -s https://ohmyposh.dev/install.sh | bash -s
   p_done
