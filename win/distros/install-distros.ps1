@@ -3,8 +3,9 @@
 
 function Set-DistroConfigs {
   param([string]$distro)
+  $debPath = "/mnt/c/users/$env:USERNAME/$dir/deb"
   $shPath = "/mnt/c/users/$env:USERNAME/$dir/win/wsl"
-  $common = "$shPath/wsl-common.sh"
+  $common = "$debPath/setup.sh"
   $setup = "$shPath/wsl-$distro.sh"
   $systemd = "$shPath/wsl-systemd.sh"
   Write-Host "running $systemd..."
