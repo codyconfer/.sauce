@@ -4,19 +4,19 @@ function echo-action(action) {
   echo $action...
 }
 
-function echo-done() {
+function echo-done {
   DIV="-------------------------------------------------------------------------------"
   echo "done!"
   echo $DIV
 }
 
-function hush-login() {
+function hush-login {
   echo-action "hush login"
   touch ~/.hushlogin
   echo-done
 }
 
-function git-config() {
+function git-config {
   echo-action "configuring git"
   gh auth login \
     -p ssh
@@ -26,7 +26,7 @@ function git-config() {
   echo-done
 }
 
-function initial-packages() {
+function initial-packages {
   echo-action "adding packages"
   wget https://packages.microsoft.com/config/debian/12/packages-microsoft-prod.deb -O packages-microsoft-prod.deb
   sudo dpkg -i packages-microsoft-prod.deb
@@ -37,7 +37,7 @@ function initial-packages() {
   echo-done
 }
 
-function dev-tools() {
+function dev-tools {
   echo-action "installing dev tools"
   curl -o- https://dotnet.microsoft.com/download/dotnet/scripts/v1/dotnet-install.sh | bash
   curl https://pyenv.run | bash
@@ -46,7 +46,7 @@ function dev-tools() {
   echo-done
 }
 
-function configure-shell() {
+function configure-shell {
   echo-action "installing ohmyposh"
   curl -s https://ohmyposh.dev/install.sh | bash -s
   echo-done
