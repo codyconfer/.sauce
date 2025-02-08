@@ -1,7 +1,7 @@
 #!/bin/bash
 
-function echo-action(action) {
-  echo $action...
+echo-action() {
+  echo $1...
 }
 
 function echo-done {
