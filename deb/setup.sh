@@ -32,7 +32,7 @@ initial_packages () {
   sudo apt update
   sudo apt install git gh curl wget xz-utils unzip s-tui htop atop iftop iotop nvtop btop wavemon tailscale -y
   sudo apt full-upgrade -y
-  tailscale up
+  sudo tailscale up
   p_done
 }
 
