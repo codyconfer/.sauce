@@ -42,6 +42,7 @@ dev_tools () {
   curl https://pyenv.run | bash
   curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash
   sudo apt install -y rustup golang neovim gcc make
+  pipx install poetry
   p_done
 }
 
