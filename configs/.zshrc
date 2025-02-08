@@ -92,7 +92,7 @@ date=$(date +'%A, %b %d, %Y')
 heading=$(cat <<-_END_
  ${yellow}${line}${clear}
  ${dateColor}${date}${clear}
- ${nameColor}$(git config user.name)@apollo${clear}
+ ${nameColor}$(whoami)@$(hostname)${clear}
 
            BP55555P#            
         #${cyan}G55PGGGGGP${clear}?PB&         
@@ -115,3 +115,4 @@ heading=$(cat <<-_END_
 _END_
 )
 echo ${heading}
+docker-containers
