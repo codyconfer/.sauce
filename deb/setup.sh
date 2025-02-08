@@ -1,9 +1,5 @@
 #!/bin/bash
 
-p_action () {
-  echo $1...
-}
-
 function p_done {
   DIV="-------------------------------------------------------------------------------"
   echo "done!"
@@ -11,13 +7,13 @@ function p_done {
 }
 
 function hush_login {
-  p_action "hush login"
+  echo "hush login..."
   touch ~/.hushlogin
   p_done
 }
 
 function git_config {
-  p_action "configuring git"
+  echo "configuring git..."
   gh auth login \
     -p ssh
   gh auth setup-git
@@ -27,7 +23,7 @@ function git_config {
 }
 
 function initial_packages {
-  p_action "adding packages"
+  echo "adding packages..."
   wget https://packages.microsoft.com/config/debian/12/packages-microsoft-prod.deb -O packages-microsoft-prod.deb
   sudo dpkg -i packages-microsoft-prod.deb
   rm packages-microsoft-prod.deb
@@ -38,7 +34,7 @@ function initial_packages {
 }
 
 function dev_tools {
-  p_action "installing dev tools"
+  echo "installing dev tools..."
   curl -o- https://dotnet.microsoft.com/download/dotnet/scripts/v1/dotnet-install.sh | bash
   curl https://pyenv.run | bash
   curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash
@@ -47,10 +43,10 @@ function dev_tools {
 }
 
 function configure_shell {
-  p_action "installing ohmyposh"
+  echo "installing ohmyposh..."
   curl -s https://ohmyposh.dev/install.sh | bash -s
   p_done
-  p_action "configuring zsh"
+  echo "configuring zsh..."
   sudo apt install zsh -y
   rm .zshrc
   cp ~/.sauce/configs/.wsl-zshrc .zshrc
