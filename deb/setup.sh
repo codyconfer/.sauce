@@ -1,6 +1,6 @@
 #!/bin/bash
 
-echo-action() {
+echo-action () {
   echo $1...
 }
 
