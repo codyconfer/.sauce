@@ -28,8 +28,9 @@ initial_packages () {
   sudo dpkg -i packages-microsoft-prod.deb
   rm packages-microsoft-prod.deb
   sudo apt update
-  sudo apt install git gh curl wget xz-utils unzip s-tui htop atop iftop iotop nvtop btop perf wavemon -y
+  sudo apt install git gh curl wget xz-utils unzip s-tui htop atop iftop iotop nvtop btop wavemon tailscale -y
   sudo apt full-upgrade -y
+  tailscale up
   p_done
 }
 
