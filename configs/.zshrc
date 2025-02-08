@@ -115,4 +115,3 @@ heading=$(cat <<-_END_
 _END_
 )
 echo ${heading}
-docker-containers

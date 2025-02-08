@@ -2,11 +2,11 @@
 # SETUP SCRIPT FOR WINDOWS 11 - codyconfer - 2024-10-22
 ################################################################################
 
-. .\win\lib\write.ps1
-. .\win\profile\install-profile.ps1
-. .\win\packages\install-packages.ps1
-. .\win\distros\install-distros.ps1
-. .\win\fonts\install-fonts.ps1
+. .\lib\write.ps1
+. .\profile\install-profile.ps1
+. .\packages\install-packages.ps1
+. .\distros\install-distros.ps1
+. .\fonts\install-fonts.ps1
 
 ################################################################################
 # LIFECYCLE
@@ -21,8 +21,8 @@ function Enable-Features {
 }
 
 Enable-Features
-# Install-Packages
-# Install-Fonts
+Install-Packages
+Install-Fonts
 Install-Profile
 Install-Distros
 Write-Header "Done!"
