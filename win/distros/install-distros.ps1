@@ -5,7 +5,9 @@ function Set-DistroConfigs {
   param([string]$distro)
   $debPath = "/mnt/c/users/$env:USERNAME/$dir/deb"
   $shPath = "/mnt/c/users/$env:USERNAME/$dir/win/wsl"
-  $common = "$debPath/setup.sh"
+  $debSetup = "$debPath/setup.sh"
+  $debAuth = "$debPath/auth.sh"
+  $debZsh = "$debPath/zsh.sh"
   $setup = "$shPath/wsl-$distro.sh"
   $systemd = "$shPath/wsl-systemd.sh"
   Write-Host "running $systemd..."
@@ -16,8 +18,10 @@ function Set-DistroConfigs {
     wsl -d $distro -e $setup
     wsl --terminate $distro
   }
-  Write-Host "running $common..."
-  wsl -d $distro -e $common
+  Write-Host "running $distro setup..."
+  wsl -d $distro -e $debAuth
+  wsl -d $distro -e $debSetup
+  wsl -d $distro -e $debZsh
   wsl --terminate $distro
 }
 

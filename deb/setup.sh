@@ -1,10 +1,6 @@
 #!/bin/bash
 
-p_done () {
-  DIV="-------------------------------------------------------------------------------"
-  echo "done!"
-  echo $DIV
-}
+. ./common.sh --source-only
 
 hush_login () {
   echo "hush login..."
@@ -12,27 +8,15 @@ hush_login () {
   p_done
 }
 
-git_config () {
-  echo "configuring git..."
-  gh auth login \
-    -p ssh
-  gh auth setup-git
-  cd ~
-  git clone git@github.com:codyconfer/.sauce.git
-  p_done
-}
-
 initial_packages () {
   echo "adding packages..."
-  curl -fsSL https://pkgs.tailscale.com/stable/ubuntu/noble.noarmor.gpg | sudo tee /usr/share/keyrings/tailscale-archive-keyring.gpg >/dev/null
-  curl -fsSL https://pkgs.tailscale.com/stable/ubuntu/noble.tailscale-keyring.list | sudo tee /etc/apt/sources.list.d/tailscale.list
+  sudo apt install curl wget xz-utils unzip
   wget https://packages.microsoft.com/config/debian/12/packages-microsoft-prod.deb -O packages-microsoft-prod.deb
   sudo dpkg -i packages-microsoft-prod.deb
   rm packages-microsoft-prod.deb
   sudo apt update
-  sudo apt install git gh curl wget xz-utils unzip s-tui htop atop iftop iotop nvtop btop wavemon tailscale -y
+  sudo apt install s-tui htop atop iftop iotop nvtop btop wavemon git -y
   sudo apt full-upgrade -y
-  sudo tailscale up
   p_done
 }
 
@@ -49,20 +33,6 @@ dev_tools () {
   p_done
 }
 
-configure_shell () {
-  echo "installing ohmyposh..."
-  curl -s https://ohmyposh.dev/install.sh | bash -s
-  p_done
-  echo "configuring zsh..."
-  sudo apt install zsh -y
-  rm .zshrc
-  cp ~/.sauce/configs/.zshrc .zshrc
-  chsh -s $(which zsh)
-  p_done
-}
-
 hush_login
 initial_packages
-git_config
 dev_tools
-configure_shell
