@@ -95,6 +95,7 @@ heading=$(cat <<-_END_
 ${nameColor}${host}${clear}
 
  ${dateColor}${date}${clear}
+ ${nameColor}$(whoami)@$(hostname)${clear}
  ${yellow}${line}${clear}
 
            BP55555P#            
