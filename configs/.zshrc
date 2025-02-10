@@ -89,16 +89,20 @@ dateColor=$cyan
 nameColor=$blue
 date=$(date +'%A, %b %d, %Y')
 
-allips=$(ip -4 addr | grep -oP '(?<=inet\s)\d+(\.\d+){3}')
-arrips=()
+allips=($(ip -4 addr | grep -oP '(?<=inet\s)\d+(\.\d+){3}'))
 ips=""
-readarray -d $'\n' -t arrips <<< ips
-for ip in "${arrips[@]}"; do
-  if [[ "$ip" != 127* ]] && [[ "$ip" != 172* ]]; then
-    ips="${ips}${ip}\n"
+for ip in "${allips[@]}"; do
+  echo $ip
+  if [[ $ip != 127* ]] && [[ $ip != 172* ]]; then
+    if [[ $ip == 10.* ]]; then
+        ips="${ips} LAN:        ${dateColor}${ip}${nameColor}\n"
+    fi
+    if [[ $ip == 100.* ]]; then
+        ips="${ips} tailnet:    ${dateColor}${ip}${nameColor}\n"
+    fi
   fi
 done
-
+ips="${ips} tailnet:    ${dateColor}$(hostname).${tailnetname}${nameColor}\n"
 host=$(figlet -f smslant "@$(hostname)" | sed 's/^/ /')
 heading=$(cat <<-_END_
  ${yellow}${line}${clear}
