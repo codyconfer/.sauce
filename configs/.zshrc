@@ -115,6 +115,8 @@ ${nameColor}${host}${clear}
 ${nameColor}${ips}${clear}
  ${yellow}${line}${clear}
 
+ across the universe divide...
+
            BP55555P#            
         #${cyan}G55PGGGGGP${clear}?PB&         
       B${cyan}55PGGGGGGGGG${clear}J${cyan}GPPG${clear}#       
