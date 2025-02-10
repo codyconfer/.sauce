@@ -89,6 +89,16 @@ dateColor=$cyan
 nameColor=$blue
 date=$(date +'%A, %b %d, %Y')
 
+allips=$(ip -4 addr | grep -oP '(?<=inet\s)\d+(\.\d+){3}')
+arrips=()
+ips=""
+readarray -d $'\n' -t arrips <<< ips
+for ip in "${arrips[@]}"; do
+  if [[ "$ip" != 127* ]] && [[ "$ip" != 172* ]]; then
+    ips="${ips}${ip}\n"
+  fi
+done
+
 host=$(figlet -f smslant "@$(hostname)" | sed 's/^/ /')
 heading=$(cat <<-_END_
  ${yellow}${line}${clear}
@@ -96,6 +106,7 @@ ${nameColor}${host}${clear}
 
  ${dateColor}${date}${clear}
  ${nameColor}$(whoami)@$(hostname)${clear}
+ ${nameColor}${ips}${clear}
  ${yellow}${line}${clear}
 
            BP55555P#            
