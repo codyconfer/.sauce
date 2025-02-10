@@ -17,6 +17,8 @@ initial_packages () {
   sudo apt update
   sudo apt install s-tui htop atop iftop iotop nvtop btop wavemon git -y
   sudo apt full-upgrade -y
+  echo "cloning .sauce..."
+  git clone git@github.com:codyconfer/.sauce.git ~/.sauce
   p_done
 }
 

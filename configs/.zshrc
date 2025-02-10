@@ -112,6 +112,7 @@ ${nameColor}${host}${clear}
 
  ${dateColor}${date}${clear}
  ${nameColor}$(whoami)@$(hostname)${clear}
+
 ${nameColor}${ips}${clear}
  ${yellow}${line}${clear}
 
