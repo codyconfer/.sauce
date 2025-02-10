@@ -89,10 +89,13 @@ dateColor=$cyan
 nameColor=$blue
 date=$(date +'%A, %b %d, %Y')
 
+host=$(figlet -f smslant "@$(hostname)" | sed 's/^/ /')
 heading=$(cat <<-_END_
  ${yellow}${line}${clear}
+${nameColor}${host}${clear}
+
  ${dateColor}${date}${clear}
- ${nameColor}$(whoami)@$(hostname)${clear}
+ ${yellow}${line}${clear}
 
            BP55555P#            
         #${cyan}G55PGGGGGP${clear}?PB&         
