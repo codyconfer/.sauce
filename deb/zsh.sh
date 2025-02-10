@@ -7,11 +7,6 @@ configure_shell () {
   curl -s https://ohmyposh.dev/install.sh | bash -s
   p_done
   echo "configuring zsh..."
-  if [ ! -d "~/.sauce" ]; then
-    echo "cloning .sauce..."
-    git clone git@github.com:codyconfer/.sauce.git ~/.sauce
-    p_done
-  fi
   sudo apt install zsh -y
   rm ~/.zshrc
   cp ~/.sauce/configs/.zshrc ~/.zshrc
