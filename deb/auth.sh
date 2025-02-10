@@ -8,7 +8,6 @@ git_config () {
   gh auth login \
     -p ssh
   gh auth setup-git
-  cd ~
   p_done
 }
 

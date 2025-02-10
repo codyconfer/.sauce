@@ -10,7 +10,7 @@ hush_login () {
 
 initial_packages () {
   echo "adding packages..."
-  sudo apt install curl wget xz-utils unzip
+  sudo apt install curl wget xz-utils unzip figlet -y
   wget https://packages.microsoft.com/config/debian/12/packages-microsoft-prod.deb -O packages-microsoft-prod.deb
   sudo dpkg -i packages-microsoft-prod.deb
   rm packages-microsoft-prod.deb
@@ -23,12 +23,12 @@ initial_packages () {
 dev_tools () {
   echo "installing dev tools..."
   sudo apt update
-  sudo apt install pipx
+  sudo apt install pipx -y
   pipx ensurepath
   curl -o- https://dotnet.microsoft.com/download/dotnet/scripts/v1/dotnet-install.sh | bash
   curl https://pyenv.run | bash
   curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash
-  sudo apt install -y rustup golang neovim gcc make
+  sudo apt install rustup golang neovim gcc make -y
   pipx install poetry
   p_done
 }

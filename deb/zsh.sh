@@ -13,8 +13,8 @@ configure_shell () {
     p_done
   fi
   sudo apt install zsh -y
-  rm .zshrc
-  cp ~/.sauce/configs/.zshrc .zshrc
+  rm ~/.zshrc
+  cp ~/.sauce/configs/.zshrc ~/.zshrc
   chsh -s $(which zsh)
   p_done
 }
