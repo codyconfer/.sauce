@@ -1,5 +1,7 @@
 # ~/.zshrc
 # 
+# config
+tailnetname=wampus-galaxy.ts.net
 # functions
 red='\033[0;31m'
 green='\033[0;32m'
@@ -110,7 +112,7 @@ ${nameColor}${host}${clear}
 
  ${dateColor}${date}${clear}
  ${nameColor}$(whoami)@$(hostname)${clear}
- ${nameColor}${ips}${clear}
+${nameColor}${ips}${clear}
  ${yellow}${line}${clear}
 
            BP55555P#            
