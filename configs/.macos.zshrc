@@ -1,7 +1,5 @@
-# ~/.zshrc
+# ~/.zshrc codyconfer@apollo
 # 
-# config
-tailnetname=wampus-galaxy.ts.net
 # functions
 red='\033[0;31m'
 green='\033[0;32m'
@@ -81,48 +79,68 @@ function LIST_DOCKER_CONTAINERS() {
 # aliases
 alias docker-containers=LIST_DOCKER_CONTAINERS
 alias zshrc=refresh_profile
+alias servers="echo '${magenta}codyconfer:${clear} atlas, hades, hyperion, prometheus' && echo '${magenta}saucenet:${clear} ares, orion, triton'"
 
-export PATH=$PATH:/home/codyconfer/.local/bin
-eval "$(oh-my-posh init zsh --config /home/codyconfer/.sauce/themes/sauce.ohmyposh.toml)"
+#
+# apollo specific configuration
+#
 
+# homebrew
+export PATH="$PATH:/opt/homebrew/bin/"
+
+# adb
+export PATH="$PATH:$HOME/.platform-tools/"
+
+# bun completions
+[ -s "/Users/codyconfer/.bun/_bun" ] && source "/Users/codyconfer/.bun/_bun"
+
+# bun
+export BUN_INSTALL="$HOME/.bun"
+export PATH="$BUN_INSTALL/bin:$PATH"
+
+# nvm
+export NVM_DIR="$HOME/.nvm"
+[ -s "/opt/homebrew/opt/nvm/nvm.sh" ] && \. "/opt/homebrew/opt/nvm/nvm.sh"
+[ -s "/opt/homebrew/opt/nvm/etc/bash_completion.d/nvm" ] && \. "/opt/homebrew/opt/nvm/etc/bash_completion.d/nvm"
+
+# pyenv
 export PYENV_ROOT="$HOME/.pyenv"
-command -v pyenv >/dev/null || export PATH="$PYENV_ROOT/bin:$PATH"
+export PATH="$PYENV_ROOT/bin:$PATH"
 eval "$(pyenv init -)"
+eval "$(pyenv init --path)"
 
-fpath+=~/.zfunc
-autoload -Uz compinit && compinit
+# The next line updates PATH for the Google Cloud SDK.
+if [ -f '/Users/codyconfer/Downloads/google-cloud-sdk/path.zsh.inc' ]; then . '/Users/codyconfer/Downloads/google-cloud-sdk/path.zsh.inc'; fi
 
-export NVM_DIR="$([ -z "${XDG_CONFIG_HOME-}" ] && printf %s "${HOME}/.nvm" || printf %s "${XDG_CONFIG_HOME}/nvm")"
-[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" # This loads nvm
+# The next line enables shell command completion for gcloud.
+if [ -f '/Users/codyconfer/Downloads/google-cloud-sdk/completion.zsh.inc' ]; then . '/Users/codyconfer/Downloads/google-cloud-sdk/completion.zsh.inc'; fi
+
+# mkdoc
+export PATH="$PATH:$HOME/.mkdoc/"
+export TEMPLATE_DIR_PATH="$HOME/.mkdoc/templates"
+
+# aliases
+alias bash=/opt/homebrew/bin/bash
+alias ares="zsh ./.sauce/profiles/ares.sh"
+alias atlas="zsh ./.sauce/profiles/atlas.sh"
+alias hades="zsh ./.sauce/profiles/hades.sh"
+alias hyperion="zsh ./.sauce/profiles/hyperion.sh"
+alias orion="zsh ./.sauce/profiles/orion.sh"
+alias prometheus="zsh ./.sauce/profiles/prometheus.sh"
+alias triton="zsh ./.sauce/profiles/triton.sh"
 
 # print header
 dateColor=$cyan
 nameColor=$blue
 date=$(date +'%A, %b %d, %Y')
-
-allips=($(ip -4 addr | grep -oP '(?<=inet\s)\d+(\.\d+){3}'))
-ips=""
-for ip in "${allips[@]}"; do
-  echo $ip
-  if [[ $ip != 127* ]] && [[ $ip != 172* ]]; then
-    if [[ $ip == 10.* ]]; then
-        ips="${ips} LAN:        ${dateColor}${ip}${nameColor}\n"
-    fi
-    if [[ $ip == 100.* ]]; then
-        ips="${ips} tailnet:    ${dateColor}${ip}${nameColor}\n"
-    fi
-  fi
-done
-ips="${ips} tailnet:    ${dateColor}$(hostname).${tailnetname}${nameColor}\n"
-host=$(figlet -f smslant "@$(hostname)" | sed 's/^/ /')
+host=$(figlet -f smslant "@apollo" | sed 's/^/ /')
 heading=$(cat <<-_END_
  ${yellow}${line}${clear}
 ${nameColor}${host}${clear}
 
  ${dateColor}${date}${clear}
- ${nameColor}$(whoami)@$(hostname)${clear}
+ ${nameColor}$(whoami)@apollo${clear}
 
-${nameColor}${ips}${clear}
  ${yellow}${line}${clear}
 
  ${nameColor}across the universe divide...${clear}
@@ -149,3 +167,8 @@ _END_
 )
 clear
 echo ${heading}
+
+eval "$(oh-my-posh init zsh --config ~/.sauce/codyconfer.toml)"
+
+# Added by LM Studio CLI (lms)
+export PATH="$PATH:/Users/codyconfer/.cache/lm-studio/bin"

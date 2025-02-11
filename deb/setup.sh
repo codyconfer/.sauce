@@ -1,11 +1,9 @@
 #!/bin/bash
 
-. ./common.sh --source-only
-
 hush_login () {
   echo "hush login..."
   touch ~/.hushlogin
-  p_done
+  echo " --- "
 }
 
 initial_packages () {
@@ -17,9 +15,7 @@ initial_packages () {
   sudo apt update
   sudo apt install s-tui htop atop iftop iotop nvtop btop wavemon git -y
   sudo apt full-upgrade -y
-  echo "cloning .sauce..."
-  git clone git@github.com:codyconfer/.sauce.git ~/.sauce
-  p_done
+  echo " --- "
 }
 
 dev_tools () {
@@ -32,9 +28,24 @@ dev_tools () {
   curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash
   sudo apt install rustup golang neovim gcc make -y
   pipx install poetry
-  p_done
+  echo " --- "
+}
+
+configure_shell () {
+  echo "installing ohmyposh..."
+  curl -s https://ohmyposh.dev/install.sh | bash -s
+  echo " --- "
+  echo "installing zsh..."
+  sudo apt install zsh -y
+  echo " --- "
+  echo "refreshing zsh..."
+  rm ~/.zshrc
+  cp ~/.sauce/configs/.zshrc ~/.zshrc
+  chsh -s $(which zsh)
+  echo " --- "
 }
 
 hush_login
 initial_packages
 dev_tools
+configure_shell

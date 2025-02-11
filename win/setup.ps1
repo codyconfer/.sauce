@@ -1,41 +1,6 @@
 ################################################################################
-# SETUP CONFIG
+# SETUP SCRIPT FOR WINDOWS 11 - codyconfer - 2024-10-22
 ################################################################################
-
-$skipFeatures = $false
-$skipPackages = $true
-$skipDistros = $false
-$skipFonts = $true
-
-$dir = ".sauce"
-$gitUserUrl = "https://github.com/codyconfer"
-
-# windows features (id, name)
-$features = @(
-  [tuple]::Create("Microsoft-Windows-Subsystem-Linux", "WSL")
-)
-
-# wsl --list --online
-$distros = @(
-  "kali-linux"
-  "Ubuntu-24.04"
-)
-
-$fonts = @(
-  "nerd-fonts-hack"
-  "cascadia-code-nerd-font"
-  "nerd-fonts-firacode"
-  "nerd-fonts-jetbrainsmono"
-  "nerd-fonts-sourcecodepro"
-  "nerd-fonts-terminus"
-  "nerd-fonts-robotomono"
-  "nerd-fonts-ubuntumono"
-  "nerd-fonts-ubuntu"
-  "nerd-fonts-spacemono"
-  "nerd-fonts-go-mono"
-  "nerd-fonts-sharetechmono"
-  "terminal-icons.powershell"
-)
 
 ## will install packages below
 $packages = [System.Collections.ArrayList] @(
@@ -51,7 +16,6 @@ $packages = [System.Collections.ArrayList] @(
   [tuple]::Create("TorProject.TorBrowser", "Tor Browser")
   [tuple]::Create("Valve.Steam", "Steam")
   [tuple]::Create("JanDeDobbeleer.OhMyPosh", "ohmyposh")
-
   [tuple]::Create("Docker.DockerDesktop", "Docker Desktop")
   [tuple]::Create("Microsoft.WindowsTerminal", "Windows Terminal")
   [tuple]::Create("Microsoft.PowerShell", "PowerShell")
@@ -74,7 +38,73 @@ $packages = [System.Collections.ArrayList] @(
   [tuple]::Create("GolangCI.golangci-lint", "golangci-lint")
   [tuple]::Create("zig.zig", "Zig")
   [tuple]::Create("Rustlang.Rustup", "Rustup")
-
   [tuple]::Create("Microsoft.VisualStudioCode", "Visual Studio Code")
   [tuple]::Create("Microsoft.VisualStudio.2022.Community", "Visual Studio 2022 Community")
 )
+
+function Install-Packages {
+  Write-Host "Installing packages..."
+  foreach ($package in $packages) {
+    Write-Host "Installing ${package.item2}..."
+    winget install $package.item1
+  }
+}
+
+$fonts = @(
+  "nerd-fonts-hack"
+  "cascadia-code-nerd-font"
+  "nerd-fonts-firacode"
+  "nerd-fonts-jetbrainsmono"
+  "nerd-fonts-sourcecodepro"
+  "nerd-fonts-terminus"
+  "nerd-fonts-robotomono"
+  "nerd-fonts-ubuntumono"
+  "nerd-fonts-ubuntu"
+  "nerd-fonts-spacemono"
+  "nerd-fonts-go-mono"
+  "nerd-fonts-sharetechmono"
+  "terminal-icons.powershell"
+)
+
+function Install-Fonts {
+  Write-Host "Installing fonts..."
+  sudo choco feature enable -n allowGlobalConfirmation
+  foreach ($font in $fonts) {
+    choco install $font
+  }
+}
+
+$dir = ".sauce"
+$gitUserUrl = "https://github.com/codyconfer"
+
+function Write-Profile {
+  param([string]$url, [string]$newUrl)
+  if (Test-Path -Path $url) {
+    Write-Host "Removing $url..."
+    Remove-Item $url
+  }
+  Write-Host "Installing $url..."
+  Copy-Item $newUrl $url
+}
+
+function Install-Profile {
+  Write-Host "Installing profile..."
+  $wd = (get-location).path
+  Set-Location $env:USERPROFILE
+  if (Test-Path -Path $dir) {
+    Write-Host "Found $dir"
+  }
+  else {
+    $repo = "$gitUserUrl/.sauce.git"
+    git clone $repo
+  }
+  $newProfile = "$dir\win\profile\profile.ps1"
+  Write-Profile $profile $newProfile
+  . $profile
+  Set-Location $wd
+}
+
+Install-Packages
+Install-Fonts
+Install-Profile
+Write-Host "Done!"

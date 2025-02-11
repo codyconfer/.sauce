@@ -2,7 +2,7 @@ $HasOhMyPosh = $true
 $HasChocolatey = $true
 
 if ($HasOhMyPosh) {
-  oh-my-posh init pwsh --config "~/.sauce/themes/ohmyposh-sauce.toml" | Invoke-Expression
+  oh-my-posh init pwsh --config "~/.sauce/themes/sauce.ohmyposh.toml" | Invoke-Expression
   Import-Module -Name Terminal-Icons
 }
 

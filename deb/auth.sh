@@ -1,14 +1,15 @@
 #!/bin/bash
 
-. ./common.sh --source-only
+CONFIG_REPO="git@github.com:codyconfer/.sauce.git"
 
 git_config () {
   echo "configuring git..."
   sudo apt install git gh -y
-  gh auth login \
-    -p ssh
+  gh auth login -p ssh
   gh auth setup-git
-  p_done
+  cd ~
+  git clone $CONFIG_REPO
+  echo " --- "
 }
 
 tailscale_config () {
@@ -18,8 +19,9 @@ tailscale_config () {
   sudo apt update
   sudo apt install tailscale -y
   sudo tailscale up
-  p_done
+  echo " --- "
 }
 
 git_config
 tailscale_config
+sh ~/.sauce/deb/setup.sh
