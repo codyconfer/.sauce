@@ -74,8 +74,7 @@ function Install-Fonts {
   }
 }
 
-$dir = ".sauce"
-$gitUserUrl = "https://github.com/codyconfer"
+$repo = "git@github.com:codyconfer/.sauce.git"
 
 function Write-Profile {
   param([string]$url, [string]$newUrl)
@@ -88,6 +87,7 @@ function Write-Profile {
 }
 
 function Install-Profile {
+  $dir = ".sauce"
   Write-Host "Installing profile..."
   $wd = (get-location).path
   Set-Location $env:USERPROFILE
@@ -95,10 +95,9 @@ function Install-Profile {
     Write-Host "Found $dir"
   }
   else {
-    $repo = "$gitUserUrl/.sauce.git"
     git clone $repo
   }
-  $newProfile = "$dir\win\profile\profile.ps1"
+  $newProfile = "$dir\configs\profile.ps1"
   Write-Profile $profile $newProfile
   . $profile
   Set-Location $wd

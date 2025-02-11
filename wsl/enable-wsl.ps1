@@ -3,22 +3,17 @@ $features = @(
   [tuple]::Create("Microsoft-Windows-Subsystem-Linux", "WSL")
 )
 
-function Enable-Feature {
-  param ([string]$id, [string]$name)
-  if ((Get-WindowsOptionalFeature -Online -FeatureName $id).State -eq "Enabled") {
-    Write-Host "$name is already enabled."
-  }
-  else {
-    Write-Host "$name is not enabled. Enabling..."
-    Write-Host "Restart your computer when prompted and run this script again."
-    Enable-WindowsOptionalFeature -Online -FeatureName $id
-    Exit
-  }
-}
-
 function Enable-Features {
   foreach ($feature in $features) {
-    Enable-Feature $($feature.item1) $($feature.item2)
+    if ((Get-WindowsOptionalFeature -Online -FeatureName $feature.item1).State -eq "Enabled") {
+      Write-Host "${feature.item2} is already enabled."
+    }
+    else {
+      Write-Host "${feature.item2} is not enabled. Enabling..."
+      Write-Host "Restart your computer when prompted and run this script again."
+      Enable-WindowsOptionalFeature -Online -FeatureName $feature.item1
+      Exit
+    }
   }
   Write-Host "Done!"
   $k = Read-Host "Press any key to continue..."
@@ -35,16 +30,16 @@ $distros = @(
 function Set-DistroConfigs {
   param([string]$distro)
   $debPath = "/mnt/c/users/$env:USERNAME/$dir/deb"
-  $shPath = "/mnt/c/users/$env:USERNAME/$dir/win/wsl"
+  $wslPath = "/mnt/c/users/$env:USERNAME/$dir/wsl"
   $debSetup = "$debPath/setup.sh"
   $debAuth = "$debPath/auth.sh"
   $debZsh = "$debPath/zsh.sh"
-  $setup = "$shPath/wsl-$distro.sh"
-  $systemd = "$shPath/wsl-systemd.sh"
+  $setup = "$wslPath/wsl-$distro.sh"
+  $systemd = "$wslPath/wsl-systemd.sh"
   Write-Host "running $systemd..."
   wsl -u root -d $distro -e $systemd
   wsl --terminate $distro
-  if (Test-Path "$env:USERPROFILE\$dir\win\wsl\wsl-$distro.sh") {
+  if (Test-Path "$env:USERPROFILE\$dir\wsl\wsl-$distro.sh") {
     Write-Host "running $setup..."
     wsl -d $distro -e $setup
     wsl --terminate $distro
