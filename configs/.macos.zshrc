@@ -1,6 +1,9 @@
 # ~/.zshrc codyconfer@apollo
 # 
-# functions
+
+# homebrew
+export PATH="$PATH:/opt/homebrew/bin/"
+
 red='\033[0;31m'
 green='\033[0;32m'
 yellow='\033[0;33m'
@@ -18,6 +21,45 @@ invisible='\033[8m'
 uparrow='\u2191'
 rightarrow='\u2192'
 line="─────────────────────────────────────────────────────"
+
+# print header
+dateColor=$cyan
+nameColor=$blue
+date=$(date +'%A, %b %d, %Y')
+host=$(figlet -f smslant "@apollo" | sed 's/^/ /')
+heading=$(cat <<-_END_
+ ${yellow}${line}${clear}
+${nameColor}${host}${clear}
+
+ ${dateColor}${date}${clear}
+ ${nameColor}$(whoami)@apollo${clear}
+
+ ${yellow}${line}${clear}
+
+ ${nameColor}across the universe divide...${clear}
+
+           BP55555P#            
+        #${cyan}G55PGGGGGP${clear}?PB&         
+      B${cyan}55PGGGGGGGGG${clear}J${cyan}GPPG${clear}#       
+    &${cyan}Y5PGGGGGGGGGP${clear}Y${cyan}PBBBG5${clear}P      
+    #${cyan}JGGGGGGGGGP${clear}YY${cyan}GBBBBBBY${clear}B     
+    B${cyan}JGGGGGGGP${clear}55${cyan}GBBBBBBBBY${clear}&     
+    B${cyan}YGGGGGG${clear}JJ${cyan}PGBBBBBBBG5${clear}#      
+    B${cyan}YGGGGGG${clear}JBGP${cyan}5PGGBG5G${clear}&       
+    G${cyan}YGGGGGG${clear}JB${blue}##${clear}BBG${cyan}PY5${clear}#         
+    G${cyan}YGGGGGP${clear}?G${blue}######${clear}BGPP
+    G${cyan}YGGP${clear}55PGGPPG${blue}B######${clear}5G      
+    P${cyan}YP${clear}5P${blue}B#&&&#${clear}BGPPG${blue}B###${clear}PG      
+    BJP${blue}B&&&&&#&&&&#${clear}BGPP${blue}B${clear}5G      
+      &BGGG${blue}B#&&&&#&&&#${clear}B5J#      
+          #BGG${blue}BB#&#${clear}BGGB#        
+             &#BGPGB&
+
+ ${yellow}${line}${clear}
+_END_
+)
+clear
+echo ${heading}
 
 function refresh_profile() {
     echo "refreshing zsh..."
@@ -79,14 +121,10 @@ function LIST_DOCKER_CONTAINERS() {
 # aliases
 alias docker-containers=LIST_DOCKER_CONTAINERS
 alias zshrc=refresh_profile
-alias servers="echo '${magenta}codyconfer:${clear} atlas, hades, hyperion, prometheus' && echo '${magenta}saucenet:${clear} ares, orion, triton'"
 
 #
 # apollo specific configuration
 #
-
-# homebrew
-export PATH="$PATH:/opt/homebrew/bin/"
 
 # adb
 export PATH="$PATH:$HOME/.platform-tools/"
@@ -97,6 +135,12 @@ export PATH="$PATH:$HOME/.platform-tools/"
 # bun
 export BUN_INSTALL="$HOME/.bun"
 export PATH="$BUN_INSTALL/bin:$PATH"
+
+# Added by LM Studio CLI (lms)
+export PATH="$PATH:/Users/codyconfer/.cache/lm-studio/bin"
+
+# Created by `pipx` on 2025-02-12 04:31:19
+export PATH="$PATH:/Users/codyconfer/.local/bin"
 
 # nvm
 export NVM_DIR="$HOME/.nvm"
@@ -115,60 +159,7 @@ if [ -f '/Users/codyconfer/Downloads/google-cloud-sdk/path.zsh.inc' ]; then . '/
 # The next line enables shell command completion for gcloud.
 if [ -f '/Users/codyconfer/Downloads/google-cloud-sdk/completion.zsh.inc' ]; then . '/Users/codyconfer/Downloads/google-cloud-sdk/completion.zsh.inc'; fi
 
-# mkdoc
-export PATH="$PATH:$HOME/.mkdoc/"
-export TEMPLATE_DIR_PATH="$HOME/.mkdoc/templates"
-
 # aliases
 alias bash=/opt/homebrew/bin/bash
-alias ares="zsh ./.sauce/profiles/ares.sh"
-alias atlas="zsh ./.sauce/profiles/atlas.sh"
-alias hades="zsh ./.sauce/profiles/hades.sh"
-alias hyperion="zsh ./.sauce/profiles/hyperion.sh"
-alias orion="zsh ./.sauce/profiles/orion.sh"
-alias prometheus="zsh ./.sauce/profiles/prometheus.sh"
-alias triton="zsh ./.sauce/profiles/triton.sh"
-
-# print header
-dateColor=$cyan
-nameColor=$blue
-date=$(date +'%A, %b %d, %Y')
-host=$(figlet -f smslant "@apollo" | sed 's/^/ /')
-heading=$(cat <<-_END_
- ${yellow}${line}${clear}
-${nameColor}${host}${clear}
-
- ${dateColor}${date}${clear}
- ${nameColor}$(whoami)@apollo${clear}
-
- ${yellow}${line}${clear}
-
- ${nameColor}across the universe divide...${clear}
-
-           BP55555P#            
-        #${cyan}G55PGGGGGP${clear}?PB&         
-      B${cyan}55PGGGGGGGGG${clear}J${cyan}GPPG${clear}#       
-    &${cyan}Y5PGGGGGGGGGP${clear}Y${cyan}PBBBG5${clear}P      
-    #${cyan}JGGGGGGGGGP${clear}YY${cyan}GBBBBBBY${clear}B     
-    B${cyan}JGGGGGGGP${clear}55${cyan}GBBBBBBBBY${clear}&     
-    B${cyan}YGGGGGG${clear}JJ${cyan}PGBBBBBBBG5${clear}#      
-    B${cyan}YGGGGGG${clear}JBGP${cyan}5PGGBG5G${clear}&       
-    G${cyan}YGGGGGG${clear}JB${blue}##${clear}BBG${cyan}PY5${clear}#         
-    G${cyan}YGGGGGP${clear}?G${blue}######${clear}BGPP
-    G${cyan}YGGP${clear}55PGGPPG${blue}B######${clear}5G      
-    P${cyan}YP${clear}5P${blue}B#&&&#${clear}BGPPG${blue}B###${clear}PG      
-    BJP${blue}B&&&&&#&&&&#${clear}BGPP${blue}B${clear}5G      
-      &BGGG${blue}B#&&&&#&&&#${clear}B5J#      
-          #BGG${blue}BB#&#${clear}BGGB#        
-             &#BGPGB&
-
- ${yellow}${line}${clear}
-_END_
-)
-clear
-echo ${heading}
 
 eval "$(oh-my-posh init zsh --config ~/.sauce/codyconfer.toml)"
-
-# Added by LM Studio CLI (lms)
-export PATH="$PATH:/Users/codyconfer/.cache/lm-studio/bin"

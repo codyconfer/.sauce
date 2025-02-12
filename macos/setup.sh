@@ -29,7 +29,7 @@ install_packages () {
   brew update
   brew install \
     git gh \
-    go rustup nvm pyenv llvm bash yarn \
+    go rustup nvm pyenv llvm bash yarn deno oven-sh/bun/bun \
     neovim nmap asitop iftop nvtop btop htop figlet mdless \
     bitwarden-cli mongosh ollama sshpass tailscale xz  \
     azure-cli mongodb-atlas-cli firebase-cli 
