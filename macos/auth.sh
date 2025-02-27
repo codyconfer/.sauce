@@ -2,10 +2,6 @@
 
 CONFIG_REPO="git@github.com:codyconfer/.sauce.git"
 
-test () {
-  echo hi
-}
-
 git_config () {
   echo "configuring git..."
   brew update
@@ -25,4 +21,5 @@ tailscale_config () {
   echo " --- "
 }
 
-test
+git_config
+tailscale_config
