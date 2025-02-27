@@ -1,5 +1,7 @@
 #!/bin/bash
 
+CONFIG_REPO="git@github.com:codyconfer/.sauce.git"
+
 homebrew () {
   echo "adding homebrew..."
   /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
