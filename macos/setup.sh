@@ -49,6 +49,8 @@ install_packages () {
 
 configure_shell () {
   echo "refreshing zsh..."
+  cd ~
+  git clone $CONFIG_REPO
   rm ~/.zshrc && cp ~/.sauce/configs/.zshrc ~/.zshrc
   echo " --- "
 }
