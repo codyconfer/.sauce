@@ -25,14 +25,21 @@ install_packages () {
     wine-stable \
     slack \
     dotnet \
+    jetbrains-toolbox \
     jandedobbeleer/oh-my-posh/oh-my-posh
   brew update
   brew install \
-    git gh \
-    go rustup nvm pyenv llvm bash yarn deno oven-sh/bun/bun \
-    neovim nmap asitop iftop nvtop btop htop figlet mdless \
-    bitwarden-cli mongosh ollama sshpass tailscale xz  \
-    azure-cli mongodb-atlas-cli firebase-cli 
+    bash neovim asitop nvtop btop htop figlet mdless xz \ #cli utils
+    nmap iftop tailscale \ # network tooling
+    bitwarden-cli sshpass \ # secrets
+    git gh make docker \ # dev workflow
+    go golangci-lint govulncheck \ # go
+    rustup llvm gcc \ # c/c++/rust
+    nvm yarn deno oven-sh/bun/bun \ # javascript
+    pyenv \ # python
+    ollama lm-studio \ # llms
+    mongosh \ # dbs
+    azure-cli aws-cli mongodb-atlas-cli firebase-cli # cloud sdks
   brew install pipx
   pipx ensurepath
   pipx install poetry
