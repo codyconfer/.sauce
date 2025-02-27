@@ -14,7 +14,9 @@ wget -qO- https://raw.githubusercontent.com/codyconfer/.sauce/main/deb/setup.sh 
 
 ## macos
 
-// TODO
+```bash
+wget -qO- https://raw.githubusercontent.com/codyconfer/.sauce/main/macos/setup.sh | bash
+```
 
 ## windows
 
