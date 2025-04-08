@@ -1,6 +1,8 @@
 #!/bin/bash
 
-CONFIG_REPO="git@github.com:codyconfer/.sauce.git"
+# Github user where .sauce repo fork is located
+# This is not the user that will be signed into github
+GITHUB_USER="codyconfer"
 
 git_config () {
   echo "configuring git..."
@@ -8,7 +10,10 @@ git_config () {
   gh auth login -p ssh
   gh auth setup-git
   cd ~
-  git clone $CONFIG_REPO
+  if [ ! -d ~/.sauce ]; then
+    CONFIG_REPO="git@github.com:$GITHUB_USER/.sauce.git"
+    git clone $CONFIG_REPO
+  fi
   echo " --- "
 }
 
@@ -24,4 +29,3 @@ tailscale_config () {
 
 git_config
 tailscale_config
-sh ~/.sauce/deb/setup.sh

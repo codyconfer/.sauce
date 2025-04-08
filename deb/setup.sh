@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Github user where .sauce repo fork is located
+GITHUB_USER="codyconfer"
+
 hush_login () {
   echo "hush login..."
   touch ~/.hushlogin
@@ -32,6 +35,11 @@ dev_tools () {
 }
 
 configure_shell () {
+  if [ ! -d ~/.sauce ]; then
+    CONFIG_REPO="https://github.com/$GITHUB_USER/.sauce.git"
+    echo "cloning config repo..."
+    git clone $CONFIG_REPO
+  fi
   echo "installing ohmyposh..."
   curl -s https://ohmyposh.dev/install.sh | bash -s
   echo " --- "
@@ -39,7 +47,9 @@ configure_shell () {
   sudo apt install zsh -y
   echo " --- "
   echo "refreshing zsh..."
-  rm ~/.zshrc
+  if [ -f ~/.zshrc ]; then
+    rm ~/.zshrc
+  fi
   cp ~/.sauce/configs/.zshrc ~/.zshrc
   chsh -s $(which zsh)
   echo " --- "
