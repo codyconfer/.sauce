@@ -1,8 +1,5 @@
 # ~/.zshrc
-# 
-# config
-tailnetname=wampus-galaxy.ts.net
-##
+
 red='\033[0;31m'
 green='\033[0;32m'
 yellow='\033[0;33m'
@@ -39,7 +36,6 @@ for ip in "${allips[@]}"; do
     fi
   fi
 done
-ips="${ips} tailnet:    ${dateColor}$(hostname).${tailnetname}${nameColor}\n"
 host=$(figlet -f smslant "@$(hostname)" | sed 's/^/ /')
 heading=$(cat <<-_END_
  ${yellow}${line}${clear}
