@@ -146,6 +146,11 @@ eval "$(pyenv init -)"
 export NVM_DIR="$([ -z "${XDG_CONFIG_HOME-}" ] && printf %s "${HOME}/.nvm" || printf %s "${XDG_CONFIG_HOME}/nvm")"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
 
+# bun
+[ -s "~/.bun/_bun" ] && source "~/.bun/_bun"
+export BUN_INSTALL="$HOME/.bun"
+export PATH="$BUN_INSTALL/bin:$PATH"
+
 fpath+=~/.zfunc
 autoload -Uz compinit && compinit
 export PATH="$PATH:~/.local/bin"
