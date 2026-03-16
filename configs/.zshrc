@@ -139,19 +139,35 @@ alias zshrc=refresh_profile
 
 # pyenv
 export PYENV_ROOT="$HOME/.pyenv"
-command -v pyenv >/dev/null || export PATH="$PYENV_ROOT/bin:$PATH"
-eval "$(pyenv init -)"
+if [ -d "$PYENV_ROOT" ]; then
+  command -v pyenv >/dev/null || export PATH="$PYENV_ROOT/bin:$PATH"
+  eval "$(pyenv init -)"
+fi
 
 # nvm
 export NVM_DIR="$([ -z "${XDG_CONFIG_HOME-}" ] && printf %s "${HOME}/.nvm" || printf %s "${XDG_CONFIG_HOME}/nvm")"
-[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+if [ -d "$NVM_DIR" ]; then
+  [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+fi
+
 
 # bun
-[ -s "~/.bun/_bun" ] && source "~/.bun/_bun"
 export BUN_INSTALL="$HOME/.bun"
-export PATH="$BUN_INSTALL/bin:$PATH"
+if [ -d "$BUN_INSTALL" ]; then
+  [ -s "$BUN_INSTALL/_bun" ] && source "$BUN_INSTALL/_bun"
+  export PATH="$BUN_INSTALL/bin:$PATH"
+fi
+
+# path
+LOCAL_BIN="$HOME/.local/bin"
+APPS="$HOME/.apps"
+if [ -d "$LOCAL_BIN" ]; then
+  export PATH="$PATH:$LOCAL_BIN"
+fi
+if [ -d "$APPS" ]; then
+  export PATH="$PATH:$APPS"
+fi
 
 fpath+=~/.zfunc
 autoload -Uz compinit && compinit
-export PATH="$PATH:~/.local/bin"
 eval "$(oh-my-posh init zsh --config ~/.sauce/themes/sauce.ohmyposh.toml)"
