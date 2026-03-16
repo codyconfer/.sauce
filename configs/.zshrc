@@ -137,15 +137,16 @@ function LIST_DOCKER_CONTAINERS() {
 alias docker-containers=LIST_DOCKER_CONTAINERS
 alias zshrc=refresh_profile
 
-export PATH=$PATH:/home/codyconfer/.local/bin
-eval "$(oh-my-posh init zsh --config /home/codyconfer/.sauce/themes/sauce.ohmyposh.toml)"
-
+# pyenv
 export PYENV_ROOT="$HOME/.pyenv"
 command -v pyenv >/dev/null || export PATH="$PYENV_ROOT/bin:$PATH"
 eval "$(pyenv init -)"
 
+# nvm
+export NVM_DIR="$([ -z "${XDG_CONFIG_HOME-}" ] && printf %s "${HOME}/.nvm" || printf %s "${XDG_CONFIG_HOME}/nvm")"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+
 fpath+=~/.zfunc
 autoload -Uz compinit && compinit
-
-export NVM_DIR="$([ -z "${XDG_CONFIG_HOME-}" ] && printf %s "${HOME}/.nvm" || printf %s "${XDG_CONFIG_HOME}/nvm")"
-[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" # This loads nvm
+export PATH="$PATH:~/.local/bin"
+eval "$(oh-my-posh init zsh --config ~/.sauce/themes/sauce.ohmyposh.toml)"
