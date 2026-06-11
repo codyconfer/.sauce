@@ -25,7 +25,7 @@ git_config () {
 initial_packages () {
   echo "adding packages..."
   sudo pacman -Syu
-  sudo pacman -S git gh curl wget xz-utils unzip s-tui htop atop iftop iotop nvtop btop perf wavemon
+  sudo pacman -S git gh curl wget xz-utils unzip s-tui htop atop iftop iotop nvtop btop perf wavemon tailscale
   p_done
 }
 
@@ -39,6 +39,7 @@ dev_tools () {
   curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash
   sudo pacman -S rustup golang neovim gcc make
   pipx install poetry
+  yay -S docker-desktop visual-studio-code-bin
   p_done
 }
 
@@ -51,6 +52,7 @@ configure_shell () {
   rm .zshrc
   cp ~/.sauce/configs/.zshrc .zshrc
   chsh -s $(which zsh)
+  cp ~/.sauce/scripts/* ~/.scripts
   p_done
 }
 

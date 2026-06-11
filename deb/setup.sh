@@ -52,6 +52,8 @@ configure_shell () {
   fi
   cp ~/.sauce/configs/.zshrc ~/.zshrc
   chsh -s $(which zsh)
+  cp ~/.sauce/scripts/* ~/.scripts
+  cp ~/.sauce/deb/scripts/* ~/.scripts
   echo " --- "
 }
 
