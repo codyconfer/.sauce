@@ -32,7 +32,7 @@ initial_packages () {
 dev_tools () {
   echo "installing dev tools..."
   sudo pacman -Syu
-  sudo pacman -S  pipx
+  sudo pacman -S pipx
   pipx ensurepath
   curl -o- https://dotnet.microsoft.com/download/dotnet/scripts/v1/dotnet-install.sh | bash
   curl https://pyenv.run | bash

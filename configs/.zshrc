@@ -49,21 +49,21 @@ ${nameColor}${ips}${clear}
 
  ${nameColor}across the universe divide...${clear}
 
-           BP55555P#            
-        #${cyan}G55PGGGGGP${clear}?PB&         
-      B${cyan}55PGGGGGGGGG${clear}J${cyan}GPPG${clear}#       
-    &${cyan}Y5PGGGGGGGGGP${clear}Y${cyan}PBBBG5${clear}P      
-    #${cyan}JGGGGGGGGGP${clear}YY${cyan}GBBBBBBY${clear}B     
-    B${cyan}JGGGGGGGP${clear}55${cyan}GBBBBBBBBY${clear}&     
-    B${cyan}YGGGGGG${clear}JJ${cyan}PGBBBBBBBG5${clear}#      
-    B${cyan}YGGGGGG${clear}JBGP${cyan}5PGGBG5G${clear}&       
-    G${cyan}YGGGGGG${clear}JB${blue}##${clear}BBG${cyan}PY5${clear}#         
+           BP55555P#
+        #${cyan}G55PGGGGGP${clear}?PB&
+      B${cyan}55PGGGGGGGGG${clear}J${cyan}GPPG${clear}#
+    &${cyan}Y5PGGGGGGGGGP${clear}Y${cyan}PBBBG5${clear}P
+    #${cyan}JGGGGGGGGGP${clear}YY${cyan}GBBBBBBY${clear}B
+    B${cyan}JGGGGGGGP${clear}55${cyan}GBBBBBBBBY${clear}&
+    B${cyan}YGGGGGG${clear}JJ${cyan}PGBBBBBBBG5${clear}#
+    B${cyan}YGGGGGG${clear}JBGP${cyan}5PGGBG5G${clear}&
+    G${cyan}YGGGGGG${clear}JB${blue}##${clear}BBG${cyan}PY5${clear}#
     G${cyan}YGGGGGP${clear}?G${blue}######${clear}BGPP
-    G${cyan}YGGP${clear}55PGGPPG${blue}B######${clear}5G      
-    P${cyan}YP${clear}5P${blue}B#&&&#${clear}BGPPG${blue}B###${clear}PG      
-    BJP${blue}B&&&&&#&&&&#${clear}BGPP${blue}B${clear}5G      
-      &BGGG${blue}B#&&&&#&&&#${clear}B5J#      
-          #BGG${blue}BB#&#${clear}BGGB#        
+    G${cyan}YGGP${clear}55PGGPPG${blue}B######${clear}5G
+    P${cyan}YP${clear}5P${blue}B#&&&#${clear}BGPPG${blue}B###${clear}PG
+    BJP${blue}B&&&&&#&&&&#${clear}BGPP${blue}B${clear}5G
+      &BGGG${blue}B#&&&&#&&&#${clear}B5J#
+          #BGG${blue}BB#&#${clear}BGGB#
              &#BGPGB&
 
  ${yellow}${line}${clear}
@@ -132,38 +132,43 @@ function LIST_DOCKER_CONTAINERS() {
 # aliases
 alias docker-containers=LIST_DOCKER_CONTAINERS
 alias zshrc=refresh_profile
+alias update='(command -v apt > /dev/null \
+    && sudo apt update && sudo apt upgrade -y && sudo apt dist-upgrade -y && sudo snap refresh) \
+    || (command -v pacman > /dev/null \
+    && sudo pacman -Syu && yay -Syu) \
+    || (command -v dnf > /dev/null \
+    && sudo dnf upgrade -y)'
+alias update-docker="sh ~/.scripts/update-docker.sh"
+alias update-vscode="sh ~/.scripts/update-vscode.sh"
+alias update-lmstudio="sh ~/.scripts/update-lmstudio.sh"
+alias update-obsidian="sh ~/.scripts/update-obsidian.sh"
 
 # pyenv
 export PYENV_ROOT="$HOME/.pyenv"
 if [ -d "$PYENV_ROOT" ]; then
-  command -v pyenv >/dev/null || export PATH="$PYENV_ROOT/bin:$PATH"
-  eval "$(pyenv init -)"
+    command -v pyenv >/dev/null || export PATH="$PYENV_ROOT/bin:$PATH"
+    eval "$(pyenv init -)"
 fi
 
 # nvm
 export NVM_DIR="$([ -z "${XDG_CONFIG_HOME-}" ] && printf %s "${HOME}/.nvm" || printf %s "${XDG_CONFIG_HOME}/nvm")"
 if [ -d "$NVM_DIR" ]; then
-  [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-fi
-
-
-# bun
-export BUN_INSTALL="$HOME/.bun"
-if [ -d "$BUN_INSTALL" ]; then
-  [ -s "$BUN_INSTALL/_bun" ] && source "$BUN_INSTALL/_bun"
-  export PATH="$BUN_INSTALL/bin:$PATH"
+    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
 fi
 
 # path
 LOCAL_BIN="$HOME/.local/bin"
 APPS="$HOME/.apps"
 if [ -d "$LOCAL_BIN" ]; then
-  export PATH="$PATH:$LOCAL_BIN"
+    export PATH="$PATH:$LOCAL_BIN"
 fi
 if [ -d "$APPS" ]; then
-  export PATH="$PATH:$APPS"
+    export PATH="$PATH:$APPS"
 fi
 
+HISTFILE=~/.zsh_history
+HISTSIZE=1000
+SAVEHIST=10000
 fpath+=~/.zfunc
 autoload -Uz compinit && compinit
 eval "$(oh-my-posh init zsh --config ~/.sauce/themes/sauce.ohmyposh.toml)"
