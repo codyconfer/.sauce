@@ -17,29 +17,26 @@ git_config () {
   gh auth login \
     -p ssh
   gh auth setup-git
-  cd ~
-  git clone git@github.com:codyconfer/.sauce.git
   p_done
 }
 
 initial_packages () {
   echo "adding packages..."
   sudo pacman -Syu
-  sudo pacman -S git gh curl wget xz-utils unzip s-tui htop atop iftop iotop nvtop btop perf wavemon tailscale
+  sudo pacman -S git curl wget unzip s-tui htop atop iftop iotop nvtop btop perf wavemon tailscale easyeffects
   p_done
 }
 
 dev_tools () {
   echo "installing dev tools..."
   sudo pacman -Syu
-  sudo pacman -S pipx
+  sudo pacman -S rustup neovim gcc make python-pipx 
   pipx ensurepath
   curl -o- https://dotnet.microsoft.com/download/dotnet/scripts/v1/dotnet-install.sh | bash
   curl https://pyenv.run | bash
   curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash
-  sudo pacman -S rustup golang neovim gcc make
   pipx install poetry
-  yay -S docker-desktop visual-studio-code-bin
+  paru -S docker-desktop visual-studio-code-bin steam discord github-cli jetbrains-toolbox lmstudio-bin obsidian bitwarden zed zen-browser deno go rslsync
   p_done
 }
 
@@ -52,12 +49,11 @@ configure_shell () {
   rm .zshrc
   cp ~/.sauce/configs/.zshrc .zshrc
   chsh -s $(which zsh)
-  cp ~/.sauce/scripts/* ~/.scripts
   p_done
 }
 
 hush_login
 initial_packages
-git_config
 dev_tools
+git_config
 configure_shell
