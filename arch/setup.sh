@@ -36,7 +36,7 @@ dev_tools () {
   curl https://pyenv.run | bash
   curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash
   pipx install poetry
-  paru -S docker-desktop visual-studio-code-bin steam discord github-cli jetbrains-toolbox lmstudio-bin obsidian bitwarden zed zen-browser deno go rslsync
+  paru -S docker-desktop visual-studio-code-bin steam discord github-cli jetbrains-toolbox lmstudio-bin obsidian bitwarden zed zen-browser deno go rslsync slack-desktop-wayland
   p_done
 }
 
