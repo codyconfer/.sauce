@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+
+set -uo pipefail
+
+if [ "${SKIP_NVIM_BOOTSTRAP:-0}" = "1" ]; then
+    echo "ℹ️  SKIP_NVIM_BOOTSTRAP=1 — skipping nvim plugin/server sync."
+    exit 0
+fi
+command -v nvim >/dev/null 2>&1 || { echo "⚠️  nvim not found; skipping bootstrap."; exit 0; }
+
+echo "📦 Syncing plugins (lazy.nvim)..."
+nvim --headless "+Lazy! sync" +qa </dev/null 2>&1 || echo "⚠️  Lazy sync returned non-zero (often benign)."
+
+echo "📦 Installing treesitter parsers..."
+nvim --headless "+Lazy! load nvim-treesitter" \
+    "+lua vim.cmd('TSInstallSync! '..table.concat(require('sauce.toolset').parsers,' '))" +qa </dev/null 2>&1 \
+    || echo "⚠️  Treesitter parser install returned non-zero."
+
+echo "📦 Installing LSP servers via Mason (may take a few minutes)..."
+nvim --headless "+Lazy! load nvim-lspconfig" \
+    "+lua local done=false; vim.api.nvim_create_autocmd('User',{pattern='MasonToolsUpdateCompleted',callback=function() done=true end}); pcall(vim.cmd,'MasonToolsInstall'); vim.wait(240000,function() return done end,500)" \
+    +qa </dev/null 2>&1 || echo "⚠️  Mason install returned non-zero; run :Mason in nvim to finish."
+
+echo "✅ Neovim bootstrap complete."

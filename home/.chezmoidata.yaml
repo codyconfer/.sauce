@@ -1,0 +1,49 @@
+# Declarative inputs for the run scripts in .chezmoiscripts/.
+# Package names mirror scripts/install-base.sh; flatpak ids mirror the old
+# install-<app>.sh flatpak installers.
+
+packages:
+  # Hard-fail prerequisites. `common` installs everywhere; per-family lists are
+  # appended for that distro only.
+  essential:
+    common: [git, curl, wget, unzip, jq, figlet, zsh, neovim, gcc, make]
+    debian: [xz-utils, build-essential]
+    fedora: [xz]
+    arch: [xz, base-devel]
+  # Best-effort extras (skipped individually if unavailable). Arch names pipx
+  # differently; everything else matches.
+  extras:
+    common: [gh, rustup, pipx, htop, btop, iftop, iotop, s-tui, wavemon]
+
+# Sway (Wayland tiling WM) + a minimal Wayland-native companion stack. Package
+# names are identical across families except mako (Debian ships mako-notifier).
+sway:
+  common:
+    - sway
+    - swaybg
+    - swayidle
+    - swaylock
+    - waybar
+    - wofi
+    - foot
+    - pavucontrol
+    - grim
+    - slurp
+    - wl-clipboard
+    - brightnessctl
+    - xdg-desktop-portal-wlr
+
+# Flathub desktop apps installed (and kept current) via `flatpak --user`. This is
+# the catalog (choice name -> Flathub app id); which of these actually install is
+# the `flatpaks` selection list prompted in .chezmoi.toml.tmpl. Keep the keys here
+# in sync with that prompt's choice list.
+flatpakCatalog:
+  slack: com.slack.Slack
+  discord: com.discordapp.Discord
+  signal: org.signal.Signal
+  easyeffects: com.github.wwmm.easyeffects
+  obs-studio: com.obsproject.Studio
+  bitwarden: com.bitwarden.desktop
+  zen: app.zen_browser.zen
+  lutris: net.lutris.Lutris
+  retroarch: org.libretro.RetroArch

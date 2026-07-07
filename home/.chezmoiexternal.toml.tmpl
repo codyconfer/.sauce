@@ -1,0 +1,60 @@
+# Download-only tools — declarative replacements for the old scripts/update-*.sh
+# that just fetched a binary/tarball/AppImage into a user directory. chezmoi
+# re-downloads each when its refreshPeriod lapses (or on `chezmoi apply --refresh-externals`).
+#
+# Tools that need sudo / install into /usr/local / run a vendor installer stay as
+# scripts/update-*.sh (see scripts/update-all.sh).
+
+# --- Neovim (stable): extracted tree; ~/.apps/nvim/bin is prepended to PATH in the rc files.
+[".apps/nvim"]
+    type = "archive"
+    url = "https://github.com/neovim/neovim/releases/download/stable/nvim-linux-x86_64.tar.gz"
+    stripComponents = 1
+    refreshPeriod = "168h"
+
+# --- k9s: single binary extracted from the release tarball.
+[".local/bin/k9s"]
+    type = "archive-file"
+    url = "https://github.com/derailed/k9s/releases/latest/download/k9s_Linux_amd64.tar.gz"
+    path = "k9s"
+    executable = true
+    refreshPeriod = "168h"
+
+# --- cloudflared: latest release binary (GitHub latest-download redirect).
+[".local/bin/cloudflared"]
+    type = "file"
+    url = "https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64"
+    executable = true
+    refreshPeriod = "168h"
+
+# --- kubectl: latest stable, resolved from the k8s release channel.
+{{- $kubectl := output "curl" "-fsSL" "https://dl.k8s.io/release/stable.txt" | trim }}
+[".local/bin/kubectl"]
+    type = "file"
+    url = {{ printf "https://dl.k8s.io/release/%s/bin/linux/amd64/kubectl" $kubectl | quote }}
+    executable = true
+    refreshPeriod = "168h"
+
+{{ if .desktop -}}
+# --- LM Studio (AppImage): stable vendor "latest" redirect.
+[".apps/lm-studio.AppImage"]
+    type = "file"
+    url = "https://lmstudio.ai/download/latest/linux/x64"
+    executable = true
+    refreshPeriod = "168h"
+
+# --- Obsidian (AppImage): newest non-arm64 .AppImage asset of the latest release.
+{{- $obsidianURL := "" }}
+{{- range (gitHubLatestRelease "obsidianmd/obsidian-releases").Assets }}
+{{-   if and (hasSuffix ".AppImage" .Name) (not (contains "arm64" .Name)) }}
+{{-     $obsidianURL = .BrowserDownloadURL }}
+{{-   end }}
+{{- end }}
+{{- if $obsidianURL }}
+[".apps/obsidian.AppImage"]
+    type = "file"
+    url = {{ $obsidianURL | quote }}
+    executable = true
+    refreshPeriod = "168h"
+{{- end }}
+{{- end }}

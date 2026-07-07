@@ -1,0 +1,108 @@
+#!/usr/bin/env bash
+
+set -uo pipefail
+source "$HOME/.sauce/scripts/lib/common.sh"
+FAMILY="{{ .family }}"
+{{- $apps := (index . "distroApps") | default (list) }}
+log_info "Installing selected distro desktop apps: {{ if $apps }}{{ $apps | join ", " }}{{ else }}(none){{ end }}"
+
+{{ if has "fish" $apps }}
+# --- fish shell
+install_pkgs fish || log_warn "fish install failed."
+{{ end }}
+{{ if has "firefox" $apps }}
+# --- Firefox
+case "$FAMILY" in
+    fedora|arch)
+        install_pkgs firefox || log_warn "firefox install failed."
+        ;;
+    debian)
+        log_install "Configuring Mozilla's APT repository..."
+        sudo install -d -m 0755 /etc/apt/keyrings
+        fetch https://packages.mozilla.org/apt/repo-signing-key.gpg \
+            | sudo tee /etc/apt/keyrings/packages.mozilla.org.asc >/dev/null
+        echo "deb [signed-by=/etc/apt/keyrings/packages.mozilla.org.asc] https://packages.mozilla.org/apt mozilla main" \
+            | sudo tee /etc/apt/sources.list.d/mozilla.list >/dev/null
+        printf 'Package: *\nPin: origin packages.mozilla.org\nPin-Priority: 1000\n' \
+            | sudo tee /etc/apt/preferences.d/mozilla >/dev/null
+        sudo apt update
+        install_pkgs firefox || log_warn "firefox install failed."
+        ;;
+esac
+{{ end }}
+{{ if has "steam" $apps }}
+# --- Steam
+case "$FAMILY" in
+    debian)
+        log_install "Enabling i386 multiarch for Steam..."
+        sudo dpkg --add-architecture i386
+        sudo apt update
+        PKGPATH="$APPS/steam_latest.deb"
+        ensure_dir "$APPS"
+        log_download "Downloading the Steam installer..."
+        download "https://repo.steampowered.com/steam/archive/stable/steam_latest.deb" "$PKGPATH"
+        install_local_pkg "$PKGPATH" || log_warn "steam install failed."
+        rm -f "$PKGPATH"
+        ;;
+    fedora)
+        log_install "Enabling RPM Fusion for Steam..."
+        sudo dnf install -y \
+            "https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm" \
+            "https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm" || true
+        install_pkgs steam || log_warn "steam install failed."
+        ;;
+    arch)
+        if ! grep -q '^\[multilib\]' /etc/pacman.conf; then
+            log_install "Enabling the multilib repo in /etc/pacman.conf..."
+            sudo sed -i '/^#\[multilib\]/,/^#Include/ s/^#//' /etc/pacman.conf
+            sudo pacman -Sy
+        fi
+        install_pkgs steam || log_warn "steam install failed."
+        ;;
+esac
+{{ end }}
+{{ if has "wine" $apps }}
+# --- Wine (Windows compatibility layer) — needs 32-bit support
+case "$FAMILY" in
+    debian)
+        log_install "Enabling i386 multiarch for Wine..."
+        sudo dpkg --add-architecture i386
+        sudo apt update
+        install_pkgs wine wine32:i386 wine64 || log_warn "wine install failed."
+        ;;
+    fedora)
+        install_pkgs wine || log_warn "wine install failed."
+        ;;
+    arch)
+        if ! grep -q '^\[multilib\]' /etc/pacman.conf; then
+            log_install "Enabling the multilib repo in /etc/pacman.conf..."
+            sudo sed -i '/^#\[multilib\]/,/^#Include/ s/^#//' /etc/pacman.conf
+            sudo pacman -Sy
+        fi
+        install_pkgs wine || log_warn "wine install failed."
+        ;;
+esac
+{{ end }}
+{{ if has "sway" $apps }}
+# --- Sway (Wayland tiling WM) + companion stack
+log_install "Installing sway and companions..."
+install_pkgs {{ .sway.common | join " " }} || log_warn "sway stack partial install."
+case "$FAMILY" in
+    debian) install_pkgs mako-notifier || log_warn "mako install failed." ;;
+    *)      install_pkgs mako || log_warn "mako install failed." ;;
+esac
+{{ end }}
+{{ if has "qemu" $apps }}
+log_install "Installing QEMU, libvirt and virt-manager..."
+case "$FAMILY" in
+    debian) install_pkgs qemu-system qemu-utils libvirt-daemon-system libvirt-clients virt-manager bridge-utils ovmf || log_warn "qemu install failed." ;;
+    fedora) install_pkgs qemu-kvm libvirt virt-manager virt-install edk2-ovmf || log_warn "qemu install failed." ;;
+    arch)   install_pkgs qemu-full libvirt virt-manager dnsmasq edk2-ovmf || log_warn "qemu install failed." ;;
+esac
+if command -v systemctl >/dev/null 2>&1; then
+    sudo systemctl enable --now libvirtd || log_warn "could not enable libvirtd."
+fi
+sudo usermod -aG libvirt "$USER" || log_warn "could not add $USER to libvirt group."
+log_hint "Log out and back in for libvirt group membership to take effect."
+{{ end }}
+log_done "Distro desktop apps installed."

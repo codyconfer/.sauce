@@ -1,2 +1,8 @@
 ﻿
 .DS_Store
+.claude/*
+.codex/*
+.idea/*
+.vim/*
+.vscode/*
+.local/*

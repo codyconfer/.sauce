@@ -1,0 +1,31 @@
+{{/* Resolve the distro family the same way scripts/lib/distro.sh does. */}}
+{{- $id := .chezmoi.osRelease.id | default "" -}}
+{{- $idLike := .chezmoi.osRelease.idLike | default "" -}}
+{{- $family := "unknown" -}}
+{{- if or (eq $id "debian" "ubuntu" "pop" "linuxmint" "raspbian") (or (contains "debian" $idLike) (contains "ubuntu" $idLike)) -}}
+{{-   $family = "debian" -}}
+{{- else if or (eq $id "fedora" "rhel" "centos" "rocky" "almalinux") (or (contains "fedora" $idLike) (contains "rhel" $idLike)) -}}
+{{-   $family = "fedora" -}}
+{{- else if or (eq $id "arch" "manjaro" "endeavouros" "cachyos") (contains "arch" $idLike) -}}
+{{-   $family = "arch" -}}
+{{- end -}}
+
+{{- $githubUser := promptStringOnce . "githubUser" "GitHub username" "codyconfer" -}}
+{{/* Two multi-select lists of desktop apps. Distro apps have bespoke install logic
+     in run_onchange_before_40-distro-apps; flatpak choices map through flatpakCatalog
+     in .chezmoidata.yaml (keep these lists in sync with that map). */}}
+{{- $distroApps := promptMultichoiceOnce . "distroApps" "Which distro desktop apps to install?" (list "firefox" "steam" "sway" "fish" "wine" "qemu") (list "firefox" "steam" "sway" "fish" "wine" "qemu") -}}
+{{- $flatpaks := promptMultichoiceOnce . "flatpaks" "Which flatpak apps to install?" (list "slack" "discord" "signal" "easyeffects" "obs-studio" "bitwarden" "zen" "lutris" "retroarch") (list "slack" "discord" "signal" "easyeffects" "obs-studio" "bitwarden" "zen" "lutris" "retroarch") -}}
+{{/* Derived: any desktop app selected turns on desktop-only externals/configs. */}}
+{{- $desktop := or (gt (len $distroApps) 0) (gt (len $flatpaks) 0) -}}
+{{- $tailscale := promptBoolOnce . "tailscale" "Join a Tailscale network on setup (runs `sudo tailscale up`)?" false -}}
+
+sourceDir = "{{ .chezmoi.homeDir }}/.sauce"
+
+[data]
+    family = {{ $family | quote }}
+    githubUser = {{ $githubUser | quote }}
+    distroApps = {{ $distroApps | toJson }}
+    flatpaks = {{ $flatpaks | toJson }}
+    desktop = {{ $desktop }}
+    tailscale = {{ $tailscale }}

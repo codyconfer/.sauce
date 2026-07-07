@@ -1,0 +1,10 @@
+{{- if ne .chezmoi.os "linux" }}
+.config/sway
+.config/waybar
+.config/wofi
+.config/mako
+.apps
+{{- end }}
+{{- if not .desktop }}
+.local/share/applications/obsidian.desktop
+{{- end }}

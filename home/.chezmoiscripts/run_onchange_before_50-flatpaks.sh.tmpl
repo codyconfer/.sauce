@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+
+set -uo pipefail
+source "$HOME/.sauce/scripts/lib/common.sh"
+{{- $sel := (index . "flatpaks") | default (list) }}
+{{ if $sel }}
+log_info "Installing/updating selected Flathub apps..."
+{{- range $sel }}
+{{- $id := index $.flatpakCatalog . }}
+install_flatpak {{ $id | quote }} || log_warn "flatpak install failed: {{ $id }}"
+{{- end }}
+log_done "Flatpaks installed."
+{{ else }}
+log_info "no flatpaks selected — skipping."
+{{ end }}
