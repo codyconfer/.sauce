@@ -1,0 +1,15 @@
+# sauce mako config — see `man 5 mako`. Symlinked by scripts/build-sway.sh.
+font=monospace 10
+background-color=#1e1e2e
+text-color=#cdd6f4
+border-color=#89b4fa
+border-size=2
+border-radius=8
+padding=10
+margin=8
+default-timeout=5000
+anchor=top-right
+
+[urgency=critical]
+border-color=#f38ba8
+default-timeout=0

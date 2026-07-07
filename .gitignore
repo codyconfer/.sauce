@@ -1,2 +1,14 @@
 ﻿
 .DS_Store
+.claude/*
+.codex/*
+.idea/*
+.vim/*
+.vscode/*
+.local/*
+generated.lua
+
+# zsh plugin clones land in the zsh-plugins package dir if a stow fold ever slips;
+# keep only the committed loader tracked.
+stow/zsh-plugins/.zsh/*
+!stow/zsh-plugins/.zsh/plugins.zsh

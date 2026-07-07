@@ -1,0 +1,47 @@
+// sauce waybar config — see `man 5 waybar`. Symlinked by scripts/build-sway.sh.
+{
+    "layer": "top",
+    "position": "top",
+    "height": 30,
+    "spacing": 6,
+    "modules-left": ["sway/workspaces", "sway/mode"],
+    "modules-center": ["sway/window"],
+    "modules-right": ["pulseaudio", "backlight", "battery", "network", "clock", "tray"],
+
+    "sway/workspaces": {
+        "disable-scroll": true,
+        "all-outputs": true
+    },
+    "sway/window": {
+        "max-length": 60
+    },
+    "clock": {
+        "format": "{:%a %d %b  %H:%M}",
+        "tooltip-format": "<tt><small>{calendar}</small></tt>"
+    },
+    "battery": {
+        "format": "{capacity}% {icon}",
+        "format-charging": "{capacity}% ",
+        "format-icons": ["", "", "", "", ""],
+        "states": { "warning": 30, "critical": 15 }
+    },
+    "network": {
+        "format-wifi": "{essid} ",
+        "format-ethernet": "eth ",
+        "format-disconnected": "off ",
+        "tooltip-format": "{ifname}: {ipaddr}"
+    },
+    "pulseaudio": {
+        "format": "{volume}% {icon}",
+        "format-muted": "muted ",
+        "format-icons": { "default": ["", "", ""] },
+        "on-click": "pavucontrol"
+    },
+    "backlight": {
+        "format": "{percent}% {icon}",
+        "format-icons": ["", "", ""]
+    },
+    "tray": {
+        "spacing": 8
+    }
+}

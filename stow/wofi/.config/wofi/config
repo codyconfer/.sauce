@@ -1,0 +1,9 @@
+# sauce wofi config — see `man 5 wofi`. Symlinked by scripts/build-sway.sh.
+show=drun
+prompt=Run
+width=600
+height=400
+lines=10
+columns=1
+allow_images=true
+insensitive=true
