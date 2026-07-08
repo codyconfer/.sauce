@@ -10,8 +10,16 @@ if ! ensure_node; then
     exit 1
 fi
 
-log_download "Running the official pi installer..."
-fetch https://pi.dev/install.sh | sh
+log_download "Running the official pi installer (headless)..."
+tmp=$(mktemp)
+trap 'rm -f "$tmp"' EXIT
+fetch https://pi.dev/install.sh > "$tmp"
+if command -v setsid >/dev/null 2>&1; then
+    setsid --wait sh "$tmp" </dev/null
+else
+    log_warn "setsid not found; running installer normally (it may prompt)."
+    sh "$tmp" </dev/null
+fi
 
 log_done
 command -v pi >/dev/null && pi --version || true
