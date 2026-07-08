@@ -67,8 +67,8 @@ onchange_distro_apps() {
                 log_install "Enabling i386 multiarch for Steam..."
                 sudo dpkg --add-architecture i386
                 sudo apt update
-                local pkgpath="$APPS/steam_latest.deb"
-                ensure_dir "$APPS"
+                local pkgpath="$CACHE/steam_latest.deb"
+                ensure_dir "$CACHE"
                 log_download "Downloading the Steam installer..."
                 download "https://repo.steampowered.com/steam/archive/stable/steam_latest.deb" "$pkgpath"
                 install_local_pkg "$pkgpath" || log_warn "steam install failed."

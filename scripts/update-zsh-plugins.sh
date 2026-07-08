@@ -10,6 +10,18 @@ PLUGINS=(
     "zsh-syntax-highlighting|https://github.com/zsh-users/zsh-syntax-highlighting"
 )
 
+cleanup() {
+    log_clean "Removing zsh plugins..."
+    local entry name
+    for entry in "${PLUGINS[@]}"; do
+        name=${entry%%|*}
+        remove_paths "$ZSH_PLUGINS/$name"
+    done
+    remove_paths "$ZSH_PLUGINS/plugins.zsh"
+    log_done "zsh plugins removed."
+}
+dispatch_remove "$@"
+
 ensure_dir "$ZSH_PLUGINS"
 for entry in "${PLUGINS[@]}"; do
     name=${entry%%|*}; url=${entry#*|}

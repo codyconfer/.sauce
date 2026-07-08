@@ -3,7 +3,6 @@
 .config/waybar
 .config/wofi
 .config/mako
-.apps
 {{- end }}
 {{- $tools := (index . "tools") | default (list) }}
 {{- if not (has "obsidian" $tools) }}

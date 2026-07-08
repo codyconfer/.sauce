@@ -1,7 +1,7 @@
-font=monospace 10
-background-color=#1e1e2e
-text-color=#cdd6f4
-border-color=#89b4fa
+font=Terminess Nerd Font 10
+background-color=#263238
+text-color=#eceff1
+border-color=#03a9f4
 border-size=2
 border-radius=8
 padding=10
@@ -10,5 +10,5 @@ default-timeout=5000
 anchor=top-right
 
 [urgency=critical]
-border-color=#f38ba8
+border-color=#e91e63
 default-timeout=0

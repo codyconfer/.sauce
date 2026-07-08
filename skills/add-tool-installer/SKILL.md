@@ -41,7 +41,7 @@ the system `update` alias — no `update-*.sh` needed.
 
 Add an entry to `home/.chezmoiexternal.toml.tmpl`. chezmoi downloads it and
 re-fetches when `refreshPeriod` lapses. Use this when the tool is a plain download
-into `~/.local/bin` or `~/.apps` (no sudo, no vendor installer). Examples:
+into `~/.local/bin` or `~/.local/opt` (no sudo, no vendor installer). Examples:
 
 ```toml
 # single binary
@@ -59,8 +59,8 @@ into `~/.local/bin` or `~/.apps` (no sudo, no vendor installer). Examples:
     executable = true
     refreshPeriod = "168h"
 
-# whole extracted tree (e.g. ~/.apps/<tool>/bin/...)
-[".apps/<tool>"]
+# whole extracted tree (e.g. ~/.local/opt/<tool>/bin/...)
+[".local/opt/<tool>"]
     type = "archive"
     url = "..."
     stripComponents = 1
@@ -98,9 +98,18 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/lib/common.sh"
 
+DEST="$BIN/<tool>"
+
+cleanup() {
+    log_clean "Removing <tool>..."
+    remove_paths "$DEST"
+    log_done "<tool> removed."
+}
+dispatch_remove "$@"
+
 log_search "Fetching the latest <tool> version..."
 # resolve latest, version_gate to skip when current, mktemp+trap, download,
-# verify_sha256/verify_md5_etag, install under /usr/local or "$APPS".
+# verify_sha256/verify_md5_etag, install under /usr/local, "$OPT", or "$BIN".
 log_done
 ```
 
@@ -118,12 +127,14 @@ Put it in the "tooling env/PATH" section. There is no longer a profile builder o
 - `scripts/lib/common.sh` — `fetch`, `download`, `download_with_headers`,
   `verify_sha256`, `verify_md5_etag`, `version_current`/`version_gate`,
   `read_stamp`/`write_stamp`, `ensure_dir`, `ensure_node`, `extract_appimage_icon`
-  (pull an AppImage's `.DirIcon` into `~/.apps/icons/<name>.png`), and the `log_*` helpers.
+  (pull an AppImage's `.DirIcon` into `~/.local/share/icons/<name>.png`), the `log_*` helpers,
+  and the removal helpers `remove_paths`/`remove_sudo_paths`/`remove_cmd`/`remove_stamp` +
+  `dispatch_remove` (used by each script's `cleanup()` — see the Path C template).
   (It sources `config.sh` and `distro.sh`, so sourcing `common.sh` pulls in all three.)
-- `scripts/lib/distro.sh` — `detect_family`, `install_pkgs`, `install_local_pkg`,
-  `pkg_refresh`, `ensure_flatpak`, `install_flatpak`.
-- `scripts/lib/config.sh` — tunables (`APPS`, `GO_ARCH`, `DOTNET_CHANNEL`,
-  `ZSH_PLUGINS`, `GITHUB_USER`, `SAUCE_DIR`).
+- `scripts/lib/distro.sh` — `detect_family`, `install_pkgs`/`remove_pkgs`, `install_local_pkg`,
+  `pkg_refresh`, `ensure_flatpak`, `install_flatpak`/`remove_flatpak`.
+- `scripts/lib/config.sh` — tunables (`OPT`, `BIN`, `ICONS`, `CACHE`, `GO_ARCH`,
+  `DOTNET_CHANNEL`, `ZSH_PLUGINS`, `GITHUB_USER`, `SAUCE_DIR`).
 - `scripts/lib/runner.sh` — `run_update_scripts`/`print_summary` (with `box`/`run_step`);
   drives `scripts/update-all.sh`. You don't source this from an `update-*.sh` — it's the
   harness that runs them.

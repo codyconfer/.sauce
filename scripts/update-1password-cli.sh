@@ -8,6 +8,13 @@ source "$SCRIPT_DIR/lib/common.sh"
 DEST="$HOME/.local/bin/op"
 ARCH="amd64"
 
+cleanup() {
+    log_clean "Removing 1Password CLI..."
+    remove_paths "$DEST"
+    log_done "1Password CLI removed."
+}
+dispatch_remove "$@"
+
 log_search "Fetching the latest 1Password CLI version..."
 # Capture the page first, then extract — piping curl straight into `grep | head`
 # trips a broken-pipe (curl exit 23) under `set -o pipefail` once head closes early.

@@ -5,6 +5,13 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/lib/common.sh"
 
+cleanup() {
+    log_clean "Removing .NET..."
+    remove_paths "$HOME/.dotnet"
+    log_done ".NET removed."
+}
+dispatch_remove "$@"
+
 SCRIPT=$(mktemp)
 trap 'rm -f "$SCRIPT"' EXIT
 

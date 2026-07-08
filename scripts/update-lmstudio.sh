@@ -5,8 +5,17 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/lib/common.sh"
 
-APPIMAGE="$APPS/lm-studio.AppImage"
+APPIMAGE="$BIN/lm-studio.AppImage"
 URL="https://lmstudio.ai/download/latest/linux/x64"
+
+cleanup() {
+    log_clean "Removing LM Studio..."
+    remove_paths "$APPIMAGE" "$ICONS/lm-studio.png"
+    remove_stamp lm-studio
+    log_done "LM Studio removed."
+    log_hint "The .desktop launcher is chezmoi-managed — deselect 'lmstudio' from the tools prompt and re-apply to remove it."
+}
+dispatch_remove "$@"
 
 log_search "Fetching the latest LM Studio version..."
 FINAL=$(curl -fsIL -o /dev/null -w '%{url_effective}' "$URL")
@@ -31,12 +40,12 @@ download_with_headers "$URL" "$TMPDIR/lm-studio.AppImage" "$TMPDIR/headers"
 verify_md5_etag "$TMPDIR/headers" "$TMPDIR/lm-studio.AppImage"
 
 log_install "Installing to $APPIMAGE..."
-ensure_dir "$APPS"
+ensure_dir "$BIN"
 chmod +x "$TMPDIR/lm-studio.AppImage"
 mv "$TMPDIR/lm-studio.AppImage" "$APPIMAGE"
 write_stamp lm-studio "$VERSION"
 
-extract_appimage_icon "$APPIMAGE" "$APPS/icons/lm-studio.png" || true
+extract_appimage_icon "$APPIMAGE" "$ICONS/lm-studio.png" || true
 
 log_done
 log_hint "Launch LM Studio from your app menu or run '$APPIMAGE'."

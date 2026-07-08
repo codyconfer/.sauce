@@ -11,6 +11,14 @@ source "$SCRIPT_DIR/lib/common.sh"
 APP_ID="de.darc.dm3mat.qdmr"
 API="https://api.github.com/repos/hmatuschek/qdmr/releases/latest"
 
+cleanup() {
+    log_clean "Removing qdmr..."
+    remove_flatpak "$APP_ID" || log_warn "flatpak uninstall failed (qdmr may not be installed)."
+    remove_stamp qdmr
+    log_done "qdmr removed."
+}
+dispatch_remove "$@"
+
 log_search "Fetching the latest qdmr version..."
 META=$(fetch "$API")
 VERSION=$(echo "$META" | jq -r '.tag_name')

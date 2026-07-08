@@ -5,6 +5,14 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/lib/common.sh"
 
+cleanup() {
+    log_clean "Removing Go..."
+    remove_sudo_paths /usr/local/go
+    log_done "Go removed."
+    log_hint "Your GOPATH (~/go) with installed tools was left in place."
+}
+dispatch_remove "$@"
+
 log_search "Fetching the latest Go version..."
 RELEASE_JSON=$(fetch "https://go.dev/dl/?mode=json")
 

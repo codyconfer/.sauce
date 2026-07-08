@@ -5,8 +5,17 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/lib/common.sh"
 
-APPIMAGE="$APPS/cursor.AppImage"
+APPIMAGE="$BIN/cursor.AppImage"
 API="https://www.cursor.com/api/download?platform=linux-x64&releaseTrack=stable"
+
+cleanup() {
+    log_clean "Removing Cursor..."
+    remove_paths "$APPIMAGE" "$ICONS/cursor.png"
+    remove_stamp cursor
+    log_done "Cursor removed."
+    log_hint "The .desktop launcher is chezmoi-managed — deselect 'cursor' from the tools prompt and re-apply to remove it."
+}
+dispatch_remove "$@"
 
 log_search "Fetching the latest Cursor version..."
 META=$(fetch "$API")
@@ -32,12 +41,12 @@ download_with_headers "$URL" "$TMPDIR/cursor.AppImage" "$TMPDIR/headers"
 verify_md5_etag "$TMPDIR/headers" "$TMPDIR/cursor.AppImage"
 
 log_install "Installing to $APPIMAGE..."
-ensure_dir "$APPS"
+ensure_dir "$BIN"
 chmod +x "$TMPDIR/cursor.AppImage"
 mv "$TMPDIR/cursor.AppImage" "$APPIMAGE"
 write_stamp cursor "$VERSION"
 
-extract_appimage_icon "$APPIMAGE" "$APPS/icons/cursor.png" || true
+extract_appimage_icon "$APPIMAGE" "$ICONS/cursor.png" || true
 
 log_done
 log_hint "Launch Cursor from your app menu or run '$APPIMAGE'."

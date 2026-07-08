@@ -1,8 +1,8 @@
 window {
-    background-color: #1e1e2e;
-    border: 2px solid #89b4fa;
+    background-color: #263238;
+    border: 2px solid #03a9f4;
     border-radius: 8px;
-    font-family: monospace;
+    font-family: "Terminess Nerd Font";
     font-size: 14px;
 }
 
@@ -11,8 +11,8 @@ window {
     padding: 6px;
     border: none;
     border-radius: 4px;
-    background-color: #313244;
-    color: #cdd6f4;
+    background-color: #37474f;
+    color: #eceff1;
 }
 
 #inner-box { margin: 8px; }
@@ -20,10 +20,10 @@ window {
 #entry {
     padding: 6px;
     border-radius: 4px;
-    color: #cdd6f4;
+    color: #eceff1;
 }
 #entry:selected {
-    background-color: #89b4fa;
-    color: #1e1e2e;
+    background-color: #03a9f4;
+    color: #263238;
 }
-#text:selected { color: #1e1e2e; }
+#text:selected { color: #263238; }

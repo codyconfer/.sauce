@@ -10,6 +10,13 @@ DEST="$HOME/.local/bin/k9s"
 TARBALL="k9s_Linux_amd64.tar.gz"
 BASE="https://github.com/$REPO/releases/latest/download"
 
+cleanup() {
+    log_clean "Removing k9s..."
+    remove_paths "$DEST"
+    log_done "k9s removed."
+}
+dispatch_remove "$@"
+
 log_search "Fetching the latest k9s version..."
 LATEST=$(fetch "https://api.github.com/repos/$REPO/releases/latest" | jq -r '.tag_name')
 if [ -z "$LATEST" ] || [ "$LATEST" = "null" ]; then

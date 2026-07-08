@@ -14,6 +14,17 @@ case "$FAMILY" in
 esac
 API="https://update.code.visualstudio.com/api/update/$PLATFORM/stable/latest"
 
+cleanup() {
+    log_clean "Removing VS Code..."
+    if [ "$FAMILY" = "arch" ]; then
+        remove_paths "$OPT/vscode" "$BIN/code"
+    else
+        remove_pkgs code
+    fi
+    log_done "VS Code removed."
+}
+dispatch_remove "$@"
+
 log_search "Fetching the latest VS Code version..."
 META=$(fetch "$API")
 URL=$(echo "$META" | jq -r '.url')
@@ -28,9 +39,9 @@ log_found "Latest version found: $VERSION"
 INSTALLED=$(command -v code >/dev/null 2>&1 && code --version 2>/dev/null | head -1 || true)
 version_gate "VS Code" "$INSTALLED" "$VERSION" && exit 0
 
-ensure_dir "$APPS"
+ensure_dir "$CACHE"
 PKG=$(basename "$URL")
-PKGPATH="$APPS/$PKG"
+PKGPATH="$CACHE/$PKG"
 log_download "Downloading $PKG..."
 download "$URL" "$PKGPATH"
 
@@ -38,13 +49,13 @@ verify_sha256 "$SHA" "$PKGPATH"
 
 log_install "Installing..."
 if [ "$FAMILY" = "arch" ]; then
-    DEST="$APPS/vscode"
+    DEST="$OPT/vscode"
     rm -rf "$DEST"
     ensure_dir "$DEST"
     tar -C "$DEST" --strip-components=1 -xzf "$PKGPATH"
-    ensure_dir "$HOME/.local/bin"
-    ln -sf "$DEST/bin/code" "$HOME/.local/bin/code"
-    log_link "Linked code -> $HOME/.local/bin/code"
+    ensure_dir "$BIN"
+    ln -sf "$DEST/bin/code" "$BIN/code"
+    log_link "Linked code -> $BIN/code"
 else
     install_local_pkg "$PKGPATH"
 fi

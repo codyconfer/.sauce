@@ -6,15 +6,15 @@ set $right l
 
 set $term foot
 set $menu wofi --show drun
-set $lock swaylock -f -c 1e1e2e
+set $lock swaylock -f -c 263238
 
-output * bg #1e1e2e solid_color
+output * bg #263238 solid_color
 
-font pango:monospace 10
+font pango:Terminess Nerd Font 9
 default_border pixel 2
 gaps inner 6
 smart_gaps on
-client.focused #89b4fa #89b4fa #1e1e2e #89b4fa #89b4fa
+client.focused #03a9f4 #03a9f4 #263238 #03a9f4 #03a9f4
 
 input "type:touchpad" {
     tap enabled

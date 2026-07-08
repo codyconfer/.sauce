@@ -1,7 +1,10 @@
 #! /bin/bash
 
 # --- paths ---
-APPS="${APPS:-$HOME/.apps}"                 # downloaded apps/AppImages; added to PATH
+OPT="${OPT:-$HOME/.local/opt}"
+BIN="${BIN:-$HOME/.local/bin}"
+ICONS="${ICONS:-$HOME/.local/share/icons}"
+CACHE="${CACHE:-${XDG_CACHE_HOME:-$HOME/.cache}/sauce}"
 ZSH_PLUGINS="${ZSH_PLUGINS:-$HOME/.zsh}"    # where zsh plugins are cloned (match .zshrc)
 
 # --- identity & dotfiles ---

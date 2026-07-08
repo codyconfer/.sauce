@@ -40,6 +40,15 @@ install_pkgs() {
     esac
 }
 
+remove_pkgs() {
+    case "$(detect_family)" in
+        debian) sudo apt remove -y "$@" ;;
+        fedora) sudo dnf remove -y "$@" ;;
+        arch)   sudo pacman -Rns --noconfirm "$@" ;;
+        *) echo "❌ Error: unsupported distro (need apt, dnf, or pacman)." >&2; return 1 ;;
+    esac
+}
+
 ensure_flatpak() {
     if ! command -v flatpak >/dev/null 2>&1; then
         log_install "Installing flatpak..."
@@ -55,3 +64,5 @@ install_flatpak() {
     log_install "Installing/updating $app from Flathub..."
     flatpak install --user -y --or-update flathub "$app"
 }
+
+remove_flatpak() { flatpak uninstall --user -y "$@"; }

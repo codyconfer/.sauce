@@ -7,6 +7,13 @@ source "$SCRIPT_DIR/lib/common.sh"
 
 DEST="$HOME/.local/bin/bw"
 
+cleanup() {
+    log_clean "Removing Bitwarden CLI..."
+    remove_paths "$DEST"
+    log_done "Bitwarden CLI removed."
+}
+dispatch_remove "$@"
+
 log_search "Fetching the latest Bitwarden CLI version..."
 LATEST=$(fetch "https://registry.npmjs.org/@bitwarden/cli/latest" | jq -r '.version')
 if [ -z "$LATEST" ] || [ "$LATEST" = "null" ]; then

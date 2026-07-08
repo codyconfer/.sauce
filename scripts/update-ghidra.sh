@@ -6,10 +6,19 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/lib/common.sh"
 
 # Ghidra isn't in the Debian/Fedora repos; it ships as a single GitHub release zip and
-# needs a JDK 21+. We extract it under $APPS and expose a `ghidra` launcher on PATH.
-INSTALL_DIR="$APPS/ghidra"
-BIN="$HOME/.local/bin/ghidra"
+# needs a JDK 21+. We extract it under $OPT and expose a `ghidra` launcher on PATH.
+INSTALL_DIR="$OPT/ghidra"
+LAUNCHER="$BIN/ghidra"
 API="https://api.github.com/repos/NationalSecurityAgency/ghidra/releases/latest"
+
+cleanup() {
+    log_clean "Removing Ghidra..."
+    remove_paths "$INSTALL_DIR" "$LAUNCHER"
+    remove_stamp ghidra
+    log_done "Ghidra removed."
+    log_hint "The JDK installed for Ghidra was left in place; remove it with your package manager if unused."
+}
+dispatch_remove "$@"
 
 log_search "Fetching the latest Ghidra version..."
 META=$(fetch "$API")
@@ -58,8 +67,8 @@ rm -rf "$INSTALL_DIR"
 ensure_dir "$(dirname "$INSTALL_DIR")"
 mv "$SRC" "$INSTALL_DIR"
 
-ensure_dir "$(dirname "$BIN")"
-ln -sf "$INSTALL_DIR/ghidraRun" "$BIN"
+ensure_dir "$BIN"
+ln -sf "$INSTALL_DIR/ghidraRun" "$LAUNCHER"
 write_stamp ghidra "$VERSION"
 
 log_done

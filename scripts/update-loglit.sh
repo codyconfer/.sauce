@@ -5,6 +5,20 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/lib/common.sh"
 
+cleanup() {
+    log_clean "Removing loglit..."
+    local gobin
+    if command -v go >/dev/null 2>&1; then
+        gobin="$(go env GOBIN)"; [ -n "$gobin" ] || gobin="$(go env GOPATH)/bin"
+    else
+        gobin="${GOBIN:-${GOPATH:-$HOME/go}/bin}"
+    fi
+    remove_paths "$gobin/loglit"
+    remove_stamp loglit
+    log_done "loglit removed."
+}
+dispatch_remove "$@"
+
 if ! command -v go >/dev/null 2>&1; then
     log_error "Go is required to install loglit. Run update-go first."
     exit 1

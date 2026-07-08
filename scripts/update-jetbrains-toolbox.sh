@@ -5,9 +5,18 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/lib/common.sh"
 
-APPDIR=$APPS/JetBrains-Toolbox
-LAUNCHER=$APPS/jetbrains-toolbox
+APPDIR=$OPT/JetBrains-Toolbox
+LAUNCHER=$BIN/jetbrains-toolbox
 API="https://data.services.jetbrains.com/products/releases?code=TBA&latest=true&type=release"
+
+cleanup() {
+    log_clean "Removing JetBrains Toolbox..."
+    remove_paths "$APPDIR" "$LAUNCHER"
+    remove_stamp jetbrains-toolbox
+    log_done "JetBrains Toolbox removed."
+    log_hint "IDEs installed via Toolbox (under ~/.local/share/JetBrains) remain; remove them from within Toolbox or delete that directory."
+}
+dispatch_remove "$@"
 
 log_search "Fetching the latest JetBrains Toolbox version..."
 META=$(fetch "$API")
@@ -37,7 +46,8 @@ SHA=$(fetch "$CSURL" | cut -d' ' -f1)
 verify_sha256 "$SHA" "$TMPDIR/$TARBALL"
 
 log_install "Installing to $APPDIR..."
-ensure_dir "$APPS"
+ensure_dir "$OPT"
+ensure_dir "$BIN"
 tar -C "$TMPDIR" -xzf "$TMPDIR/$TARBALL"
 SRC=$(find "$TMPDIR" -mindepth 1 -maxdepth 1 -type d -name 'jetbrains-toolbox-*' | head -n1)
 if [ -z "$SRC" ] || [ ! -x "$SRC/bin/jetbrains-toolbox" ]; then

@@ -8,6 +8,13 @@ source "$SCRIPT_DIR/lib/common.sh"
 SDK_ROOT="$HOME/google-cloud-sdk"
 URL="https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-cli-linux-x86_64.tar.gz"
 
+cleanup() {
+    log_clean "Removing Google Cloud CLI..."
+    remove_paths "$SDK_ROOT"
+    log_done "Google Cloud CLI removed."
+}
+dispatch_remove "$@"
+
 if [ -d "$SDK_ROOT" ]; then
     log_install "Updating existing Google Cloud CLI components..."
     "$SDK_ROOT/bin/gcloud" components update --quiet

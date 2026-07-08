@@ -7,6 +7,13 @@ source "$SCRIPT_DIR/lib/common.sh"
 
 PYENV_ROOT="${PYENV_ROOT:-$HOME/.pyenv}"
 
+cleanup() {
+    log_clean "Removing pyenv..."
+    remove_paths "$PYENV_ROOT"
+    log_done "pyenv removed."
+}
+dispatch_remove "$@"
+
 if [ -d "$PYENV_ROOT/.git" ]; then
     log_download "Updating existing pyenv install in $PYENV_ROOT..."
     git -C "$PYENV_ROOT" pull --ff-only

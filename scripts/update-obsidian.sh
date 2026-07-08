@@ -5,8 +5,17 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/lib/common.sh"
 
-APPIMAGE="$APPS/obsidian.AppImage"
+APPIMAGE="$BIN/obsidian.AppImage"
 API="https://api.github.com/repos/obsidianmd/obsidian-releases/releases/latest"
+
+cleanup() {
+    log_clean "Removing Obsidian..."
+    remove_paths "$APPIMAGE" "$ICONS/obsidian.png"
+    remove_stamp obsidian
+    log_done "Obsidian removed."
+    log_hint "The .desktop launcher is chezmoi-managed — deselect 'obsidian' from the tools prompt and re-apply to remove it."
+}
+dispatch_remove "$@"
 
 log_search "Fetching the latest Obsidian version..."
 META=$(fetch "$API")
@@ -32,12 +41,12 @@ download_with_headers "$URL" "$TMPDIR/obsidian.AppImage" "$TMPDIR/headers"
 verify_md5_etag "$TMPDIR/headers" "$TMPDIR/obsidian.AppImage"
 
 log_install "Installing to $APPIMAGE..."
-ensure_dir "$APPS"
+ensure_dir "$BIN"
 chmod +x "$TMPDIR/obsidian.AppImage"
 mv "$TMPDIR/obsidian.AppImage" "$APPIMAGE"
 write_stamp obsidian "$VERSION"
 
-extract_appimage_icon "$APPIMAGE" "$APPS/icons/obsidian.png" || true
+extract_appimage_icon "$APPIMAGE" "$ICONS/obsidian.png" || true
 
 log_done
 log_hint "Launch Obsidian from your app menu or run '$APPIMAGE'."

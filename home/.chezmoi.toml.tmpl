@@ -20,7 +20,7 @@
      a scripts/update-<name>.sh installer (runner.sh filters on this selection) or a
      download-only external in .chezmoiexternal.toml.tmpl (none currently defined).
      Keep this list in sync with the update-*.sh filenames and any external keys. */}}
-{{- $toolChoices := list "1password-cli" "adb" "aws" "azure-cli" "bitwarden-cli" "claude-code" "cloudflared" "codex" "cursor" "docker" "dotnet" "gcloud" "gcx" "ghidra" "go" "jetbrains-toolbox" "k9s" "kubectl" "lmstudio" "loglit" "nvim" "nvm" "obsidian" "ollama" "opencode" "pi" "poetry" "pyenv" "qdmr" "vscode" "wrangler" "yarn" "zed" "zsh-plugins" -}}
+{{- $toolChoices := list "1password-cli" "adb" "aws" "azure-cli" "bitwarden-cli" "claude-code" "cloudflared" "codex" "cursor" "docker" "dotnet" "fonts" "gcloud" "gcx" "ghidra" "go" "jetbrains-toolbox" "k9s" "kubectl" "lmstudio" "loglit" "nvim" "nvm" "obsidian" "ollama" "opencode" "pi" "poetry" "pyenv" "qdmr" "vscode" "wrangler" "yarn" "zed" "zsh-plugins" -}}
 {{- $tools := promptMultichoiceOnce . "tools" "CLI / dev tools to install and keep updated (all selected by default; leave empty for none)" $toolChoices $toolChoices -}}
 {{/* Derived: any desktop app selected turns on desktop-only externals/configs. */}}
 {{- $desktop := or (gt (len $distroApps) 0) (gt (len $flatpaks) 0) -}}

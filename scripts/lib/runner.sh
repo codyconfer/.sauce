@@ -40,7 +40,7 @@ _selected_tools() {
 }
 
 run_update_scripts() {
-    local dir="${1:-$SCRIPT_DIR}" script name tool
+    local dir="${1:-$SCRIPT_DIR}" mode="${2:-}" script name tool
     # Only filter when a selection is resolvable; otherwise run every updater
     # (backward-compatible with installs that predate the `tools` prompt).
     local filter=0
@@ -64,7 +64,7 @@ run_update_scripts() {
             tool="${name#update-}"; tool="${tool%.sh}"
             [ -n "${selected[$tool]:-}" ] || continue
         fi
-        run_step "$name" bash "$script"
+        run_step "$name" bash "$script" ${mode:+"$mode"}
     done
 }
 

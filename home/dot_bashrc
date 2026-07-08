@@ -158,8 +158,6 @@ fi
 export PATH="$PATH:/usr/local/go/bin:$HOME/go/bin"
 # lm studio cli
 [ -d "$HOME/.lmstudio/bin" ] && export PATH="$PATH:$HOME/.lmstudio/bin"
-# Neovim (latest, installed to ~/.apps/nvim) — prepended so it wins over the distro package
-[ -d "$HOME/.apps/nvim/bin" ] && export PATH="$HOME/.apps/nvim/bin:$PATH"
 export EDITOR="nvim"
 export VISUAL="nvim"
 alias vi="nvim"
@@ -180,12 +178,8 @@ fi
 
 # path
 LOCAL_BIN="$HOME/.local/bin"
-APPS="$HOME/.apps"
 if [ -d "$LOCAL_BIN" ]; then
-    export PATH="$PATH:$LOCAL_BIN"
-fi
-if [ -d "$APPS" ]; then
-    export PATH="$PATH:$APPS"
+    export PATH="$LOCAL_BIN:$PATH"
 fi
 
 # history

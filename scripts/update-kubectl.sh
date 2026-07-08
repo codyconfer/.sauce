@@ -7,6 +7,13 @@ source "$SCRIPT_DIR/lib/common.sh"
 
 DEST="$HOME/.local/bin/kubectl"
 
+cleanup() {
+    log_clean "Removing kubectl..."
+    remove_paths "$DEST"
+    log_done "kubectl removed."
+}
+dispatch_remove "$@"
+
 log_search "Fetching the latest stable kubectl version..."
 LATEST=$(fetch "https://dl.k8s.io/release/stable.txt" | tr -d '[:space:]')
 if [ -z "$LATEST" ]; then

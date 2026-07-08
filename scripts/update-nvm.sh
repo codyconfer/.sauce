@@ -7,6 +7,14 @@ source "$SCRIPT_DIR/lib/common.sh"
 
 REPO=nvm-sh/nvm
 
+cleanup() {
+    log_clean "Removing nvm..."
+    remove_paths "${NVM_DIR:-$HOME/.nvm}"
+    log_done "nvm removed."
+    log_hint "Your rc files still source nvm (chezmoi-managed); the block is a harmless no-op once nvm is gone."
+}
+dispatch_remove "$@"
+
 log_search "Fetching the latest nvm version..."
 TAG=$(gh release view --repo "$REPO" --json tagName --jq '.tagName')
 if [ -z "$TAG" ]; then

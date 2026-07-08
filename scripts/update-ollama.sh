@@ -5,6 +5,18 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/lib/common.sh"
 
+cleanup() {
+    log_clean "Removing Ollama..."
+    if command -v systemctl >/dev/null 2>&1 && systemctl list-unit-files ollama.service >/dev/null 2>&1; then
+        sudo systemctl stop ollama 2>/dev/null || true
+        sudo systemctl disable ollama 2>/dev/null || true
+    fi
+    remove_sudo_paths /usr/local/bin/ollama /usr/share/ollama /etc/systemd/system/ollama.service
+    log_done "Ollama removed."
+    log_hint "Pulled models (~/.ollama) and the 'ollama' service user were left in place."
+}
+dispatch_remove "$@"
+
 log_search "Fetching the latest Ollama version..."
 LATEST=$(fetch "https://api.github.com/repos/ollama/ollama/releases/latest" | jq -r '.tag_name')
 if [ -z "$LATEST" ] || [ "$LATEST" = "null" ]; then

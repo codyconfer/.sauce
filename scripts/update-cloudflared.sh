@@ -10,6 +10,13 @@ DEST="$HOME/.local/bin/cloudflared"
 ASSET="cloudflared-linux-amd64"
 BASE="https://github.com/$REPO/releases/latest/download"
 
+cleanup() {
+    log_clean "Removing cloudflared..."
+    remove_paths "$DEST"
+    log_done "cloudflared removed."
+}
+dispatch_remove "$@"
+
 log_search "Fetching the latest cloudflared version..."
 LATEST=$(fetch "https://api.github.com/repos/$REPO/releases/latest" | jq -r '.tag_name')
 if [ -z "$LATEST" ] || [ "$LATEST" = "null" ]; then

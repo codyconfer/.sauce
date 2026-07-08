@@ -11,6 +11,14 @@ source "$SCRIPT_DIR/lib/common.sh"
 DEST_DIR="$HOME/.local/bin"
 URL="https://dl.google.com/android/repository/platform-tools-latest-linux.zip"
 
+cleanup() {
+    log_clean "Removing adb + fastboot..."
+    remove_paths "$DEST_DIR/adb" "$DEST_DIR/fastboot"
+    remove_stamp adb
+    log_done "adb + fastboot removed."
+}
+dispatch_remove "$@"
+
 TMPDIR=$(mktemp -d)
 trap 'rm -rf "$TMPDIR"' EXIT
 

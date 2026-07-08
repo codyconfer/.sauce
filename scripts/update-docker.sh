@@ -11,12 +11,20 @@ case "$(detect_family)" in
     arch)   PKG=docker-desktop-x86_64.pkg.tar.zst ;;
     *) log_error "unsupported distro (need apt, dnf, or pacman)."; exit 1 ;;
 esac
+
+cleanup() {
+    log_clean "Removing Docker Desktop..."
+    remove_pkgs docker-desktop
+    log_done "Docker Desktop removed."
+}
+dispatch_remove "$@"
+
 BASE=https://desktop.docker.com/linux/main/amd64
-PKGPATH="$APPS/$PKG"
+PKGPATH="$CACHE/$PKG"
 HDRS=$(mktemp)
 trap 'rm -f "$HDRS"' EXIT
 
-ensure_dir "$APPS"
+ensure_dir "$CACHE"
 log_download "Downloading $PKG..."
 download_with_headers "$BASE/$PKG" "$PKGPATH" "$HDRS"
 

@@ -145,8 +145,6 @@ test -d "$HOME/google-cloud-sdk/bin"; and fish_add_path "$HOME/google-cloud-sdk/
 fish_add_path -a /usr/local/go/bin $HOME/go/bin
 # lm studio cli
 test -d "$HOME/.lmstudio/bin"; and fish_add_path -a "$HOME/.lmstudio/bin"
-# Neovim (latest, installed to ~/.apps/nvim) — prepended so it wins over the distro package
-test -d "$HOME/.apps/nvim/bin"; and fish_add_path -p "$HOME/.apps/nvim/bin"
 set -gx EDITOR nvim
 set -gx VISUAL nvim
 alias vi 'nvim'
@@ -164,7 +162,6 @@ end
 
 # path
 test -d "$HOME/.local/bin"; and fish_add_path "$HOME/.local/bin"
-test -d "$HOME/.apps"; and fish_add_path "$HOME/.apps"
 
 # prompt
 if type -q oh-my-posh

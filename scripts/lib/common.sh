@@ -104,8 +104,47 @@ version_gate() {
 }
 
 # Stamp store for tools that can't report their own version (e.g. AppImages).
-VERSIONS_DIR="${VERSIONS_DIR:-$APPS/.versions}"
+VERSIONS_DIR="${VERSIONS_DIR:-${XDG_STATE_HOME:-$HOME/.local/state}/sauce/versions}"
 read_stamp()  { cat "$VERSIONS_DIR/$1" 2>/dev/null || true; }
 write_stamp() { ensure_dir "$VERSIONS_DIR"; printf '%s\n' "$2" > "$VERSIONS_DIR/$1"; }
+
+remove_paths() {
+    local p
+    for p in "$@"; do
+        [ -n "$p" ] || continue
+        if [ -e "$p" ] || [ -L "$p" ]; then
+            log_clean "Removing $p"
+            rm -rf "$p"
+        fi
+    done
+}
+
+remove_sudo_paths() {
+    local p
+    for p in "$@"; do
+        [ -n "$p" ] || continue
+        if [ -e "$p" ] || [ -L "$p" ]; then
+            log_clean "Removing $p (sudo)"
+            sudo rm -rf "$p"
+        fi
+    done
+}
+
+remove_cmd() {
+    local c path
+    for c in "$@"; do
+        path="$(command -v "$c" 2>/dev/null || true)"
+        [ -n "$path" ] && remove_paths "$path"
+    done
+}
+
+remove_stamp() { local n; for n in "$@"; do rm -f "$VERSIONS_DIR/$n"; done; }
+
+dispatch_remove() {
+    if [ "${1:-}" = "remove" ]; then
+        cleanup
+        exit 0
+    fi
+}
 
 source "$(dirname "${BASH_SOURCE[0]}")/distro.sh"
