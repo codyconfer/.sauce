@@ -1,0 +1,224 @@
+# ~/.zshrc — managed by chezmoi (source: ~/.sauce). Edit via `chezmoi edit ~/.zshrc`.
+
+red='\033[0;31m'
+green='\033[0;32m'
+yellow='\033[0;33m'
+blue='\033[0;34m'
+magenta='\033[0;35m'
+cyan='\033[0;36m'
+clear='\033[0m'
+bold='\033[0;1m'
+dim='\033[0;2m'
+italic='\033[0;3m'
+underline='\033[0;4m'
+blinking='\033[0;5m'
+reverse='\033[0;7m'
+invisible='\033[8m'
+uparrow='↑'
+rightarrow='→'
+dash='–'
+x='✗'
+line="─────────────────────────────────────────────────────"
+
+# print header
+dateColor=$cyan
+nameColor=$blue
+date=$(date +'%A, %b %d, %Y')
+
+allips=($(ip -4 addr | grep -oP '(?<=inet\s)\d+(\.\d+){3}'))
+ips=""
+for ip in "${allips[@]}"; do
+    echo $ip
+    if [[ $ip != 127* ]] && [[ $ip != 172* ]]; then
+        if [[ $ip == 10.* ]]; then
+            ips="${ips} LAN:        ${dateColor}${ip}${nameColor}\n"
+        fi
+        if [[ $ip == 100.* ]]; then
+            ips="${ips} tailnet:    ${dateColor}${ip}${nameColor}\n"
+        fi
+    fi
+done
+host=$(figlet -f smslant "@$(hostname)" | sed 's/^/ /')
+heading=$(cat <<-_END_
+ ${yellow}${line}${clear}
+${nameColor}${host}${clear}
+
+ ${dateColor}${date}${clear}
+ ${nameColor}$(whoami)@$(hostname)${clear}
+
+${nameColor}${ips}${clear}
+ ${yellow}${line}${clear}
+
+ ${nameColor}across the universe divide...${clear}
+
+           BP55555P#
+        #${cyan}G55PGGGGGP${clear}?PB&
+      B${cyan}55PGGGGGGGGG${clear}J${cyan}GPPG${clear}#
+    &${cyan}Y5PGGGGGGGGGP${clear}Y${cyan}PBBBG5${clear}P
+    #${cyan}JGGGGGGGGGP${clear}YY${cyan}GBBBBBBY${clear}B
+    B${cyan}JGGGGGGGP${clear}55${cyan}GBBBBBBBBY${clear}&
+    B${cyan}YGGGGGG${clear}JJ${cyan}PGBBBBBBBG5${clear}#
+    B${cyan}YGGGGGG${clear}JBGP${cyan}5PGGBG5G${clear}&
+    G${cyan}YGGGGGG${clear}JB${blue}##${clear}BBG${cyan}PY5${clear}#
+    G${cyan}YGGGGGP${clear}?G${blue}######${clear}BGPP
+    G${cyan}YGGP${clear}55PGGPPG${blue}B######${clear}5G
+    P${cyan}YP${clear}5P${blue}B#&&&#${clear}BGPPG${blue}B###${clear}PG
+    BJP${blue}B&&&&&#&&&&#${clear}BGPP${blue}B${clear}5G
+      &BGGG${blue}B#&&&&#&&&#${clear}B5J#
+          #BGG${blue}BB#&#${clear}BGGB#
+             &#BGPGB&
+
+ ${yellow}${line}${clear}
+_END_
+)
+clear
+echo ${heading}
+
+# docker
+function LIST_DOCKER_CONTAINERS() {
+    local tmp_ifs=$IFS
+    IFS=$'\n'
+    local container=""; local group=""
+    for container_status in 'Up' 'Running' 'Restarting' 'Created' 'Paused' 'Exited' 'Stopped' 'Dead'; do
+        group=""
+        local container=""; local ps_result=""; local display_status=""
+        case $container_status in
+            Up)
+                display_status="${green}${uparrow}${clear}"
+                ;;
+            Running)
+                display_status="${green}${uparrow}${clear}"
+                ;;
+            Exited)
+                display_status="${yellow}${dash}${clear}"
+                ;;
+            Stopped)
+                display_status="${yellow}${dash}${clear}"
+                ;;
+            Dead)
+                display_status="${red}${x}${clear}"
+                ;;
+            *)
+                display_status=$container_status
+                ;;
+        esac
+        for ps_result in $(docker ps -a --format "{{.Status}} | {{.Names}} | {{.Image}} | {{.Ports}}" | grep "${container_status} "); do
+            container=""
+            i=1
+            while iter=$(echo "$ps_result" | cut -d\| -f$i | xargs) ; [ -n "$iter" ] ; do
+                if [[ $i == 1 ]]; then
+                    # omit first query field from output
+                elif [[ $i == 2 ]]; then
+                    container="${container}${display_status} ${bold}${iter}${clear}\n"
+                else
+                    container="${container}\t${dim}${iter}\n"
+                fi
+                i=$((i+1))
+            done
+            group="${group}${container}"
+        done
+        if [[ $group != "" ]]; then
+            echo -e "${group}"
+        fi
+    done
+    IFS=$tmp_ifs
+}
+
+# aliases
+alias docker-containers=LIST_DOCKER_CONTAINERS
+alias sauce="chezmoi apply"                 # re-apply dotfiles + run install/update scripts
+alias sauce-edit="chezmoi edit --apply"     # edit a managed file and apply on save
+alias sauce-cd="chezmoi cd"                 # drop into the ~/.sauce source repo
+alias update='(command -v apt > /dev/null \
+    && sudo apt update && sudo apt upgrade -y && sudo apt dist-upgrade -y && sudo snap refresh) \
+    || (command -v pacman > /dev/null \
+    && sudo pacman -Syu && paru -Syu) \
+    || (command -v dnf > /dev/null \
+    && sudo dnf upgrade -y); \
+    command -v flatpak > /dev/null && flatpak update --user -y'
+
+# aliases generated from ~/.sauce/scripts/*.sh (setup, onchange, update-*, update-all)
+for _script in ~/.sauce/scripts/*.sh; do
+    [ -e "$_script" ] || continue
+    alias "$(basename "$_script" .sh)"="bash $_script"
+done
+unset _script
+
+# tooling env/PATH — one runtime-guarded block per tool (a no-op if the tool is
+# absent). Managed by chezmoi; keep the list in sync when adding a tool.
+# dotnet
+export DOTNET_ROOT="$HOME/.dotnet"
+if [ -d "$DOTNET_ROOT" ]; then
+    export PATH="$PATH:$DOTNET_ROOT:$DOTNET_ROOT/tools"
+fi
+# gcloud
+[ -d "$HOME/google-cloud-sdk/bin" ] && export PATH="$HOME/google-cloud-sdk/bin:$PATH"
+# Go
+export PATH="$PATH:/usr/local/go/bin:$HOME/go/bin"
+# lm studio cli
+[ -d "$HOME/.lmstudio/bin" ] && export PATH="$PATH:$HOME/.lmstudio/bin"
+export EDITOR="nvim"
+export VISUAL="nvim"
+alias vi="nvim"
+alias vim="nvim"
+# nvm
+export NVM_DIR="$([ -z "${XDG_CONFIG_HOME-}" ] && printf %s "${HOME}/.nvm" || printf %s "${XDG_CONFIG_HOME}/nvm")"
+if [ -d "$NVM_DIR" ]; then
+    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+fi
+# opencode
+[ -d "$HOME/.opencode/bin" ] && export PATH="$HOME/.opencode/bin:$PATH"
+# pyenv
+export PYENV_ROOT="$HOME/.pyenv"
+if [ -d "$PYENV_ROOT" ]; then
+    command -v pyenv >/dev/null || export PATH="$PYENV_ROOT/bin:$PATH"
+    eval "$(pyenv init -)"
+fi
+
+# path
+LOCAL_BIN="$HOME/.local/bin"
+if [ -d "$LOCAL_BIN" ]; then
+    export PATH="$LOCAL_BIN:$PATH"
+fi
+
+# history
+HISTFILE=~/.zsh_history
+HISTSIZE=10000
+SAVEHIST=10000
+setopt SHARE_HISTORY HIST_IGNORE_ALL_DUPS HIST_IGNORE_SPACE INC_APPEND_HISTORY
+
+# completion / autocomplete
+setopt AUTO_MENU COMPLETE_IN_WORD ALWAYS_TO_END
+fpath+=(~/.zfunc)
+mkdir -p ~/.cache/zsh 2>/dev/null
+autoload -Uz compinit && compinit
+zstyle ':completion:*' menu select
+zstyle ':completion:*' matcher-list 'm:{a-zA-Z}={A-Za-z}' 'r:|=*' 'l:|=* r:|=*'
+zstyle ':completion:*' list-colors "${(s.:.)LS_COLORS}"
+zstyle ':completion:*' group-name ''
+zstyle ':completion:*:descriptions' format '%B%F{blue}%d%f%b'
+zstyle ':completion:*' use-cache on
+zstyle ':completion:*' cache-path ~/.cache/zsh/zcompcache
+
+# dotnet completion (dotnet ships no zsh completion of its own)
+if command -v dotnet >/dev/null 2>&1; then
+    _dotnet_zsh_complete() {
+        local completions=("$(dotnet complete "$words")")
+        if [ -z "$completions" ]; then
+            _arguments '*::arguments: _normal'
+            return
+        fi
+        _values = "${(ps:\n:)completions}"
+    }
+    compdef _dotnet_zsh_complete dotnet
+fi
+
+# prompt
+eval "$(oh-my-posh init zsh --config ~/.config/oh-my-posh/sauce.toml)"
+
+# your personal tweaks — kept in ~/.zshrc.local (created once, never touched by chezmoi)
+[ -f "$HOME/.zshrc.local" ] && source "$HOME/.zshrc.local"
+
+# zsh plugins — loader generated by update-zsh-plugins.sh; sourced last so
+# zsh-syntax-highlighting (which must load last) wraps everything above it.
+[ -f "$HOME/.zsh/plugins.zsh" ] && source "$HOME/.zsh/plugins.zsh"

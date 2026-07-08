@@ -1,0 +1,10 @@
+# Download-only tools (chezmoi externals) — a binary/tarball/AppImage fetched straight
+# into a user directory and re-downloaded when its `refreshPeriod` lapses (or on
+# `chezmoi apply --refresh-externals`). Use this for tools that need no sudo, no vendor
+# installer, and no version logic; anything else ships as a scripts/update-*.sh installer.
+#
+# None are currently defined — k9s, kubectl and cloudflared moved to scripts/update-*.sh.
+# To add one, define a table gated on the `tools` selection (has "<key>" $tools) and add
+# the key to $toolChoices in .chezmoi.toml.tmpl. See skills/add-tool-installer, Path B.
+
+{{- $tools := (index . "tools") | default (list) }}

@@ -1,0 +1,40 @@
+* {
+    font-family: "Terminess Nerd Font";
+    font-size: 13px;
+    min-height: 0;
+}
+
+window#waybar {
+    background: #263238;
+    color: #eceff1;
+}
+
+#workspaces button {
+    padding: 0 8px;
+    color: #90a4ae;
+    background: transparent;
+}
+#workspaces button.focused {
+    color: #263238;
+    background: #03a9f4;
+    border-radius: 4px;
+}
+#workspaces button.urgent {
+    color: #263238;
+    background: #e91e63;
+    border-radius: 4px;
+}
+
+#mode,
+#clock,
+#battery,
+#network,
+#pulseaudio,
+#backlight,
+#tray {
+    padding: 0 10px;
+}
+
+#battery.warning { color: #ffc107; }
+#battery.critical { color: #e91e63; }
+#network.disconnected { color: #e91e63; }

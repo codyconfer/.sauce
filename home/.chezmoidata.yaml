@@ -1,0 +1,46 @@
+packages:
+  essential:
+    common: [git, curl, wget, unzip, jq, figlet, zsh, neovim, gcc, make]
+    debian: [xz-utils, build-essential]
+    fedora: [xz]
+    arch: [xz, base-devel]
+  extras:
+    common:
+      [gh, rustup, pipx, htop, btop, iftop, iotop, s-tui, wavemon, gnuradio]
+
+  netTools:
+    common: [nmap, traceroute, mtr, tcpdump, whois, socat, net-tools]
+    debian: [dnsutils, netcat-openbsd, iputils-ping]
+    fedora: [bind-utils, nmap-ncat, iputils]
+    arch: [bind, openbsd-netcat, iputils]
+
+sway:
+  common:
+    - sway
+    - swaybg
+    - swayidle
+    - swaylock
+    - waybar
+    - wofi
+    - foot
+    - pavucontrol
+    - grim
+    - slurp
+    - wl-clipboard
+    - brightnessctl
+    - xdg-desktop-portal-wlr
+
+flatpakCatalog:
+  slack: com.slack.Slack
+  discord: com.discordapp.Discord
+  signal: org.signal.Signal
+  easyeffects: com.github.wwmm.easyeffects
+  obs-studio: com.obsproject.Studio
+  bitwarden: com.bitwarden.desktop
+  zen: app.zen_browser.zen
+  lutris: net.lutris.Lutris
+  retroarch: org.libretro.RetroArch
+  zoom: us.zoom.Zoom
+  1password: com.onepassword.OnePassword
+  chirp: com.chirpmyradio.chirp
+  sonic-pi: net.sonic_pi.SonicPi

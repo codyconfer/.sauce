@@ -1,0 +1,16 @@
+{{- if ne .chezmoi.os "linux" }}
+.config/sway
+.config/waybar
+.config/wofi
+.config/mako
+{{- end }}
+{{- $tools := (index . "tools") | default (list) }}
+{{- if not (has "obsidian" $tools) }}
+.local/share/applications/obsidian.desktop
+{{- end }}
+{{- if not (has "lmstudio" $tools) }}
+.local/share/applications/lm-studio.desktop
+{{- end }}
+{{- if not (has "cursor" $tools) }}
+.local/share/applications/cursor.desktop
+{{- end }}

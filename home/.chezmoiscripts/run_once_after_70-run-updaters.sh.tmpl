@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+
+set -uo pipefail
+UPDATE_TOOLS="{{ (index . "tools") | default (list) | join " " }}" \
+    bash "$HOME/.sauce/scripts/setup.sh" run-updaters

@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+
+set -uo pipefail
+FAMILY="{{ .family }}" \
+ESSENTIAL="{{ .packages.essential.common | join " " }}{{ with (index .packages.essential .family) }} {{ . | join " " }}{{ end }}" \
+EXTRAS="{{ .packages.extras.common | join " " }}" \
+    bash "$HOME/.sauce/scripts/setup.sh" base-packages
