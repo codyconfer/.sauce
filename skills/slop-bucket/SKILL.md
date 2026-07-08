@@ -146,10 +146,14 @@ On a yes:
 
 This is **tier 2** — graduating a curated helper into a real home. The curated bucket is
 still a staging area, not a permanent home. A helper with a high `Accessed` count is slop
-that has proven itself and should graduate. When the user asks to "review the bucket",
-"export/graduate a helper", or "promote the slop" — or when you notice a
-frequently-accessed entry — offer the two paths below. **Always confirm the destination
-and name with the user before writing anything outside `.local/slop-bucket.md`.**
+that has proven itself and should graduate.
+
+**Export only on request.** Never write a helper out to a file or wire it into the repo
+unprompted. Trigger the paths below only when the user asks — "review the bucket",
+"export/graduate a helper", "promote the slop", or similar. You may *point out* a
+frequently-accessed entry as a candidate, but don't export it until asked. **Always
+confirm the destination and name with the user before writing anything outside
+`.local/slop-bucket.md`.**
 
 ### Reviewing
 
