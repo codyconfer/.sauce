@@ -138,8 +138,8 @@ alias update='(command -v apt > /dev/null \
     && sudo dnf upgrade -y); \
     command -v flatpak > /dev/null && flatpak update --user -y'
 
-# per-tool update-* aliases generated from ~/.sauce/scripts (includes `update-all`)
-for _script in ~/.sauce/scripts/update-*.sh; do
+# aliases generated from ~/.sauce/scripts/*.sh (setup, onchange, update-*, update-all)
+for _script in ~/.sauce/scripts/*.sh; do
     [ -e "$_script" ] || continue
     alias "$(basename "$_script" .sh)"="bash $_script"
 done

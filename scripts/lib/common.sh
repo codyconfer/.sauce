@@ -46,6 +46,43 @@ verify_md5_etag() {
     fi
 }
 
+# extract_appimage_icon <appimage> <dest.png>
+# Pull the app's icon (.DirIcon) out of an AppImage into <dest> without unpacking the
+# whole (possibly gigabyte-sized) image. Best-effort: warns and returns non-zero if no
+# icon is found — callers should treat it as optional (append `|| true`).
+extract_appimage_icon() {
+    local appimage="$1" dest="$2"
+    local workdir root src target
+    workdir=$(mktemp -d)
+    root="$workdir/squashfs-root"
+
+    # .DirIcon is the canonical app icon: usually a symlink to the real PNG. Extract the
+    # pointer first, then the single file it references (extracting an exact path pulls
+    # only that file, not the entire squashfs).
+    if ! ( cd "$workdir" && "$appimage" --appimage-extract '.DirIcon' >/dev/null 2>&1 ); then
+        log_warn "Could not read icon from $(basename "$appimage")."
+        rm -rf "$workdir"
+        return 1
+    fi
+    if [ -L "$root/.DirIcon" ]; then
+        target=$(readlink "$root/.DirIcon")
+        ( cd "$workdir" && "$appimage" --appimage-extract "$target" >/dev/null 2>&1 ) || true
+        src="$root/$target"
+    else
+        src="$root/.DirIcon"
+    fi
+
+    if [ ! -f "$src" ]; then
+        log_warn "No icon found inside $(basename "$appimage")."
+        rm -rf "$workdir"
+        return 1
+    fi
+    ensure_dir "$(dirname "$dest")"
+    cp -f "$src" "$dest"
+    rm -rf "$workdir"
+    log_link "Extracted icon -> $dest"
+}
+
 # --- version gating ---------------------------------------------------------
 # version_current <installed> <latest> -> 0 if same (ignoring a leading "v").
 # Empty installed/latest, or FORCE set, => 1 ("not current, proceed").

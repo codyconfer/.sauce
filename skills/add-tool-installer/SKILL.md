@@ -23,15 +23,19 @@ the next `chezmoi apply`. No script to write.
   list and the defaults) in `home/.chezmoi.toml.tmpl`. Keep the two in sync — the
   catalog is the name→id lookup, the prompt is what actually installs.
 - **Distro desktop app** (firefox/steam/sway-style, bespoke install) → add its
-  install logic to `run_onchange_before_40-distro-apps.sh.tmpl` and add its name to the
-  `distroApps` `promptMultichoiceOnce` list in `home/.chezmoi.toml.tmpl`. `.desktop`
-  (which gates desktop-only externals/configs) is derived from the `distroApps` and
-  `flatpaks` prompt lists being non-empty.
+  install logic to the `onchange_distro_apps` function in `scripts/onchange.sh` and add
+  its name to the `distroApps` `promptMultichoiceOnce` list in `home/.chezmoi.toml.tmpl`.
+  `.desktop` (which gates desktop-only externals/configs) is derived from the
+  `distroApps` and `flatpaks` prompt lists being non-empty.
 
-The installers are `home/.chezmoiscripts/run_once_before_10-base-packages.sh.tmpl`,
-`run_onchange_before_40-distro-apps.sh.tmpl` (repo-setup apps like firefox/steam
-+ sway), and `run_onchange_before_50-flatpaks.sh.tmpl`. Distro packages / flatpaks
-are then kept current by the system `update` alias — no `update-*.sh` needed.
+The install *logic* lives in `scripts/setup.sh` (run-once steps: `base-packages`,
+`github-auth`, ...) and `scripts/onchange.sh` (re-runnable steps: `distro-apps`,
+`flatpaks`, `nvim-bootstrap`). The `home/.chezmoiscripts/run_{once,onchange}_*` files are
+thin wrappers that pass the selection as env vars and call a subcommand — the
+`run_onchange_*` wrappers also embed a hash of `onchange.sh` so a logic change re-runs
+the step. Both scripts are also exposed as the `setup`/`onchange` aliases (they fall back
+to `chezmoi data` when run by hand). Distro packages / flatpaks are then kept current by
+the system `update` alias — no `update-*.sh` needed.
 
 ## Path B — download-only tool (binary / tarball / AppImage into a user dir)
 
@@ -101,7 +105,8 @@ Put it in the "tooling env/PATH" section. There is no longer a profile builder o
 
 - `scripts/lib/common.sh` — `fetch`, `download`, `download_with_headers`,
   `verify_sha256`, `verify_md5_etag`, `version_current`/`version_gate`,
-  `read_stamp`/`write_stamp`, `ensure_dir`, `ensure_node`, and the `log_*` helpers.
+  `read_stamp`/`write_stamp`, `ensure_dir`, `ensure_node`, `extract_appimage_icon`
+  (pull an AppImage's `.DirIcon` into `~/.apps/icons/<name>.png`), and the `log_*` helpers.
   (It sources `config.sh` and `distro.sh`, so sourcing `common.sh` pulls in all three.)
 - `scripts/lib/distro.sh` — `detect_family`, `install_pkgs`, `install_local_pkg`,
   `pkg_refresh`, `ensure_flatpak`, `install_flatpak`.

@@ -124,9 +124,9 @@ alias sauce 'chezmoi apply'                # re-apply dotfiles + run install/upd
 alias sauce-edit 'chezmoi edit --apply'    # edit a managed file and apply on save
 alias sauce-cd 'chezmoi cd'                # drop into the ~/.sauce source repo
 
-# per-tool update-* aliases generated from ~/.sauce/scripts (includes `update-all`)
+# aliases generated from ~/.sauce/scripts/*.sh (setup, onchange, update-*, update-all)
 if test -d ~/.sauce/scripts
-    for _script in ~/.sauce/scripts/update-*.sh
+    for _script in ~/.sauce/scripts/*.sh
         test -e $_script; or continue
         alias (basename $_script .sh) "bash $_script"
     end

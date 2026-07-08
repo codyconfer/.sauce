@@ -1,14 +1,4 @@
 #!/usr/bin/env bash
 
 set -uo pipefail
-source "$HOME/.sauce/scripts/lib/common.sh"
-
-command -v gh >/dev/null 2>&1 || { log_warn "gh not installed; skipping GitHub auth."; exit 0; }
-
-if gh auth status >/dev/null 2>&1; then
-    log_info "GitHub already authenticated."
-else
-    log_info "Authenticating with GitHub over SSH..."
-    gh auth login -p ssh || { log_warn "gh auth login failed or was skipped."; exit 0; }
-fi
-gh auth setup-git || log_warn "gh auth setup-git failed."
+bash "$HOME/.sauce/scripts/setup.sh" github-auth

@@ -7,4 +7,5 @@
 {{- end }}
 {{- if not .desktop }}
 .local/share/applications/obsidian.desktop
+.local/share/applications/lm-studio.desktop
 {{- end }}
