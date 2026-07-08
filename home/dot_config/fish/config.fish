@@ -128,6 +128,7 @@ alias sauce-cd 'chezmoi cd'                # drop into the ~/.sauce source repo
 if test -d ~/.sauce/scripts
     for _script in ~/.sauce/scripts/*.sh
         test -e $_script; or continue
+        test (basename $_script) = functions.sh; and continue  # bash-only lib, not for fish
         alias (basename $_script .sh) "bash $_script"
     end
 end
