@@ -10,15 +10,24 @@
 {{-   $family = "arch" -}}
 {{- end -}}
 
-{{- $githubUser := promptStringOnce . "githubUser" "GitHub username" "codyconfer" -}}
+{{- $githubUser := promptStringOnce . "githubUser" "GitHub username (owner of your .sauce fork; used for git + gh auth)" "codyconfer" -}}
 {{/* Two multi-select lists of desktop apps. Distro apps have bespoke install logic
      in run_onchange_before_40-distro-apps; flatpak choices map through flatpakCatalog
      in .chezmoidata.yaml (keep these lists in sync with that map). */}}
-{{- $distroApps := promptMultichoiceOnce . "distroApps" "Which distro desktop apps to install?" (list "firefox" "steam" "sway" "fish" "wine" "qemu") (list "firefox" "steam" "sway" "fish" "wine" "qemu") -}}
-{{- $flatpaks := promptMultichoiceOnce . "flatpaks" "Which flatpak apps to install?" (list "slack" "discord" "signal" "easyeffects" "obs-studio" "bitwarden" "zen" "lutris" "retroarch") (list "slack" "discord" "signal" "easyeffects" "obs-studio" "bitwarden" "zen" "lutris" "retroarch") -}}
+{{- $distroApps := promptMultichoiceOnce . "distroApps" "Distro desktop apps to install (all selected by default; leave empty for none)" (list "firefox" "steam" "sway" "fish" "wine" "qemu") (list "firefox" "steam" "sway" "fish" "wine" "qemu") -}}
+{{- $flatpaks := promptMultichoiceOnce . "flatpaks" "Flatpak (Flathub) apps to install (all selected by default; leave empty for none)" (list "slack" "discord" "signal" "easyeffects" "obs-studio" "bitwarden" "zen" "lutris" "retroarch" "zoom" "1password" "chirp" "sonic-pi") (list "slack" "discord" "signal" "easyeffects" "obs-studio" "bitwarden" "zen" "lutris" "retroarch" "zoom" "1password" "chirp" "sonic-pi") -}}
+{{/* Dev tools kept current by chezmoi. Each choice name maps to exactly one mechanism:
+     a scripts/update-<name>.sh installer (runner.sh filters on this selection) or a
+     download-only external in .chezmoiexternal.toml.tmpl (none currently defined).
+     Keep this list in sync with the update-*.sh filenames and any external keys. */}}
+{{- $toolChoices := list "1password-cli" "adb" "aws" "azure-cli" "bitwarden-cli" "claude-code" "cloudflared" "codex" "cursor" "docker" "dotnet" "gcloud" "gcx" "ghidra" "go" "jetbrains-toolbox" "k9s" "kubectl" "lmstudio" "loglit" "nvim" "nvm" "obsidian" "ollama" "opencode" "pi" "poetry" "pyenv" "qdmr" "vscode" "wrangler" "yarn" "zed" "zsh-plugins" -}}
+{{- $tools := promptMultichoiceOnce . "tools" "CLI / dev tools to install and keep updated (all selected by default; leave empty for none)" $toolChoices $toolChoices -}}
 {{/* Derived: any desktop app selected turns on desktop-only externals/configs. */}}
 {{- $desktop := or (gt (len $distroApps) 0) (gt (len $flatpaks) 0) -}}
-{{- $tailscale := promptBoolOnce . "tailscale" "Join a Tailscale network on setup (runs `sudo tailscale up`)?" false -}}
+{{- $tailscale := promptBoolOnce . "tailscale" "Connect this machine to Tailscale now (installs Tailscale and runs `sudo tailscale up`)?" false -}}
+{{/* Curated cross-distro network/security CLI tools; package lists live in
+     .chezmoidata.yaml under packages.netTools (per-family). */}}
+{{- $netTools := promptBoolOnce . "netTools" "Install common network/security CLI tools (nmap, dig, nslookup, netcat, tcpdump, mtr, whois, ...)?" true -}}
 
 sourceDir = "{{ .chezmoi.homeDir }}/.sauce"
 
@@ -27,5 +36,7 @@ sourceDir = "{{ .chezmoi.homeDir }}/.sauce"
     githubUser = {{ $githubUser | quote }}
     distroApps = {{ $distroApps | toJson }}
     flatpaks = {{ $flatpaks | toJson }}
+    tools = {{ $tools | toJson }}
     desktop = {{ $desktop }}
     tailscale = {{ $tailscale }}
+    netTools = {{ $netTools }}

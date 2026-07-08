@@ -1,12 +1,4 @@
 #!/usr/bin/env bash
-# One-time setup steps for ~/.sauce.
-#
-# Invoked two ways:
-#   1. During `chezmoi apply` by the home/.chezmoiscripts/run_once_* wrappers, which
-#      pass the relevant chezmoi data as env vars (so e.g. base-packages works before
-#      jq is installed, and no nested `chezmoi` call happens mid-apply).
-#   2. Manually via the generated `setup` alias (`setup`, `setup base-packages`, ...),
-#      falling back to `chezmoi data` for any value the env doesn't provide.
 
 set -uo pipefail
 

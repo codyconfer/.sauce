@@ -154,6 +154,33 @@ onchange_flatpaks() {
     log_done "Flatpaks installed."
 }
 
+onchange_net_tools() {
+    local -a pkgs
+    if [ -n "${NET_TOOLS+x}" ]; then
+        # Apply path: the wrapper only sets NET_TOOLS when the netTools prompt is on.
+        read -ra pkgs <<<"${NET_TOOLS:-}"
+    else
+        # Manual path: honor the bool, then resolve the per-family list from data.
+        [ "$(_data '.netTools')" = true ] || { log_info "netTools=false — skipping."; return 0; }
+        local family
+        family="${FAMILY:-$(detect_family)}"
+        mapfile -t pkgs < <(_data --arg f "$family" '.packages.netTools.common + (.packages.netTools[$f] // []) | .[]')
+    fi
+
+    if [ "${#pkgs[@]}" -eq 0 ]; then
+        log_info "no network tools to install — skipping."
+        return 0
+    fi
+
+    log_install "Installing network/security tools (best-effort): ${pkgs[*]}"
+    pkg_refresh || true
+    local p
+    for p in "${pkgs[@]}"; do
+        install_pkgs "$p" || log_warn "skipped (unavailable): $p"
+    done
+    log_done "Network tools installed."
+}
+
 onchange_nvim_bootstrap() {
     if [ "${SKIP_NVIM_BOOTSTRAP:-0}" = "1" ]; then
         log_info "SKIP_NVIM_BOOTSTRAP=1 — skipping nvim plugin/server sync."
@@ -180,10 +207,12 @@ onchange_nvim_bootstrap() {
 case "${1:-all}" in
     distro-apps)    onchange_distro_apps ;;
     flatpaks)       onchange_flatpaks ;;
+    net-tools)      onchange_net_tools ;;
     nvim-bootstrap) onchange_nvim_bootstrap ;;
     all)
         onchange_distro_apps
         onchange_flatpaks
+        onchange_net_tools
         onchange_nvim_bootstrap
         ;;
     *) log_error "unknown onchange step: ${1:-}"; exit 2 ;;

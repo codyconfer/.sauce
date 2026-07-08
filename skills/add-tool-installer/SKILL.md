@@ -72,6 +72,12 @@ Resolve a "latest" URL with the GitHub latest-download redirect
 / ranging over `.Assets`, or `{{ output "curl" "-fsSL" "<version-url>" | trim }}`.
 Gate GUI apps behind `{{ if .desktop }}`.
 
+Then make the tool opt-in-able: wrap its table in
+`{{- if has "<key>" (index . "tools" | default (list)) }} … {{- end }}` (put any per-tool
+`output`/version lookup *inside* the `if` so it's skipped when deselected) and add
+`<key>` to the `$toolChoices` list in `home/.chezmoi.toml.tmpl` (used as both the
+choices and the defaults). The `<key>` is the external's table key.
+
 ## Path C — sudo / vendor installer / self-updating tool
 
 Write `scripts/update-<tool>.sh`, following the existing pattern (model after
@@ -79,6 +85,12 @@ Write `scripts/update-<tool>.sh`, following the existing pattern (model after
 `/usr/local`, runs a vendor `curl | sh` installer, or self-updates. These run once
 at setup (via `run_once_after_70-run-updaters`) and any time after via the alias
 matching the filename or `update-all`.
+
+Then add `<tool>` (the `update-<tool>.sh` suffix) to the `$toolChoices` list in
+`home/.chezmoi.toml.tmpl` — `run_update_scripts` (`scripts/lib/runner.sh`) only runs
+an `update-*.sh` whose suffix is in that `tools` selection. If the tool drops a GUI
+`.desktop` launcher, also gate the launcher on its key in `home/.chezmoiignore`
+(see cursor/obsidian/lmstudio).
 
 ```bash
 #! /bin/bash

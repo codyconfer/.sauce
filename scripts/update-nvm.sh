@@ -16,7 +16,7 @@ fi
 log_found "Latest version found: $TAG"
 
 log_download "Running the nvm install script ($TAG)..."
-fetch "https://raw.githubusercontent.com/$REPO/$TAG/install.sh" | bash
+fetch "https://raw.githubusercontent.com/$REPO/$TAG/install.sh" | PROFILE=/dev/null bash
 
 log_done
 log_hint "Restart your shell to load nvm (NVM_DIR is set in your rc files)."

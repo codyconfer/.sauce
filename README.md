@@ -21,11 +21,19 @@ declared apps/flatpaks, downloads the CLI tools, runs the self-updating tool
 installers once, bootstraps Neovim, and sets zsh as your login shell. Each step is
 idempotent.
 
-On first `init` you're prompted for a GitHub username, then pick from two
-multi-select lists — which distro desktop apps (Firefox, Steam, Sway, fish, Wine, QEMU) and
-which flatpaks (Slack, Discord, Signal, EasyEffects, OBS, Bitwarden, Zen) to
-install — and whether to bring up Tailscale. Answers are saved to
-`~/.config/chezmoi/chezmoi.toml`; re-run `chezmoi init` to change the selections.
+On first `init` you're prompted for a GitHub username, then pick from three
+multi-select lists — which distro desktop apps (Firefox, Steam, Sway, fish, Wine, QEMU),
+which flatpaks (Slack, Discord, Signal, EasyEffects, OBS, Bitwarden, Zen), and which
+dev tools (go, docker, gcloud, cursor, k9s, kubectl, … — every `update-*.sh` and
+download-only external) to install — and whether to bring up Tailscale. Everything
+defaults to selected, so accepting the defaults installs the full set. Answers are
+saved to `~/.config/chezmoi/chezmoi.toml`; re-run `chezmoi init` to change the
+selections.
+
+> **Upgrading an existing install:** the dev-tools prompt (`tools`) is new. Because
+> it only prompts once, run `chezmoi init` (accept the defaults) after pulling this
+> change so the selection is recorded — otherwise a bare `chezmoi apply` treats it as
+> "none selected" and skips the externals/launchers.
 
 ## How it's organized
 
@@ -39,7 +47,7 @@ own directories aren't mistaken for things to deploy.
   home/
     .chezmoi.toml.tmpl                # generates ~/.config/chezmoi/chezmoi.toml (family, prompts)
     .chezmoidata.yaml                 # package lists (essential/extras, sway, flatpaks)
-    .chezmoiexternal.toml.tmpl        # download-only tools (neovim, k9s, kubectl, cloudflared, obsidian, lmstudio)
+    .chezmoiexternal.toml.tmpl        # download-only tools (none currently; see skills/add-tool-installer Path B)
     .chezmoiignore                    # per-OS / per-flag exclusions
     dot_zshrc  dot_bashrc             # → ~/.zshrc, ~/.bashrc
     dot_config/
@@ -85,15 +93,22 @@ whenever their rendered content changes (e.g. you edit a package list).
 Two mechanisms, by tool type:
 
 - **Declarative externals** (`home/.chezmoiexternal.toml.tmpl`) — tools that are
-  just a downloaded binary/tarball/AppImage into a user directory (neovim, k9s,
-  kubectl, cloudflared, obsidian, lmstudio). chezmoi re-downloads each when its
-  `refreshPeriod` lapses, or on `chezmoi apply --refresh-externals`.
+  just a downloaded binary/tarball/AppImage into a user directory. chezmoi
+  re-downloads each when its `refreshPeriod` lapses, or on
+  `chezmoi apply --refresh-externals`. None are currently defined; see
+  `skills/add-tool-installer` (Path B) to add one.
 - **`scripts/update-*.sh`** — tools that need `sudo`, install into `/usr/local`,
-  run a vendor `curl | sh` installer, or self-update (go, dotnet, gcloud, aws,
-  pyenv, poetry, zed, opencode, gcx, pi, nvm, wrangler, yarn, azure-cli, vscode,
-  docker, jetbrains-toolbox, zsh-plugins, loglit). Run once at setup, then any time via
-  the alias matching the filename (e.g. `update-go`) or `update-all` for all of
+  run a vendor `curl | sh` installer, self-update, or are a plain binary download
+  (go, dotnet, gcloud, aws, pyenv, poetry, zed, opencode, claude-code, codex, gcx,
+  pi, nvm, wrangler, yarn, azure-cli, vscode, docker, jetbrains-toolbox,
+  zsh-plugins, loglit, k9s, kubectl, cloudflared). Run once at setup, then any time
+  via the alias matching the filename (e.g. `update-go`) or `update-all` for all of
   them.
+
+Both mechanisms are gated by the `tools` init-prompt selection: an external is only
+downloaded when its key is selected, and `run_update_scripts` only runs an
+`update-*.sh` whose suffix is selected (a manual `update-all` reads the selection
+from `chezmoi data`; running `update-go` by hand still works regardless).
 
 Distro packages and flatpaks are kept current by the system: the `update` alias
 runs `apt upgrade` / `pacman -Syu` / `dnf upgrade` plus `flatpak update`.

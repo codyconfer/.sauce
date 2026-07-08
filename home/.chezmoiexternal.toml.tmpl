@@ -1,29 +1,10 @@
-# Download-only tools — declarative replacements for the old scripts/update-*.sh
-# that just fetched a binary/tarball/AppImage into a user directory. chezmoi
-# re-downloads each when its refreshPeriod lapses (or on `chezmoi apply --refresh-externals`).
+# Download-only tools (chezmoi externals) — a binary/tarball/AppImage fetched straight
+# into a user directory and re-downloaded when its `refreshPeriod` lapses (or on
+# `chezmoi apply --refresh-externals`). Use this for tools that need no sudo, no vendor
+# installer, and no version logic; anything else ships as a scripts/update-*.sh installer.
 #
-# Tools that need sudo / install into /usr/local / run a vendor installer stay as
-# scripts/update-*.sh (see scripts/update-all.sh).
+# None are currently defined — k9s, kubectl and cloudflared moved to scripts/update-*.sh.
+# To add one, define a table gated on the `tools` selection (has "<key>" $tools) and add
+# the key to $toolChoices in .chezmoi.toml.tmpl. See skills/add-tool-installer, Path B.
 
-# --- k9s: single binary extracted from the release tarball.
-[".local/bin/k9s"]
-    type = "archive-file"
-    url = "https://github.com/derailed/k9s/releases/latest/download/k9s_Linux_amd64.tar.gz"
-    path = "k9s"
-    executable = true
-    refreshPeriod = "168h"
-
-# --- cloudflared: latest release binary (GitHub latest-download redirect).
-[".local/bin/cloudflared"]
-    type = "file"
-    url = "https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64"
-    executable = true
-    refreshPeriod = "168h"
-
-# --- kubectl: latest stable, resolved from the k8s release channel.
-{{- $kubectl := output "curl" "-fsSL" "https://dl.k8s.io/release/stable.txt" | trim }}
-[".local/bin/kubectl"]
-    type = "file"
-    url = {{ printf "https://dl.k8s.io/release/%s/bin/linux/amd64/kubectl" $kubectl | quote }}
-    executable = true
-    refreshPeriod = "168h"
+{{- $tools := (index . "tools") | default (list) }}

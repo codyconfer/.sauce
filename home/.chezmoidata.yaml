@@ -1,22 +1,19 @@
-# Declarative inputs for the run scripts in .chezmoiscripts/.
-# Package names mirror scripts/install-base.sh; flatpak ids mirror the old
-# install-<app>.sh flatpak installers.
-
 packages:
-  # Hard-fail prerequisites. `common` installs everywhere; per-family lists are
-  # appended for that distro only.
   essential:
     common: [git, curl, wget, unzip, jq, figlet, zsh, neovim, gcc, make]
     debian: [xz-utils, build-essential]
     fedora: [xz]
     arch: [xz, base-devel]
-  # Best-effort extras (skipped individually if unavailable). Arch names pipx
-  # differently; everything else matches.
   extras:
-    common: [gh, rustup, pipx, htop, btop, iftop, iotop, s-tui, wavemon]
+    common:
+      [gh, rustup, pipx, htop, btop, iftop, iotop, s-tui, wavemon, gnuradio]
 
-# Sway (Wayland tiling WM) + a minimal Wayland-native companion stack. Package
-# names are identical across families except mako (Debian ships mako-notifier).
+  netTools:
+    common: [nmap, traceroute, mtr, tcpdump, whois, socat, net-tools]
+    debian: [dnsutils, netcat-openbsd, iputils-ping]
+    fedora: [bind-utils, nmap-ncat, iputils]
+    arch: [bind, openbsd-netcat, iputils]
+
 sway:
   common:
     - sway
@@ -33,10 +30,6 @@ sway:
     - brightnessctl
     - xdg-desktop-portal-wlr
 
-# Flathub desktop apps installed (and kept current) via `flatpak --user`. This is
-# the catalog (choice name -> Flathub app id); which of these actually install is
-# the `flatpaks` selection list prompted in .chezmoi.toml.tmpl. Keep the keys here
-# in sync with that prompt's choice list.
 flatpakCatalog:
   slack: com.slack.Slack
   discord: com.discordapp.Discord
@@ -47,3 +40,7 @@ flatpakCatalog:
   zen: app.zen_browser.zen
   lutris: net.lutris.Lutris
   retroarch: org.libretro.RetroArch
+  zoom: us.zoom.Zoom
+  1password: com.onepassword.OnePassword
+  chirp: com.chirpmyradio.chirp
+  sonic-pi: net.sonic_pi.SonicPi

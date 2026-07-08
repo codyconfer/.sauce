@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+
+set -uo pipefail
+{{- if (index . "netTools" | default false) }}
+FAMILY="{{ .family }}" \
+NET_TOOLS="{{ .packages.netTools.common | join " " }}{{ with (index .packages.netTools .family) }} {{ . | join " " }}{{ end }}" \
+    bash "$HOME/.sauce/scripts/onchange.sh" net-tools
+{{- end }}

@@ -26,11 +26,44 @@ run_step() {
     fi
 }
 
+# Resolve the selected tool set (chezmoi's `tools` prompt). Prints one tool per line,
+# or nothing when the selection can't be determined (caller then runs everything).
+#   1. UPDATE_TOOLS env (set — even to "") by the run-updaters wrapper at apply time.
+#   2. `chezmoi data` .tools fallback for manual `update-all` runs.
+_selected_tools() {
+    if [ -n "${UPDATE_TOOLS+x}" ]; then
+        printf '%s\n' ${UPDATE_TOOLS:-}
+        return 0
+    fi
+    command -v chezmoi >/dev/null 2>&1 && command -v jq >/dev/null 2>&1 || return 0
+    chezmoi data --format json 2>/dev/null | jq -r '.tools[]?' 2>/dev/null || true
+}
+
 run_update_scripts() {
-    local dir="${1:-$SCRIPT_DIR}" script name
+    local dir="${1:-$SCRIPT_DIR}" script name tool
+    # Only filter when a selection is resolvable; otherwise run every updater
+    # (backward-compatible with installs that predate the `tools` prompt).
+    local filter=0
+    local -A selected=()
+    if [ -n "${UPDATE_TOOLS+x}" ]; then
+        filter=1
+        for tool in $(_selected_tools); do selected["$tool"]=1; done
+    else
+        local -a sel
+        mapfile -t sel < <(_selected_tools)
+        if [ "${#sel[@]}" -gt 0 ]; then
+            filter=1
+            for tool in "${sel[@]}"; do selected["$tool"]=1; done
+        fi
+    fi
+
     for script in "$dir"/update-*.sh; do
         name=$(basename "$script")
         [ "$name" = "update-all.sh" ] && continue
+        if [ "$filter" -eq 1 ]; then
+            tool="${name#update-}"; tool="${tool%.sh}"
+            [ -n "${selected[$tool]:-}" ] || continue
+        fi
         run_step "$name" bash "$script"
     done
 }
