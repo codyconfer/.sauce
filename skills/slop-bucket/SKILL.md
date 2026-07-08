@@ -1,22 +1,32 @@
 ---
 name: slop-bucket
-description: Two-tier catalog for throwaway helpers you write for yourself — INCLUDING ad-hoc inline shell one-liners (curl/HTTP probes, git/jq/node one-liners, syntax/type checks, log greps), not just saved scripts. If you ran a shell command to answer "did this work / what does this look like", it is slop — capture it on FIRST use, proactively and without being asked: auto-save a generalized form to `.local/agent-slop-bucket.md` (tracks an inline `Accessed` count) and reuse cataloged helpers instead of rewriting one-offs. Every 3rd access — or when the user asks, often indirectly ("slop-bucket it", "toss it in the bucket", "another one for the slop pile", "great, more slop") — offer to promote an entry into the curated `.local/slop-bucket.md`, and from there export to a real script or the repo. If a slop/bucket mention is ambiguous, ask "is this one for the slop bucket, dave?". Agent-bucket writes are automatic; promotion is always user-gated.
+description: Two-tier catalog for throwaway helpers you write for yourself — INCLUDING ad-hoc inline shell one-liners (curl/HTTP probes, git/jq/node one-liners, syntax/type checks, log greps), not just saved scripts. If you ran a shell command to answer "did this work / what does this look like", it is slop — capture it on FIRST use, proactively and without being asked: auto-save a generalized form to `.local/.agents/slop-bucket.md` (tracks an inline `Accessed` count) and reuse cataloged helpers instead of rewriting one-offs. Once an entry is accessed more than once, automatically promote it into the curated `.local/slop-bucket.md` — no asking. Export from there to a real script only when the user asks. Run this workflow on every prompt — capture, reuse, and auto-promote proactively — until the user says to stop. Agent-bucket writes and promotion are automatic; only export is user-gated.
 ---
 
 # Slop bucket
 
 Helpers you write for *yourself* — inspection one-liners, transforms, scratch `git`/`curl`/`jq` — are normally written once, hardcoded, thrown away, and rewritten next session. The slop bucket catalogs them for reuse across turns and sessions.
 
+**Run this on every prompt** — capture new slop, reuse cataloged helpers, and auto-promote earners — proactively and without being asked, until the user tells you to stop.
+
+**When you finish working a problem, print the bucket.** Once you've wrapped up the task at hand, output a simple markdown table of the entries in `.local/slop-bucket.md`:
+
+| Name | Summary | Accessed |
+| --- | --- | --- |
+| json-probe | curl a URL and pretty-print the JSON body | 2 |
+
+One row per curated entry, using its one-line description as the summary and its `Accessed` count. Skip the table if the curated bucket is empty.
+
 ## Two buckets, one funnel
 
-    helper you write  →  .local/agent-slop-bucket.md   (auto — never ask)
-                      →  .local/slop-bucket.md         (tier 1: ask, every 3rd access)
-                      →  real script / repo            (tier 2: ask, Path A/B)
+    helper you write  →  .local/.agents/slop-bucket.md   (auto — never ask)
+                      →  .local/slop-bucket.md           (auto — after >1 access)
+                      →  real script                     (on request)
 
-- **`.local/agent-slop-bucket.md`** — your scratchpad. Auto-save every helper here; terse and rough is fine.
-- **`.local/slop-bucket.md`** — curated, human-readable. Entries arrive only via user-confirmed promotion.
+- **`.local/.agents/slop-bucket.md`** — your scratchpad. Auto-save every helper here; terse and rough is fine.
+- **`.local/slop-bucket.md`** — curated, human-readable. Entries arrive automatically once they've earned it.
 
-**Only the agent-bucket write is automatic. Every promotion needs the user's yes.**
+**Agent-bucket writes and promotion are automatic. Only export needs the user's yes.**
 
 ## What counts as slop
 
@@ -30,15 +40,9 @@ Capture on **first use**, mid-task, without being asked — generalizing as you 
 
 ## Workflow
 
-1. **Before writing a helper**, read `.local/agent-slop-bucket.md` (if it exists). Reuse or extend a close-enough entry; only add a new one when nothing fits.
+1. **Before writing a helper**, read `.local/.agents/slop-bucket.md` (if it exists). Reuse or extend a close-enough entry; only add a new one when nothing fits.
 2. **On each reuse**, bump that entry's `Accessed: N` and save. New entries start at `Accessed: 0`; the creating write doesn't count.
-3. **When N lands on a multiple of 3**, ask to promote — e.g. "`json-diff` has earned its keep (3×) — promote it to the slop bucket?" Declined → keep counting, ask again at the next multiple.
-
-Promotion asks are often **sarcastic or indirect**: "another one for the slop pile", "great, more slop", "toss it in the bucket", "bucket it", any wry slop/bucket/pile reference aimed at a helper. If it could just be idle grumbling, ask exactly:
-
-> is this one for the slop bucket, dave?
-
-Never guess and silently promote.
+3. **When `Accessed` passes 1** (its second access, i.e. accessed more than once), **automatically** promote it into `.local/slop-bucket.md`. Don't ask — just do it, cleaning it up per *Generalize before storing* on the way in.
 
 ## Generalize before storing
 
@@ -74,7 +78,7 @@ Editing rules: **update in place** (preserve `Accessed` across edits); **merge d
 
 ## Tier 1 — promote into `.local/slop-bucket.md`
 
-Triggered by a 3rd-access ask or a user request. On a yes:
+**Triggered automatically when an entry's `Accessed` count exceeds 1 (its second access):**
 
 1. Clean it up per *Generalize before storing*; add the one-line description and usage example.
 2. Add it to `.local/slop-bucket.md`, **carrying over its `Accessed` count**.
@@ -88,9 +92,7 @@ Triggered by a 3rd-access ask or a user request. On a yes:
 
 **Docs written on export are brief and visual:** mermaid for flow/structure, arrows for pipelines (`stdin → jq → table`), bullets for args/flags — minimal prose, scannable in seconds.
 
-### Path A — export to a file
-
-For general-purpose helpers:
+**Export to a file:**
 
 1. Confirm the name (suggest the entry's slug) and location (default `~/.local/bin/`).
 2. Ask which format:
@@ -98,19 +100,9 @@ For general-purpose helpers:
    - **Markdown** — `<dir>/<name>.md`, concise notes interleaved between the code blocks.
 3. Report the path and how to run or read it.
 
-### Path B — wire into this chezmoi repo
-
-For helpers that belong to the dotfiles repo, use the repo's own skills instead of dropping a loose script:
-
-- Tool install/update, distro package, or download → **`add-tool-installer`**
-- Alias, function, PATH/env in rc files → **`add-shell-fragment`**
-- Distro desktop app → **`add-distro-app`**; setup step → **`add-chezmoiscript-step`**
-
-Then run **`validate-scripts`** and, for wiring changes, **`code-review`**.
-
-After export, remove the entry from `.local/slop-bucket.md` unless the user wants it kept. Never delete an entry the user hasn't agreed to promote.
+After export, remove the entry from `.local/slop-bucket.md` unless the user wants it kept. Never delete an entry the user hasn't agreed to export.
 
 ## Housekeeping
 
-- Both files live under `.local/` at the working-directory root; create the directory on first save.
-- In a git repo, ensure `.gitignore` contains a `.local/` line (check before adding; don't duplicate). Outside a repo, just create the files.
+- The agent scratchpad lives at `.local/.agents/slop-bucket.md` and the curated bucket at `.local/slop-bucket.md`, both under `.local/` at the working-directory root; create the `.local/` and `.local/.agents/` directories on first save.
+- In a git repo, ensure `.gitignore` contains a `.local/` line (check before adding; don't duplicate) — it covers the nested `.agents/` dir too. Outside a repo, just create the files.
