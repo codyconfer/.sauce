@@ -1,23 +1,42 @@
 ---
 name: slop-bucket
-description: Save the throwaway helper scripts you write for yourself as generic, reusable tools in a `.slop-bucket.md` catalog at the working-directory root, and reuse them later instead of rewriting one-offs. Use when the user asks — directly ("add this to the slop bucket", "check the slop bucket", "slop-bucket it") OR sarcastically/indirectly ("another one for the slop pile", "toss it in the bucket", "into the slop it goes", "great, more slop"). If a mention of slop/the bucket is ambiguous, ask "is this one for the slop bucket, dave?" before acting. Do NOT apply automatically to every helper script.
+description: Two-tier catalog for the throwaway helper scripts you write for yourself. Auto-save every helper to a private `.local/agent-slop-bucket.md` scratchpad (tracks an `Accessed` count inline); reuse cataloged helpers instead of rewriting one-offs. On every 3rd access — or when the user asks — offer to promote an entry into the curated, human-readable `.local/slop-bucket.md`, and from there export it to a real script or wire it into the repo. Promotion is user-gated and the ask is often indirect ("slop-bucket it", "check the slop bucket", "another one for the slop pile", "toss it in the bucket", "great, more slop"); if a slop/bucket mention is ambiguous, ask "is this one for the slop bucket, dave?". Writing to .local/agent-slop-bucket.md is automatic; do NOT auto-promote into .local/slop-bucket.md.
 ---
 
 # Slop bucket
 
-A **slop bucket** is a single `.slop-bucket.md` file at the root of the working
-directory that collects the little helper scripts you write for *yourself* while
+A **slop bucket** collects the little helper scripts you write for *yourself* while
 working a task — inspection one-liners, data transforms, log parsers, repetitive
 `git`/`curl`/`jq` invocations, scratch automation. Left alone these are disposable:
 written once, hardcoded to the moment, thrown away, then rewritten from scratch the
 next time. The slop bucket turns them into a growing catalog of generic tools you can
 find and reuse across turns and sessions.
 
-**This skill is opt-in.** Only engage it when the user asks. Do not silently rewrite
-or catalog every helper you happen to write.
+## Two buckets
 
-Read the request generously — the ask is often **sarcastic or indirect**, not a clean
-command. Treat these as invocations too:
+There are **two** files, both kept under `.local/` at the working-directory root:
+
+- **`.local/agent-slop-bucket.md`** — *your* scratchpad. **Automatically save every helper
+  script you write for yourself here — no need to ask.** It doesn't have to be
+  human-readable; it's a terse working store. It still tracks an `Accessed: N` count per
+  entry.
+- **`.local/slop-bucket.md`** — the **curated, human-readable** catalog. Entries land here
+  only by being **promoted** from the agent bucket, through a user-confirmed gate. This
+  is the file a human reads.
+
+The flow is a two-tier funnel — each promotion tier is user-gated:
+
+    helper you write  →  .local/agent-slop-bucket.md   (auto, no ask)
+                      →  .local/slop-bucket.md         (promote: ask, every 3rd access)
+                      →  real script / repo            (export: ask, Path A/B)
+
+**Writing to `.local/agent-slop-bucket.md` is automatic and needs no invocation.** Everything
+below about being *opt-in* and *asking first* governs **promotion** — graduating slop
+from the agent bucket into `.local/slop-bucket.md`, and out of `.local/slop-bucket.md` into a real
+home. Never promote without the user's say-so.
+
+Read a promotion request generously — the ask is often **sarcastic or indirect**, not a
+clean command. Treat these as promotion invocations too:
 
 - "another one for the slop pile", "great, more slop", "add it to the pile"
 - "toss it in the bucket", "into the slop it goes", "bucket it"
@@ -25,31 +44,37 @@ command. Treat these as invocations too:
   wrote or are about to write.
 
 **When unsure, ask.** If a mention of slop / the bucket / the pile is ambiguous — could
-be idle grumbling rather than a request to catalog the script — ask before doing
+be idle grumbling rather than a request to promote a script — ask before promoting
 anything, using exactly this line:
 
 > is this one for the slop bucket, dave?
 
-Don't guess and silently write the file.
+Don't guess and silently promote into `.local/slop-bucket.md`.
 
-## On invocation, check the bucket first
+## Before writing a helper, check the agent bucket
 
-Before writing a new helper, read `.slop-bucket.md` (if it exists) and look for an
-entry that already does the job or is close enough to adapt. Reuse or extend an
-existing script rather than adding a near-duplicate. Only add a new entry when nothing
-there fits.
+Before writing a new helper, read `.local/agent-slop-bucket.md` (if it exists) and look for an
+entry that already does the job or is close enough to adapt. Reuse or extend an existing
+script rather than adding a near-duplicate; only add a new entry when nothing fits. New
+helpers you write for yourself go into `.local/agent-slop-bucket.md` **automatically**.
 
 **When you reuse an entry, bump its access count.** Each entry carries an `Accessed: N`
 marker (see Storage format). Every time you run or adapt that helper to do real work,
 increment `N` by one and save the file. A new entry starts at `Accessed: 0`; the write
-that *creates* it does not count as an access. The count is how the bucket surfaces
-which slop has earned graduation into a real script or into this repo (see Promoting a
-helper).
+that *creates* it does not count as an access.
+
+**Every 3rd access, offer to promote.** Whenever bumping a count in
+`.local/agent-slop-bucket.md` lands it on a multiple of 3 (`Accessed: 3`, `6`, `9`, …), the
+script has proven itself — **ask the user** whether to promote it into the curated
+`.local/slop-bucket.md` (see "Promoting from the agent bucket"). The 3rd-access ask *is* the
+gate; never promote unprompted. If the user declines, keep counting and ask again at the
+next multiple of 3.
 
 ## Generalize before storing
 
-A script only earns a place in the bucket if it is reusable. Before saving, lift it out
-of the one-off:
+The agent bucket can hold rough, task-shaped scratch. But a script only earns a place in
+the **curated** `.local/slop-bucket.md` if it's reusable — so before promoting (and, ideally,
+as you write it), lift it out of the one-off:
 
 - **Parameterize inputs.** Take paths, hosts, names, and values as arguments, flags, or
   environment variables — never hardcode the specifics of the current task.
@@ -65,7 +90,7 @@ of the one-off:
 
 ## Storage format
 
-`.slop-bucket.md` is a flat catalog — one section per script:
+Both buckets are flat catalogs — one section per script, in the same shape:
 
     ## <script-name>
 
@@ -81,9 +106,12 @@ of the one-off:
 
     Usage: `<script-name> <args...>` — plus a concrete example.
 
-The `Accessed: <N>` line is required and lives directly under the heading. It starts at
-`0` when the entry is created and is incremented each time the helper is reused (see
-"On invocation" above).
+`.local/agent-slop-bucket.md` uses this same layout but may be **terser** — it's your
+scratchpad, so the one-line description and usage example are optional and the code can
+stay rough. `.local/slop-bucket.md` entries should read cleanly for a human. Both files require
+the `Accessed: <N>` line directly under the heading; it starts at `0` when the entry is
+created and increments on each reuse (see "Before writing a helper, check the agent
+bucket" above).
 
 Rules for editing the file:
 
@@ -94,13 +122,34 @@ Rules for editing the file:
 - **Keep it a catalog, not a changelog.** No dated entries or history; each section is
   the current best version of that tool.
 
-## Promoting a helper out of the bucket
+## Promoting from the agent bucket to `.local/slop-bucket.md`
 
-The bucket is a staging area, not a permanent home. A helper with a high `Accessed`
-count is slop that has proven itself and should graduate. When the user asks to
-"review the bucket", "export/graduate a helper", or "promote the slop" — or when you
-notice a frequently-accessed entry — offer the two paths below. **Always confirm the
-destination and name with the user before writing anything outside `.slop-bucket.md`.**
+This is **tier 1** of promotion — graduating proven scratch into the curated catalog. Do
+it when a `.local/agent-slop-bucket.md` entry hits a **3rd access** (`Accessed: 3`, `6`, `9`,
+…) or when the user asks (including the indirect phrasings above).
+
+**It is user-gated.** Never move an entry into `.local/slop-bucket.md` without confirmation. On
+the 3rd-access trigger, ask something like: "`json-diff` has earned its keep (3×) —
+promote it to the slop bucket?" If the user declines, leave it in the agent bucket and
+ask again at the next multiple of 3.
+
+On a yes:
+
+1. **Clean it up for humans** — apply *Generalize before storing*: parameterize inputs,
+   add the one-line description and a concrete usage example.
+2. **Add it to `.local/slop-bucket.md`** as a new section, **carrying over its `Accessed`
+   count** so the tier-2 export threshold still reflects real usage.
+3. **Remove it from `.local/agent-slop-bucket.md`** — it now lives in the curated catalog —
+   unless the user wants to keep the scratch copy.
+
+## Promoting out of `.local/slop-bucket.md`
+
+This is **tier 2** — graduating a curated helper into a real home. The curated bucket is
+still a staging area, not a permanent home. A helper with a high `Accessed` count is slop
+that has proven itself and should graduate. When the user asks to "review the bucket",
+"export/graduate a helper", or "promote the slop" — or when you notice a
+frequently-accessed entry — offer the two paths below. **Always confirm the destination
+and name with the user before writing anything outside `.local/slop-bucket.md`.**
 
 ### Reviewing
 
@@ -114,16 +163,31 @@ has earned promotion (e.g. "`git-prune-merged` — accessed 7×; `json-diff` —
 scope before you export anything. If the bucket holds three or fewer entries, just offer
 them all.
 
-### Path A — export to a standalone script file
+### Document concisely on export
+
+Any documentation you write while exporting — a `.md` doc, a source-file header, or
+notes for a repo wiring — must be **brief and scannable**. Lead with visuals, not prose:
+
+- **Mermaid** diagrams for flow/structure.
+- **Arrows** for pipelines and data flow (e.g. `stdin → jq filter → sorted table`).
+- **Bulleted lists** for args, flags, and steps.
+- Keep prose minimal — the whole doc should scan in seconds.
+
+### Path A — export to a file
 
 For a general-purpose helper not specific to this repo:
 
 1. **Prompt for a name** — suggest the entry's slug (`git-prune-merged`), but ask the
    user to confirm or override, and ask where it should live (default `~/.local/bin/`
    so it lands on `PATH`).
-2. Write the code block from the entry to `<dir>/<name>`, keep the shebang, and
-   `chmod +x` it.
-3. Report the path and how to run it.
+2. **Ask which format** to export:
+   - **Source file** (default) — write the code block to `<dir>/<name>`, keep the
+     shebang, and `chmod +x` it. **Ask whether inline comments are wanted:** if yes,
+     add brief comments on the non-obvious steps; if no, export the code clean.
+   - **Markdown (`.md`)** — write `<dir>/<name>.md` as a documented walkthrough:
+     concise explanations (mermaid / arrows / bullets, per the brevity note above)
+     sitting *between* the fenced code blocks, rather than one raw script.
+3. Report the path and how to run or read it.
 
 ### Path B — promote into chezmoi / this repo
 
@@ -137,16 +201,25 @@ the repo's own skills:
 
 Follow the chosen skill to place the code correctly (source `scripts/lib/common.sh`
 helpers, add the `tools`/`distroApps` prompt entry, gate PATH, etc.), then run
-**`validate-scripts`** and, for wiring changes, **`code-review`**.
+**`validate-scripts`** and, for wiring changes, **`code-review`**. Keep any README or
+comments you add brief and visual (see the brevity note above).
 
 ### After promoting
 
 Once a helper is exported or wired into the repo, **remove its entry from
-`.slop-bucket.md`** (it now lives somewhere real) — unless the user wants to keep the
+`.local/slop-bucket.md`** (it now lives somewhere real) — unless the user wants to keep the
 scratch copy around. Never delete an entry the user hasn't agreed to promote.
 
 ## Housekeeping
 
-- Create `.slop-bucket.md` at the working-directory root if it doesn't exist yet.
-- Whether to commit `.slop-bucket.md` or add it to `.gitignore` is the user's call —
-  don't decide it for them or enforce either way unless asked.
+- Both buckets live under `.local/` at the working-directory root:
+  `.local/agent-slop-bucket.md` (created on the first auto-save) and
+  `.local/slop-bucket.md` (created on the first promotion). Create the `.local/`
+  directory if it doesn't exist yet.
+- **In a git repo, keep `.local/` out of version control.** If it isn't already
+  git-ignored, create or append to `.gitignore` at the repo root:
+
+      .local/
+
+  (Check whether the line is present before adding it; don't duplicate entries.)
+- Outside a git repo there's nothing to ignore — just create the files.
