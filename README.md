@@ -1,7 +1,19 @@
 # .sauce
 
-Linux dotfiles + machine setup (Debian, Fedora, and Arch families), managed with
-[chezmoi](https://chezmoi.io).
+Cross-platform dotfiles + machine setup for Linux (Debian, Fedora, and Arch families),
+macOS, and Windows, managed with [chezmoi](https://chezmoi.io).
+
+On macOS, package management routes through [Homebrew](https://brew.sh) (installed
+automatically if missing): base packages and CLI tools become `brew` formulae, desktop
+apps become `brew --cask`, and the Linux-only pieces (Sway/Wayland configs, freedesktop
+`.desktop` launchers, Flatpak, systemd/libvirt) are skipped.
+
+Windows is supported in two modes. For the full dev environment, run this inside **WSL2**
+(Ubuntu/Debian) — the entire Linux path applies, minus the GUI desktop stack, which is
+gated off automatically. For **native Windows**, a deliberately thin layer deploys the
+cross-platform config (Neovim, oh-my-posh, a PowerShell profile) and installs a selected
+set of GUI apps + CLI tools through [winget](https://learn.microsoft.com/windows/package-manager/).
+See [Windows notes](#windows-notes).
 
 ## Quick start
 
@@ -15,6 +27,16 @@ bash <(curl -fsSL https://raw.githubusercontent.com/codyconfer/.sauce/main/boots
 Already have the repo cloned? Just run `bash ~/.sauce/bootstrap.sh`, or if chezmoi
 is installed, `chezmoi init --source=~/.sauce --apply`.
 
+On **native Windows** (PowerShell), bootstrap with winget instead:
+
+```powershell
+irm https://raw.githubusercontent.com/codyconfer/.sauce/main/bootstrap.ps1 | iex
+```
+
+or, if chezmoi is already installed, `chezmoi init --apply codyconfer` (chezmoi clones the
+repo itself). Inside **WSL2** use the `bash` bootstrap above — it just works. See
+[Windows notes](#windows-notes).
+
 `chezmoi apply` (aliased to `sauce`) is safe to re-run — it installs base packages,
 authenticates GitHub, installs oh-my-posh, deploys all config files, installs the
 declared apps/flatpaks, downloads the CLI tools, runs the self-updating tool
@@ -23,10 +45,13 @@ idempotent.
 
 On first `init` you pick from three
 multi-select lists — which distro desktop apps (Firefox, Steam, Sway, fish, Wine, QEMU),
-which flatpaks (Slack, Discord, Signal, EasyEffects, OBS, Bitwarden, Zen), and which
+which flatpaks (Slack, Discord, Signal, EasyEffects, OBS, Bitwarden, Zen, …), and which
 dev tools (go, docker, gcloud, cursor, k9s, kubectl, … — every `update-*.sh` and
-download-only external) to install — and whether to bring up Tailscale. Everything
-defaults to selected, so accepting the defaults installs the full set. Answers are
+download-only external) to install — plus two yes/no questions: whether to install the
+common network/security CLI tools (nmap, dig, netcat, tcpdump, mtr, whois, …) and
+whether to bring up Tailscale. (On macOS the same selections install via Homebrew — see
+[macOS notes](#macos-notes) below.) Everything defaults to selected, so accepting the
+defaults installs the full set. Answers are
 saved to `~/.config/chezmoi/chezmoi.toml`; re-run `chezmoi init` to change the
 selections.
 
@@ -42,24 +67,26 @@ own directories aren't mistaken for things to deploy.
 
 ```
 ~/.sauce/                             # git repo + chezmoi sourceDir
-  bootstrap.sh                        # install chezmoi + clone + init --apply
+  bootstrap.sh                        # Linux/macOS/WSL: install chezmoi + clone + init --apply
+  bootstrap.ps1                       # native Windows: winget git+chezmoi + clone + init --apply
   .chezmoiroot                        # "home" — the source root
   home/
-    .chezmoi.toml.tmpl                # generates ~/.config/chezmoi/chezmoi.toml (family, prompts)
-    .chezmoidata.yaml                 # package lists (essential/extras, sway, flatpaks)
+    .chezmoi.toml.tmpl                # generates ~/.config/chezmoi/chezmoi.toml (os/family, prompts)
+    .chezmoidata.yaml                 # package lists (essential/extras, netTools, sway, flatpakCatalog, caskCatalog, winget)
     .chezmoiexternal.toml.tmpl        # download-only tools (none currently; see skills/add-tool-installer Path B)
     .chezmoiignore                    # per-OS / per-flag exclusions
+    Documents/PowerShell/Microsoft.PowerShell_profile.ps1  # → ~/Documents/PowerShell/... (native Windows)
     dot_zshrc  dot_bashrc             # → ~/.zshrc, ~/.bashrc
     dot_config/
       fish/config.fish                # → ~/.config/fish/config.fish
       oh-my-posh/sauce.toml           # → ~/.config/oh-my-posh/sauce.toml (prompt theme)
       nvim/**                         # → ~/.config/nvim (lazy.nvim setup)
       nvim/lua/sauce/generated.lua.tmpl  # LSP/parser list, detected via lookPath
-      sway/ waybar/ wofi/ mako/       # → ~/.config/* (tracked WM config)
+      sway/ waybar/ wofi/ mako/       # → ~/.config/* (tracked WM config; Linux only, ignored on macOS)
     create_dot_zshrc.local            # → ~/.zshrc.local (created once, never overwritten)
     create_dot_bashrc.local           #    "  ~/.bashrc.local
     create_dot_config/fish/user.fish  #    "  ~/.config/fish/user.fish
-    dot_local/share/applications/     # AppImage .desktop launchers (obsidian)
+    dot_local/share/applications/     # AppImage .desktop launchers (obsidian; Linux only, ignored on macOS)
     .chezmoiscripts/                  # ordered run scripts (see below)
   scripts/
     lib/{config,common,distro,runner}.sh   # shared bash helpers
@@ -79,11 +106,13 @@ written, `after_` scripts once everything is in place:
 | `run_once_before_20-github-auth` | `setup.sh` github step | once |
 | `run_once_before_30-oh-my-posh` | `setup.sh` oh-my-posh step | once |
 | `run_onchange_before_40-distro-apps` | firefox/steam/sway/fish/wine/qemu installers | on change |
+| `run_onchange_before_45-net-tools` | network/security CLI tools (opt-in via `netTools`) | on change |
 | `run_onchange_before_50-flatpaks` | flatpak `install-*.sh` | on change |
 | `run_once_after_70-run-updaters` | `setup.sh` update loop | once |
 | `run_onchange_after_80-nvim-bootstrap` | `build-nvim.sh` sync tail | on lockfile/toolchain change |
 | `run_once_after_90-chsh-zsh` | `setup.sh` chsh | once |
 | `run_once_after_95-tailscale` | `setup.sh` tailscale | once (opt-in) |
+| `run_onchange_before_40-winget.ps1` | winget GUI apps + CLI tools (native Windows only) | on change |
 
 `run_once_*` run a single time (keyed on content hash); `run_onchange_*` re-run
 whenever their rendered content changes (e.g. you edit a package list).
@@ -111,7 +140,41 @@ downloaded when its key is selected, and `run_update_scripts` only runs an
 from `chezmoi data`; running `update-go` by hand still works regardless).
 
 Distro packages and flatpaks are kept current by the system: the `update` alias
-runs `apt upgrade` / `pacman -Syu` / `dnf upgrade` plus `flatpak update`.
+runs `apt upgrade` / `pacman -Syu` / `dnf upgrade` plus `flatpak update` (on macOS it
+runs `brew update && brew upgrade && brew upgrade --cask`).
+
+### macOS notes
+
+On macOS the same `tools` selection installs via Homebrew: each Linux-only
+`update-*.sh` delegates to `brew` at the top (`scripts/lib/distro.sh` maps the tool to a
+formula or cask), so `update-<tool>` and `update-all` work the same way, and
+`update-<tool> remove` uninstalls the brew package. Cross-platform vendor installers
+(claude-code, codex, opencode, dotnet, nvm, pyenv, poetry, zed, wrangler, yarn,
+zsh-plugins, …) run their normal installer on both OSes. The `flatpaks` prompt maps to
+Homebrew casks via `caskCatalog` in `.chezmoidata.yaml`; a few Linux-only apps
+(easyeffects, lutris) and the Sway stack have no macOS equivalent and are skipped.
+
+### Windows notes
+
+Two independent chezmoi "machines" run off this one repo:
+
+- **WSL2** (Ubuntu/Debian): detected via the `microsoft` kernel marker. The full Debian
+  path applies — base packages, CLI tools, shells, oh-my-posh, Neovim, Tailscale — but the
+  GUI/desktop layer is gated off automatically (Sway/Wayland stack, distro desktop apps,
+  Flatpaks, AppImage launchers), since WSL has no display. No prompts for those appear.
+- **Native Windows**: a thin layer. chezmoi deploys the cross-platform config
+  (`~/.config/nvim`, `~/.config/oh-my-posh/sauce.toml`, and a PowerShell profile at
+  `~/Documents/PowerShell/Microsoft.PowerShell_profile.ps1`) and skips the entire bash
+  provisioning apparatus, the POSIX shells, and the desktop stack. First `init` prompts two
+  multi-select lists — GUI apps (`winApps`) and CLI/dev tools (`winTools`) — which
+  `run_onchange_before_40-winget.ps1` installs idempotently through winget. The choice→id
+  maps live under `winget:` in `.chezmoidata.yaml`.
+
+  Not everything ports: the Linux-only Flatpaks (easyeffects, lutris) and a few tools with
+  no clean winget package (chirp, sonic-pi, plus niche personal tools) are omitted, and
+  npm/pipx-only tools (wrangler, claude-code, poetry, pyenv) aren't in the winget set yet.
+  The PowerShell profile sets `XDG_CONFIG_HOME` so Neovim finds the shared `~/.config/nvim`.
+  Personal tweaks go in `~/Documents/PowerShell/profile.local.ps1` (sourced, never managed).
 
 ## Shell config & personal tweaks
 

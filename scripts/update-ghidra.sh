@@ -5,6 +5,8 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/lib/common.sh"
 
+if [ "$OS" = darwin ]; then macos_tool "${BASH_SOURCE[0]}" "$@"; exit $?; fi
+
 # Ghidra isn't in the Debian/Fedora repos; it ships as a single GitHub release zip and
 # needs a JDK 21+. We extract it under $OPT and expose a `ghidra` launcher on PATH.
 INSTALL_DIR="$OPT/ghidra"

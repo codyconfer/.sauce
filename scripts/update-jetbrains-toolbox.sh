@@ -5,6 +5,8 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/lib/common.sh"
 
+if [ "$OS" = darwin ]; then macos_tool "${BASH_SOURCE[0]}" "$@"; exit $?; fi
+
 APPDIR=$OPT/JetBrains-Toolbox
 LAUNCHER=$BIN/jetbrains-toolbox
 API="https://data.services.jetbrains.com/products/releases?code=TBA&latest=true&type=release"

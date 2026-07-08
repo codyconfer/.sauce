@@ -32,15 +32,26 @@ download_with_headers() { curl -fL -D "$3" --output "$2" "$1"; }   # URL, dest, 
 
 verify_sha256() {
     log_verify "Verifying checksum..."
-    echo "$1  $2" | sha256sum -c -
+    if command -v sha256sum >/dev/null 2>&1; then
+        echo "$1  $2" | sha256sum -c -
+    else
+        echo "$1  $2" | shasum -a 256 -c -
+    fi
 }
 
 verify_md5_etag() {
-    local etag
+    local etag actual
     etag=$(grep -i '^etag:' "$1" | tail -n1 | tr -d ' \r"' | sed 's/^[Ee][Tt][Aa][Gg]://' || true)
     if [[ "$etag" =~ ^[0-9a-f]{32}$ ]]; then
         log_verify "Verifying MD5 against server ETag..."
-        echo "$etag  $2" | md5sum -c -
+        if command -v md5sum >/dev/null 2>&1; then
+            echo "$etag  $2" | md5sum -c -
+        elif command -v md5 >/dev/null 2>&1; then
+            actual=$(md5 -q "$2")
+            [ "$actual" = "$etag" ] && log_done "$2: OK" || { log_error "$2: FAILED MD5 check"; return 1; }
+        else
+            log_warn "No md5 tool available; skipping hash check."
+        fi
     else
         log_warn "No usable checksum from server (ETag='$etag'); skipping hash check."
     fi

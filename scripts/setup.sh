@@ -101,6 +101,12 @@ setup_tailscale() {
         return 0
     fi
     if ! command -v tailscale >/dev/null 2>&1; then
+        if [ "$(uname -s)" = Darwin ]; then
+            log_download "Installing Tailscale (Homebrew cask)..."
+            install_cask tailscale || { log_warn "tailscale install failed."; return 0; }
+            log_hint "On macOS, bring up Tailscale from the menu-bar app (the 'tailscale' CLI is inside Tailscale.app)."
+            return 0
+        fi
         log_download "Installing Tailscale..."
         fetch https://tailscale.com/install.sh | sh || { log_warn "tailscale install failed."; return 0; }
     fi

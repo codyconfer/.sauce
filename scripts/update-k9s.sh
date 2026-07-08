@@ -5,6 +5,8 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/lib/common.sh"
 
+if [ "$OS" = darwin ]; then macos_tool "${BASH_SOURCE[0]}" "$@"; exit $?; fi
+
 REPO="derailed/k9s"
 DEST="$HOME/.local/bin/k9s"
 TARBALL="k9s_Linux_amd64.tar.gz"

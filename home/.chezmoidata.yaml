@@ -4,6 +4,7 @@ packages:
     debian: [xz-utils, build-essential]
     fedora: [xz]
     arch: [xz, base-devel]
+    macos: [xz, bash]
   extras:
     common:
       [gh, rustup, pipx, htop, btop, iftop, iotop, s-tui, wavemon, gnuradio]
@@ -44,3 +45,55 @@ flatpakCatalog:
   1password: com.onepassword.OnePassword
   chirp: com.chirpmyradio.chirp
   sonic-pi: net.sonic_pi.SonicPi
+
+caskCatalog:
+  slack: slack
+  discord: discord
+  signal: signal
+  obs-studio: obs
+  bitwarden: bitwarden
+  zen: zen
+  retroarch: retroarch
+  zoom: zoom
+  1password: 1password
+  chirp: chirp
+  sonic-pi: sonic-pi
+
+winget:
+  apps:
+    vscode: Microsoft.VisualStudioCode
+    cursor: Anysphere.Cursor
+    zed: Zed.Zed
+    obsidian: Obsidian.Obsidian
+    docker-desktop: Docker.DockerDesktop
+    jetbrains-toolbox: JetBrains.Toolbox
+    ghidra: NationalSecurityAgency.Ghidra
+    ollama: Ollama.Ollama
+    lmstudio: ElementLabs.LMStudio
+    slack: SlackTechnologies.Slack
+    discord: Discord.Discord
+    signal: OpenWhisperSystems.Signal
+    obs-studio: OBSProject.OBSStudio
+    bitwarden: Bitwarden.Bitwarden
+    zen: Zen-Team.Zen-Browser
+    retroarch: Libretro.RetroArch
+    zoom: Zoom.Zoom
+    1password: AgileBits.1Password
+  tools:
+    go: GoLang.Go
+    dotnet: Microsoft.DotNet.SDK.9
+    aws: Amazon.AWSCLI
+    gcloud: Google.CloudSDK
+    azure-cli: Microsoft.AzureCLI
+    kubectl: Kubernetes.kubectl
+    k9s: Derailed.k9s
+    node: OpenJS.NodeJS
+    nvm: CoreyButler.NVMforWindows
+    yarn: Yarn.Yarn
+    neovim: Neovim.Neovim
+    gh: GitHub.cli
+    oh-my-posh: JanDeDobbeleer.OhMyPosh
+    cloudflared: Cloudflare.cloudflared
+    adb: Google.PlatformTools
+    1password-cli: AgileBits.1Password.CLI
+    bitwarden-cli: Bitwarden.CLI

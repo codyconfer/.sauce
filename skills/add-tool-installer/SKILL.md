@@ -21,21 +21,33 @@ the next `chezmoi apply`. No script to write.
   `slack: com.slack.Slack`) to the `flatpakCatalog` map in `home/.chezmoidata.yaml`,
   then add `<choice>` to the `flatpaks` `promptMultichoiceOnce` list (both the choice
   list and the defaults) in `home/.chezmoi.toml.tmpl`. Keep the two in sync — the
-  catalog is the name→id lookup, the prompt is what actually installs.
+  catalog is the name→id lookup, the prompt is what actually installs. On macOS the same
+  `flatpaks` selection resolves through the parallel `caskCatalog` map in
+  `home/.chezmoidata.yaml`, so add a `<choice>: <cask-name>` entry there too when the app
+  has a Homebrew cask equivalent.
 - **Distro desktop app** (firefox/steam/sway-style, bespoke install) → add its
   install logic to the `onchange_distro_apps` function in `scripts/onchange.sh` and add
   its name to the `distroApps` `promptMultichoiceOnce` list in `home/.chezmoi.toml.tmpl`.
   `.desktop` (which gates desktop-only externals/configs) is derived from the
   `distroApps` and `flatpaks` prompt lists being non-empty.
+- **Windows GUI app** (native Windows only) → add its winget id to `winget.apps` in
+  `home/.chezmoidata.yaml` and add the choice to the `winApps` `promptMultichoiceOnce`
+  list in `home/.chezmoi.toml.tmpl`.
+- **Windows CLI/dev tool** (native Windows only) → add its winget id to `winget.tools`
+  and the choice to the `winTools` prompt. `run_onchange_before_40-winget.ps1` installs
+  the selection idempotently. Note the bash `update-*.sh` layer is POSIX-only
+  (Linux + macOS) and does not run on native Windows — winget is the only path there.
 
 The install *logic* lives in `scripts/setup.sh` (run-once steps: `base-packages`,
 `github-auth`, ...) and `scripts/onchange.sh` (re-runnable steps: `distro-apps`,
 `flatpaks`, `nvim-bootstrap`). The `home/.chezmoiscripts/run_{once,onchange}_*` files are
-thin wrappers that pass the selection as env vars and call a subcommand — the
-`run_onchange_*` wrappers also embed a hash of `onchange.sh` so a logic change re-runs
-the step. Both scripts are also exposed as the `setup`/`onchange` aliases (they fall back
-to `chezmoi data` when run by hand). Distro packages / flatpaks are then kept current by
-the system `update` alias — no `update-*.sh` needed.
+thin wrappers that pass the selection as env vars and call a subcommand. A
+`run_onchange_*` step re-runs only when its *rendered wrapper content* changes (the
+interpolated data — FAMILY, DISTRO_APPS, FLATPAK_IDS, …); editing `onchange.sh` logic
+alone does **not** retrigger it, so to force a re-run bump the selection/data or just run
+the `onchange` alias by hand. Both scripts are also exposed as the `setup`/`onchange`
+aliases (they fall back to `chezmoi data` when run by hand). Distro packages / flatpaks
+are then kept current by the system `update` alias — no `update-*.sh` needed.
 
 ## Path B — download-only tool (binary / tarball / AppImage into a user dir)
 
@@ -92,6 +104,18 @@ an `update-*.sh` whose suffix is in that `tools` selection. If the tool drops a 
 `.desktop` launcher, also gate the launcher on its key in `home/.chezmoiignore`
 (see cursor/obsidian/lmstudio).
 
+**macOS:** if the installer is Linux-specific (hardcoded `linux`/`amd64` URLs, `/usr/local`,
+AppImage, apt/dnf/pacman), add a darwin guard right after sourcing `common.sh`:
+
+```bash
+if [ "$OS" = darwin ]; then macos_tool "${BASH_SOURCE[0]}" "$@"; exit $?; fi
+```
+
+and add the tool → Homebrew mapping (`formula <name>` or `cask <name>`) to `_brew_spec`
+in `scripts/lib/distro.sh`. If the installer is already cross-platform (a vendor
+`curl | sh`, `npm -g`, `go install`, git clone), no guard is needed — it runs as-is on
+both OSes. Prefer a real cross-platform installer over the brew mapping when one exists.
+
 ```bash
 #! /bin/bash
 set -euo pipefail
@@ -142,4 +166,5 @@ Put it in the "tooling env/PATH" section. There is no longer a profile builder o
 ## After writing
 
 Run the `validate-scripts` skill (chezmoi template + apply dry-run, `bash -n`,
-`shellcheck`).
+`shellcheck`). If the change touched PowerShell/winget files (`bootstrap.ps1`, a
+`*.ps1.tmpl`, the PS profile), it also renders and parses those.

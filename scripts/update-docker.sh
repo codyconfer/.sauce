@@ -5,6 +5,8 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/lib/common.sh"
 
+if [ "$OS" = darwin ]; then macos_tool "${BASH_SOURCE[0]}" "$@"; exit $?; fi
+
 case "$(detect_family)" in
     debian) PKG=docker-desktop-amd64.deb ;;
     fedora) PKG=docker-desktop-x86_64.rpm ;;

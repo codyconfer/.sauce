@@ -5,6 +5,8 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/lib/common.sh"
 
+if [ "$OS" = darwin ]; then macos_tool "${BASH_SOURCE[0]}" "$@"; exit $?; fi
+
 # Google's platform-tools zip is the cross-family source of adb + fastboot (native package
 # names diverge: android-tools on Fedora/Arch, split adb/fastboot on Debian). It has no
 # version API, so we download the "latest" zip and gate on its embedded Pkg.Revision.

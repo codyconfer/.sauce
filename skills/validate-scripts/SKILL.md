@@ -47,7 +47,30 @@ command -v fish >/dev/null 2>&1 && fish --no-execute home/dot_config/fish/config
 
 `bash -n` parses without executing. A clean run prints nothing.
 
-## 4. shellcheck (if available)
+## 4. Syntax-check the PowerShell files (if available)
+
+Native-Windows support ships PowerShell: `bootstrap.ps1`, the winget run-script
+(`home/.chezmoiscripts/run_onchange_before_40-winget.ps1.tmpl`, rendered in step 1), and
+`home/Documents/PowerShell/Microsoft.PowerShell_profile.ps1`. Parse them if `pwsh` is
+installed; otherwise skip and say so.
+
+```bash
+if command -v pwsh >/dev/null 2>&1; then
+  chezmoi execute-template < home/.chezmoiscripts/run_onchange_before_40-winget.ps1.tmpl > /tmp/winget.ps1
+  for f in bootstrap.ps1 /tmp/winget.ps1 \
+           home/Documents/PowerShell/Microsoft.PowerShell_profile.ps1; do
+    pwsh -NoProfile -Command "
+      \$errs = \$null
+      \$null = [System.Management.Automation.Language.Parser]::ParseFile('$f', [ref]\$null, [ref]\$errs)
+      if (\$errs) { Write-Host 'PS SYNTAX ERROR: $f'; \$errs | ForEach-Object { Write-Host \$_ }; exit 1 }
+    " || echo "PS SYNTAX ERROR: $f"
+  done
+else
+  echo "pwsh not installed — skipping PowerShell syntax checks (Windows-only files)."
+fi
+```
+
+## 5. shellcheck (if available)
 
 ```bash
 if command -v shellcheck >/dev/null 2>&1; then
@@ -60,4 +83,4 @@ fi
 ## Reporting
 
 Summarize which checks passed/failed. If everything is clean, say so plainly. Do
-not claim chezmoi or shellcheck passed if they were skipped.
+not claim chezmoi, pwsh, or shellcheck passed if they were skipped.

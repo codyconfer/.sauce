@@ -84,7 +84,11 @@ _sauce_print_header() {
     date=$(date +'%A, %b %d, %Y')
 
     local allips ip ips=""
-    allips=($(ip -4 addr | grep -oP '(?<=inet\s)\d+(\.\d+){3}'))
+    if command -v ip >/dev/null 2>&1; then
+        allips=($(ip -4 addr | grep -oE 'inet [0-9]+(\.[0-9]+){3}' | awk '{print $2}'))
+    else
+        allips=($(ifconfig 2>/dev/null | grep -oE 'inet [0-9]+(\.[0-9]+){3}' | awk '{print $2}'))
+    fi
     for ip in "${allips[@]}"; do
         if [[ $ip != 127* ]] && [[ $ip != 172* ]]; then
             if [[ $ip == 10.* ]]; then
@@ -182,6 +186,10 @@ LIST_DOCKER_CONTAINERS() {
 }
 
 update() {
+    if [ "$(uname -s)" = Darwin ]; then
+        brew update && brew upgrade && brew upgrade --cask
+        return
+    fi
     (command -v apt > /dev/null \
         && sudo apt update && sudo apt upgrade -y && sudo apt dist-upgrade -y && sudo snap refresh) \
         || (command -v pacman > /dev/null \

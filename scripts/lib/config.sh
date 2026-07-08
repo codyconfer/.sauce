@@ -10,6 +10,13 @@ ZSH_PLUGINS="${ZSH_PLUGINS:-$HOME/.zsh}"    # where zsh plugins are cloned (matc
 # --- identity & dotfiles ---
 SAUCE_DIR="${SAUCE_DIR:-$HOME/.sauce}"      # local dotfiles/config repo (chezmoi sourceDir)
 
+OS="$(uname -s | tr '[:upper:]' '[:lower:]')"
+ARCH="$(uname -m)"
+case "$ARCH" in
+    x86_64|amd64)  ARCH=amd64 ;;
+    aarch64|arm64) ARCH=arm64 ;;
+esac
+
 # --- per-tool tunables ---
 DOTNET_CHANNEL="${DOTNET_CHANNEL:-LTS}"     # LTS | STS | e.g. 8.0
-GO_ARCH="${GO_ARCH:-linux-amd64}"           # Go tarball arch suffix
+GO_ARCH="${GO_ARCH:-${OS}-${ARCH}}"

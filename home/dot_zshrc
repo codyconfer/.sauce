@@ -1,5 +1,10 @@
 # ~/.zshrc — managed by chezmoi (source: ~/.sauce). Edit via `chezmoi edit ~/.zshrc`.
 
+for _brew in /opt/homebrew/bin/brew /usr/local/bin/brew; do
+    [ -x "$_brew" ] && eval "$("$_brew" shellenv)" && break
+done
+unset _brew
+
 # shared interactive shell logic (colors, banner, docker helper, update, get_secret, ...)
 [ -f ~/.sauce/scripts/functions.sh ] && source ~/.sauce/scripts/functions.sh
 _sauce_print_header

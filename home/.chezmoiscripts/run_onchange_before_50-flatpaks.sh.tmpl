@@ -1,5 +1,10 @@
 #!/usr/bin/env bash
 
 set -uo pipefail
+{{- if eq .chezmoi.os "darwin" }}
+FLATPAK_CASKS="{{ range (index . "flatpaks" | default (list)) }}{{ with (index $.caskCatalog .) }}{{ . }} {{ end }}{{ end }}" \
+    bash "$HOME/.sauce/scripts/onchange.sh" flatpaks
+{{- else }}
 FLATPAK_IDS="{{ range (index . "flatpaks" | default (list)) }}{{ index $.flatpakCatalog . }} {{ end }}" \
     bash "$HOME/.sauce/scripts/onchange.sh" flatpaks
+{{- end }}

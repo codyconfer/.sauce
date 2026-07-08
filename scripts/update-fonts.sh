@@ -7,7 +7,11 @@ source "$SCRIPT_DIR/lib/common.sh"
 
 REPO="ryanoasis/nerd-fonts"
 BASE="https://github.com/$REPO/releases/latest/download"
-FONT_DIR="$HOME/.local/share/fonts/NerdFonts"
+if [ "$OS" = darwin ]; then
+    FONT_DIR="$HOME/Library/Fonts/NerdFonts"
+else
+    FONT_DIR="$HOME/.local/share/fonts/NerdFonts"
+fi
 
 FONTS=(
     Terminus
@@ -78,6 +82,8 @@ log_warn "No per-asset checksums published by Nerd Fonts; skipping hash check."
 if command -v fc-cache >/dev/null 2>&1; then
     log_install "Rebuilding font cache..."
     fc-cache -f "$FONT_DIR"
+elif [ "$OS" = darwin ]; then
+    log_info "macOS picks up fonts in ~/Library/Fonts automatically — no cache refresh needed."
 else
     log_warn "fc-cache not found (install fontconfig); fonts copied but cache not refreshed."
 fi

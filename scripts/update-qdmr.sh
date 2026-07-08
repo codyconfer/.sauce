@@ -5,6 +5,8 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/lib/common.sh"
 
+if [ "$OS" = darwin ]; then macos_tool "${BASH_SOURCE[0]}" "$@"; exit $?; fi
+
 # qdmr ships only as a single-file flatpak bundle on GitHub (not on Flathub). We fetch
 # the bundle and install it with `flatpak --user`; its KDE runtime is pulled from the
 # flathub remote that ensure_flatpak configures.

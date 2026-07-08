@@ -1,6 +1,13 @@
 # ~/.config/fish/config.fish — managed by chezmoi (source: ~/.sauce).
 # Edit via `chezmoi edit ~/.config/fish/config.fish`.
 
+for _brew in /opt/homebrew/bin/brew /usr/local/bin/brew
+    if test -x $_brew
+        eval ($_brew shellenv)
+        break
+    end
+end
+
 set -g red (printf '\e[0;31m')
 set -g green (printf '\e[0;32m')
 set -g yellow (printf '\e[0;33m')
@@ -56,6 +63,10 @@ end
 
 # distro-aware system upgrade (mirrors the `update` alias in the other shells)
 function update
+    if test (uname) = Darwin
+        brew update; and brew upgrade; and brew upgrade --cask
+        return
+    end
     if command -q apt
         sudo apt update; and sudo apt upgrade -y; and sudo apt dist-upgrade -y; and sudo snap refresh
     else if command -q pacman
@@ -69,7 +80,12 @@ end
 # print header (interactive only)
 if status is-interactive
     set -l date (date +'%A, %b %d, %Y')
-    set -l allips (ip -4 addr | grep -oP '(?<=inet\s)\d+(\.\d+){3}')
+    set -l allips
+    if command -q ip
+        set allips (ip -4 addr | grep -oE 'inet [0-9]+(\.[0-9]+){3}' | awk '{print $2}')
+    else
+        set allips (ifconfig 2>/dev/null | grep -oE 'inet [0-9]+(\.[0-9]+){3}' | awk '{print $2}')
+    end
     set -l ipslines
     for ip in $allips
         echo $ip

@@ -1,0 +1,32 @@
+{{- $ids := list -}}
+{{- range ((index . "winApps") | default (list)) -}}
+{{-   $id := index $.winget.apps . -}}
+{{-   if $id -}}{{- $ids = append $ids $id -}}{{- end -}}
+{{- end -}}
+{{- range ((index . "winTools") | default (list)) -}}
+{{-   $id := index $.winget.tools . -}}
+{{-   if $id -}}{{- $ids = append $ids $id -}}{{- end -}}
+{{- end -}}
+$ErrorActionPreference = 'Stop'
+
+if (-not (Get-Command winget -ErrorAction SilentlyContinue)) {
+    Write-Warning 'winget not found on PATH; skipping app installation.'
+    return
+}
+
+$ids = @(
+{{- range $ids }}
+    '{{ . }}'
+{{- end }}
+)
+
+foreach ($id in $ids) {
+    winget list --exact --id $id --accept-source-agreements *> $null
+    if ($LASTEXITCODE -eq 0) {
+        Write-Host "= $id already installed"
+        continue
+    }
+    Write-Host "+ installing $id"
+    winget install --exact --id $id --silent `
+        --accept-source-agreements --accept-package-agreements
+}

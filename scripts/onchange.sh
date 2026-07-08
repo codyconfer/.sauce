@@ -45,6 +45,8 @@ onchange_distro_apps() {
 
     if _has firefox; then
         case "$family" in
+            macos)
+                install_cask firefox || log_warn "firefox install failed." ;;
             fedora|arch)
                 install_pkgs firefox || log_warn "firefox install failed." ;;
             debian)
@@ -63,6 +65,8 @@ onchange_distro_apps() {
 
     if _has steam; then
         case "$family" in
+            macos)
+                install_cask steam || log_warn "steam install failed." ;;
             debian)
                 log_install "Enabling i386 multiarch for Steam..."
                 sudo dpkg --add-architecture i386
@@ -91,6 +95,8 @@ onchange_distro_apps() {
 
     if _has wine; then
         case "$family" in
+            macos)
+                install_cask wine-stable || log_warn "wine install failed." ;;
             debian)
                 log_install "Enabling i386 multiarch for Wine..."
                 sudo dpkg --add-architecture i386
@@ -109,32 +115,44 @@ onchange_distro_apps() {
     fi
 
     if _has sway; then
-        log_install "Installing sway and companions..."
-        install_pkgs "${sway_pkgs[@]:-}" || log_warn "sway stack partial install."
-        case "$family" in
-            debian) install_pkgs mako-notifier || log_warn "mako install failed." ;;
-            *)      install_pkgs mako || log_warn "mako install failed." ;;
-        esac
+        if [ "$family" = macos ]; then
+            log_info "sway (Wayland WM) is Linux-only — skipping on macOS."
+        else
+            log_install "Installing sway and companions..."
+            install_pkgs "${sway_pkgs[@]:-}" || log_warn "sway stack partial install."
+            case "$family" in
+                debian) install_pkgs mako-notifier || log_warn "mako install failed." ;;
+                *)      install_pkgs mako || log_warn "mako install failed." ;;
+            esac
+        fi
     fi
 
     if _has qemu; then
-        log_install "Installing QEMU, libvirt and virt-manager..."
+        log_install "Installing QEMU..."
         case "$family" in
             debian) install_pkgs qemu-system qemu-utils libvirt-daemon-system libvirt-clients virt-manager bridge-utils ovmf || log_warn "qemu install failed." ;;
             fedora) install_pkgs qemu-kvm libvirt virt-manager virt-install edk2-ovmf || log_warn "qemu install failed." ;;
             arch)   install_pkgs qemu-full libvirt virt-manager dnsmasq edk2-ovmf || log_warn "qemu install failed." ;;
+            macos)  install_pkgs qemu || log_warn "qemu install failed." ;;
         esac
-        if command -v systemctl >/dev/null 2>&1; then
-            sudo systemctl enable --now libvirtd || log_warn "could not enable libvirtd."
+        if [ "$family" != macos ]; then
+            if command -v systemctl >/dev/null 2>&1; then
+                sudo systemctl enable --now libvirtd || log_warn "could not enable libvirtd."
+            fi
+            sudo usermod -aG libvirt "$USER" || log_warn "could not add $USER to libvirt group."
+            log_hint "Log out and back in for libvirt group membership to take effect."
         fi
-        sudo usermod -aG libvirt "$USER" || log_warn "could not add $USER to libvirt group."
-        log_hint "Log out and back in for libvirt group membership to take effect."
     fi
 
     log_done "Distro desktop apps installed."
 }
 
 onchange_flatpaks() {
+    if [ "$(detect_family)" = macos ]; then
+        onchange_casks
+        return $?
+    fi
+
     local -a ids
     if [ -n "${FLATPAK_IDS+x}" ]; then
         read -ra ids <<<"${FLATPAK_IDS:-}"
@@ -152,6 +170,26 @@ onchange_flatpaks() {
         install_flatpak "$id" || log_warn "flatpak install failed: $id"
     done
     log_done "Flatpaks installed."
+}
+
+onchange_casks() {
+    local -a casks
+    if [ -n "${FLATPAK_CASKS+x}" ]; then
+        read -ra casks <<<"${FLATPAK_CASKS:-}"
+    else
+        mapfile -t casks < <(_data '.flatpaks[] as $k | .caskCatalog[$k] // empty')
+    fi
+
+    if [ "${#casks[@]}" -eq 0 ]; then
+        log_info "no macOS casks selected — skipping."
+        return 0
+    fi
+    log_info "Installing/updating selected apps via Homebrew casks..."
+    local c
+    for c in "${casks[@]}"; do
+        install_cask "$c" || log_warn "cask install failed: $c"
+    done
+    log_done "Casks installed."
 }
 
 onchange_net_tools() {

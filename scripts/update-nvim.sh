@@ -5,6 +5,8 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/lib/common.sh"
 
+if [ "$OS" = darwin ]; then macos_tool "${BASH_SOURCE[0]}" "$@"; exit $?; fi
+
 DEST="$OPT/nvim"
 TARBALL="nvim-linux-x86_64.tar.gz"
 URL="https://github.com/neovim/neovim/releases/download/stable/$TARBALL"
