@@ -8,7 +8,6 @@ CACHE="${CACHE:-${XDG_CACHE_HOME:-$HOME/.cache}/sauce}"
 ZSH_PLUGINS="${ZSH_PLUGINS:-$HOME/.zsh}"    # where zsh plugins are cloned (match .zshrc)
 
 # --- identity & dotfiles ---
-GITHUB_USER="${GITHUB_USER:-codyconfer}"    # owner of your .sauce fork
 SAUCE_DIR="${SAUCE_DIR:-$HOME/.sauce}"      # local dotfiles/config repo (chezmoi sourceDir)
 
 # --- per-tool tunables ---

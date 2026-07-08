@@ -21,7 +21,7 @@ declared apps/flatpaks, downloads the CLI tools, runs the self-updating tool
 installers once, bootstraps Neovim, and sets zsh as your login shell. Each step is
 idempotent.
 
-On first `init` you're prompted for a GitHub username, then pick from three
+On first `init` you pick from three
 multi-select lists — which distro desktop apps (Firefox, Steam, Sway, fish, Wine, QEMU),
 which flatpaks (Slack, Discord, Signal, EasyEffects, OBS, Bitwarden, Zen), and which
 dev tools (go, docker, gcloud, cursor, k9s, kubectl, … — every `update-*.sh` and

@@ -10,7 +10,6 @@
 {{-   $family = "arch" -}}
 {{- end -}}
 
-{{- $githubUser := promptStringOnce . "githubUser" "GitHub username (owner of your .sauce fork; used for git + gh auth)" "codyconfer" -}}
 {{/* Two multi-select lists of desktop apps. Distro apps have bespoke install logic
      in run_onchange_before_40-distro-apps; flatpak choices map through flatpakCatalog
      in .chezmoidata.yaml (keep these lists in sync with that map). */}}
@@ -33,7 +32,6 @@ sourceDir = "{{ .chezmoi.homeDir }}/.sauce"
 
 [data]
     family = {{ $family | quote }}
-    githubUser = {{ $githubUser | quote }}
     distroApps = {{ $distroApps | toJson }}
     flatpaks = {{ $flatpaks | toJson }}
     tools = {{ $tools | toJson }}

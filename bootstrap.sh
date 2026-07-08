@@ -12,7 +12,6 @@
 # and shell. Safe to re-run; every step is idempotent.
 set -euo pipefail
 
-GITHUB_USER="${GITHUB_USER:-codyconfer}"
 SAUCE_DIR="${SAUCE_DIR:-$HOME/.sauce}"
 BIN_DIR="${BIN_DIR:-$HOME/.local/bin}"
 
@@ -31,7 +30,7 @@ fi
 # 2. repo (chezmoi sourceDir). If we're already running from inside a clone, reuse it.
 if [ ! -d "$SAUCE_DIR/.git" ]; then
     log "Cloning .sauce to $SAUCE_DIR..."
-    git clone "https://github.com/$GITHUB_USER/.sauce.git" "$SAUCE_DIR"
+    git clone "https://github.com/codyconfer/.sauce.git" "$SAUCE_DIR"
 fi
 
 # 3. init + apply. --source points chezmoi at the repo; .chezmoiroot sends it into home/.

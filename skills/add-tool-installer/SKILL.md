@@ -134,7 +134,7 @@ Put it in the "tooling env/PATH" section. There is no longer a profile builder o
 - `scripts/lib/distro.sh` — `detect_family`, `install_pkgs`/`remove_pkgs`, `install_local_pkg`,
   `pkg_refresh`, `ensure_flatpak`, `install_flatpak`/`remove_flatpak`.
 - `scripts/lib/config.sh` — tunables (`OPT`, `BIN`, `ICONS`, `CACHE`, `GO_ARCH`,
-  `DOTNET_CHANNEL`, `ZSH_PLUGINS`, `GITHUB_USER`, `SAUCE_DIR`).
+  `DOTNET_CHANNEL`, `ZSH_PLUGINS`, `SAUCE_DIR`).
 - `scripts/lib/runner.sh` — `run_update_scripts`/`print_summary` (with `box`/`run_step`);
   drives `scripts/update-all.sh`. You don't source this from an `update-*.sh` — it's the
   harness that runs them.
