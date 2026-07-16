@@ -7,8 +7,6 @@ source "$SCRIPT_DIR/lib/common.sh"
 
 if [ "$OS" = darwin ]; then macos_tool "${BASH_SOURCE[0]}" "$@"; exit $?; fi
 
-# Ghidra isn't in the Debian/Fedora repos; it ships as a single GitHub release zip and
-# needs a JDK 21+. We extract it under $OPT and expose a `ghidra` launcher on PATH.
 INSTALL_DIR="$OPT/ghidra"
 LAUNCHER="$BIN/ghidra"
 API="https://api.github.com/repos/NationalSecurityAgency/ghidra/releases/latest"
@@ -32,13 +30,11 @@ if [ -z "$VERSION" ] || [ "$VERSION" = "null" ] || [ -z "$URL" ]; then
 fi
 log_found "Latest version found: $VERSION"
 
-# The release ships no version binary; compare the release tag against the last install.
 if [ -z "${FORCE:-}" ] && [ -x "$INSTALL_DIR/ghidraRun" ] && [ "$(read_stamp ghidra)" = "$VERSION" ]; then
     log_done "Ghidra $VERSION is already installed — skipping. (set FORCE=1 to reinstall)"
     exit 0
 fi
 
-# Ghidra needs a JDK 21+; install one per-family if the current java is missing/older.
 have_jdk21() {
     command -v java >/dev/null 2>&1 || return 1
     local major

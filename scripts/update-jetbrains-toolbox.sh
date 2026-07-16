@@ -31,7 +31,6 @@ if [ -z "$URL" ] || [ "$URL" = "null" ]; then
 fi
 log_found "Latest version found: $VERSION"
 
-# The Toolbox binary has no simple version flag; compare against the last install.
 if [ -z "${FORCE:-}" ] && [ -d "$APPDIR" ] && [ "$(read_stamp jetbrains-toolbox)" = "$VERSION" ]; then
     log_done "JetBrains Toolbox $VERSION is already installed — skipping. (set FORCE=1 to reinstall)"
     exit 0

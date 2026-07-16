@@ -1,7 +1,0 @@
-#!/usr/bin/env bash
-
-set -uo pipefail
-FAMILY="{{ .family }}" \
-DISTRO_APPS="{{ (index . "distroApps") | default (list) | join " " }}" \
-SWAY_PKGS="{{ .sway.common | join " " }}" \
-    bash "$HOME/.sauce/scripts/onchange.sh" distro-apps

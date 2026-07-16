@@ -7,7 +7,7 @@ packages:
     macos: [xz, bash]
   extras:
     common:
-      [gh, rustup, pipx, htop, btop, iftop, iotop, s-tui, wavemon, gnuradio]
+      [gh, pipx, htop, btop, iftop, iotop, s-tui, wavemon, fish]
 
   netTools:
     common: [nmap, traceroute, mtr, tcpdump, whois, socat, net-tools]

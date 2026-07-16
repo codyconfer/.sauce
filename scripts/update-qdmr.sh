@@ -7,9 +7,6 @@ source "$SCRIPT_DIR/lib/common.sh"
 
 if [ "$OS" = darwin ]; then macos_tool "${BASH_SOURCE[0]}" "$@"; exit $?; fi
 
-# qdmr ships only as a single-file flatpak bundle on GitHub (not on Flathub). We fetch
-# the bundle and install it with `flatpak --user`; its KDE runtime is pulled from the
-# flathub remote that ensure_flatpak configures.
 APP_ID="de.darc.dm3mat.qdmr"
 API="https://api.github.com/repos/hmatuschek/qdmr/releases/latest"
 
@@ -31,7 +28,6 @@ if [ -z "$VERSION" ] || [ "$VERSION" = "null" ] || [ -z "$URL" ]; then
 fi
 log_found "Latest version found: $VERSION"
 
-# The bundle carries no queryable version; compare the release tag against the last install.
 if [ -z "${FORCE:-}" ] \
     && flatpak info --user "$APP_ID" >/dev/null 2>&1 \
     && [ "$(read_stamp qdmr)" = "$VERSION" ]; then
@@ -39,8 +35,6 @@ if [ -z "${FORCE:-}" ] \
     exit 0
 fi
 
-# Ensures flatpak is installed and the flathub --user remote exists (needed so flatpak
-# can resolve the KDE runtime the bundle depends on).
 ensure_flatpak || { log_error "flatpak is required to install qdmr."; exit 1; }
 
 TMPDIR=$(mktemp -d)

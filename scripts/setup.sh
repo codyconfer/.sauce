@@ -3,11 +3,8 @@
 set -uo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-# shellcheck source=lib/common.sh
 source "$SCRIPT_DIR/lib/common.sh"
 
-# _data <jq args...> — read a value from chezmoi's merged template data (fallback path
-# for manual runs only; the apply path always passes env vars). Never called mid-apply.
 _data() { chezmoi data --format json 2>/dev/null | jq -r "$@" 2>/dev/null || true; }
 
 setup_base_packages() {
@@ -30,7 +27,6 @@ setup_base_packages() {
     else
         mapfile -t extras < <(_data '.packages.extras.common[]')
     fi
-    # Arch packages pipx differently.
     [ "$family" = arch ] && extras=("${extras[@]/pipx/python-pipx}")
 
     pkg_refresh || true
@@ -44,7 +40,6 @@ setup_base_packages() {
         install_pkgs "$p" || log_warn "skipped (unavailable): $p"
     done
 
-    command -v rustup >/dev/null 2>&1 && rustup default stable || true
     command -v pipx   >/dev/null 2>&1 && pipx ensurepath || true
 
     log_done "Base packages installed."

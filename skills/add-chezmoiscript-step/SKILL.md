@@ -28,7 +28,8 @@ Pick `NN` relative to the existing scripts. Current numbering:
 | `run_once_before_10-base-packages` | `setup.sh base-packages` |
 | `run_once_before_20-github-auth` | `setup.sh github-auth` |
 | `run_once_before_30-oh-my-posh` | `setup.sh oh-my-posh` |
-| `run_onchange_before_40-distro-apps` | `onchange.sh distro-apps` |
+| `run_onchange_before_38-emulators` | `onchange.sh emulators` |
+| `run_onchange_before_40-gui-apps` | `onchange.sh gui-apps` |
 | `run_onchange_before_40-winget.ps1` | (Windows-only PowerShell, no bash dispatcher) |
 | `run_onchange_before_45-net-tools` | `onchange.sh net-tools` |
 | `run_onchange_before_50-flatpaks` | `onchange.sh flatpaks` |
@@ -53,7 +54,7 @@ FAMILY="{{ .family }}" \
     bash "$HOME/.sauce/scripts/onchange.sh" my-step
 ```
 
-Patterns to follow (see `run_onchange_before_40-distro-apps.sh.tmpl` for the real thing):
+Patterns to follow (see `run_onchange_before_40-gui-apps.sh.tmpl` for the real thing):
 
 - Always `set -uo pipefail`.
 - Pass chezmoi data as **env vars** (uppercase); the dispatcher reads them with

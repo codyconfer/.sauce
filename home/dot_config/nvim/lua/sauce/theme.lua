@@ -138,7 +138,6 @@ function M.apply(key)
     local bg = (p.bg ~= nil and p.bg ~= "") and p.bg or "NONE"
     local function hi(group, spec) vim.api.nvim_set_hl(0, group, spec) end
 
-    -- Editor UI
     hi("Normal", { fg = p.text, bg = bg })
     hi("NormalNC", { fg = p.text, bg = bg })
     hi("NormalFloat", { fg = p.text, bg = bg })
@@ -175,7 +174,6 @@ function M.apply(key)
     hi("WinBar", { fg = p.text, bg = bg })
     hi("WinBarNC", { fg = p.muted, bg = bg })
 
-    -- Legacy syntax groups
     hi("Constant", { fg = p.warning })
     hi("Number", { fg = p.warning })
     hi("Float", { fg = p.warning })
@@ -206,7 +204,6 @@ function M.apply(key)
     hi("Error", { fg = p.failure })
     hi("Underlined", { fg = p.info, underline = true })
 
-    -- Treesitter
     hi("@variable", { fg = p.text })
     hi("@variable.builtin", { fg = p.selected })
     hi("@variable.parameter", { fg = p.text })
@@ -246,7 +243,6 @@ function M.apply(key)
     hi("@markup.link", { fg = p.info, underline = true })
     hi("@markup.raw", { fg = p.success })
 
-    -- Diagnostics
     hi("DiagnosticError", { fg = p.failure })
     hi("DiagnosticWarn", { fg = p.warning })
     hi("DiagnosticInfo", { fg = p.info })
@@ -257,18 +253,15 @@ function M.apply(key)
     hi("DiagnosticUnderlineInfo", { undercurl = true, sp = p.info })
     hi("DiagnosticUnderlineHint", { undercurl = true, sp = p.muted })
 
-    -- LSP references
     hi("LspReferenceText", { bg = p.border })
     hi("LspReferenceRead", { bg = p.border })
     hi("LspReferenceWrite", { bg = p.border })
 
-    -- Gitsigns
     hi("GitSignsAdd", { fg = p.success })
     hi("GitSignsChange", { fg = p.warning })
     hi("GitSignsDelete", { fg = p.failure })
     hi("GitSignsCurrentLineBlame", { fg = p.muted, italic = true })
 
-    -- Diff / diffview
     hi("DiffAdd", { fg = p.success, bg = bg })
     hi("DiffChange", { fg = p.warning, bg = bg })
     hi("DiffDelete", { fg = p.failure, bg = bg })
@@ -277,13 +270,11 @@ function M.apply(key)
     hi("diffChanged", { fg = p.warning })
     hi("diffRemoved", { fg = p.failure })
 
-    -- nvim-cmp
     hi("CmpItemAbbrMatch", { fg = p.accent, bold = true })
     hi("CmpItemAbbrMatchFuzzy", { fg = p.accent })
     hi("CmpItemKind", { fg = p.info })
     hi("CmpItemMenu", { fg = p.muted })
 
-    -- Messages
     hi("ErrorMsg", { fg = p.failure })
     hi("WarningMsg", { fg = p.warning })
     hi("MoreMsg", { fg = p.success })

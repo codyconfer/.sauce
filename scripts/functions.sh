@@ -1,32 +1,11 @@
 #! /bin/bash
 
-# ~/.sauce/scripts/functions.sh — shared interactive shell functions.
-#
-# Sourced (not aliased) by dot_zshrc / dot_bashrc; bash & zsh compatible. Kept
-# self-contained on purpose — it runs in every interactive shell, so it does NOT
-# source lib/common.sh (which would pull in distro detection and a pile of
-# installer helpers we don't want at prompt time).
-
-# _sauce_tool_registered <tool> — true if <tool> is in chezmoi's selected `.tools`.
-# Mirrors the `chezmoi data` idiom in scripts/lib/runner.sh. When chezmoi or jq
-# aren't available we return true so callers fall back to plain `command -v`
-# detection (keeps these helpers usable on non-chezmoi machines).
 _sauce_tool_registered() {
     command -v chezmoi >/dev/null 2>&1 && command -v jq >/dev/null 2>&1 || return 0
     chezmoi data --format json 2>/dev/null \
         | jq -e --arg t "$1" '(.tools // []) | index($t)' >/dev/null 2>&1
 }
 
-# get_secret <item> [field] — print a secret to stdout, trying Bitwarden then 1Password.
-#
-# Order: if bitwarden-cli is registered in chezmoi and `bw` is installed, try
-# `bw` first; on a miss, fall through to `op` (1password-cli); error if neither
-# yields the secret. `field` defaults to `password`. Field semantics differ
-# slightly between backends: for `bw` it's the object (password|username|totp|
-# notes|uri|...), for `op` it's the field label — `password` works in both.
-#
-#   PASSWORD=$(get_secret "GitHub")
-#   TOKEN=$(get_secret "My API" credential)
 get_secret() {
     local item="${1:-}" field="${2:-password}" value=""
 
@@ -35,7 +14,6 @@ get_secret() {
         return 2
     fi
 
-    # Bitwarden
     if _sauce_tool_registered bitwarden-cli && command -v bw >/dev/null 2>&1; then
         value=$(bw get "$field" "$item" 2>/dev/null) || value=""
         if [ -n "$value" ]; then
@@ -44,7 +22,6 @@ get_secret() {
         fi
     fi
 
-    # 1Password
     if _sauce_tool_registered 1password-cli && command -v op >/dev/null 2>&1; then
         value=$(op item get "$item" --fields "$field" --reveal 2>/dev/null) || value=""
         if [ -n "$value" ]; then
@@ -168,7 +145,7 @@ LIST_DOCKER_CONTAINERS() {
             i=1
             while iter=$(echo "$ps_result" | cut -d\| -f$i | xargs) ; [ -n "$iter" ] ; do
                 if [[ $i == 1 ]]; then
-                    : # omit first query field from output
+                    :
                 elif [[ $i == 2 ]]; then
                     container="${container}${display_status} ${bold}${iter}${clear}\n"
                 else
@@ -200,6 +177,6 @@ update() {
 }
 
 alias docker-containers=LIST_DOCKER_CONTAINERS
-alias sauce="chezmoi apply"                 # re-apply dotfiles + run install/update scripts
-alias sauce-edit="chezmoi edit --apply"     # edit a managed file and apply on save
-alias sauce-cd="chezmoi cd"                 # drop into the ~/.sauce source repo
+alias sauce="chezmoi apply"
+alias sauce-edit="chezmoi edit --apply"
+alias sauce-cd="chezmoi cd"

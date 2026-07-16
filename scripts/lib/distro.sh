@@ -98,7 +98,6 @@ _brew_spec() {
     esac
 }
 
-# shellcheck disable=SC2086
 macos_tool() {
     local script="$1"; shift
     local key spec kind name flag=""

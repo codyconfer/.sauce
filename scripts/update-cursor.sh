@@ -15,7 +15,7 @@ cleanup() {
     remove_paths "$APPIMAGE" "$ICONS/cursor.png"
     remove_stamp cursor
     log_done "Cursor removed."
-    log_hint "The .desktop launcher is chezmoi-managed — deselect 'cursor' from the tools prompt and re-apply to remove it."
+    log_hint "The .desktop launcher is chezmoi-managed — deselect 'cursor' from the GUI apps prompt and re-apply to remove it."
 }
 dispatch_remove "$@"
 
@@ -29,7 +29,6 @@ if [ -z "$VERSION" ] || [ "$VERSION" = "null" ] || [ -z "$URL" ] || [ "$URL" = "
 fi
 log_found "Latest version found: $VERSION"
 
-# The AppImage has no version flag; compare against the last install.
 if [ -z "${FORCE:-}" ] && [ -f "$APPIMAGE" ] && [ "$(read_stamp cursor)" = "$VERSION" ]; then
     log_done "Cursor $VERSION is already installed — skipping. (set FORCE=1 to reinstall)"
     exit 0

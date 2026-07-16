@@ -18,8 +18,6 @@ cleanup() {
 dispatch_remove "$@"
 
 log_search "Fetching the latest 1Password CLI version..."
-# Capture the page first, then extract — piping curl straight into `grep | head`
-# trips a broken-pipe (curl exit 23) under `set -o pipefail` once head closes early.
 HISTORY=$(fetch "https://app-updates.agilebits.com/product_history/CLI2")
 LATEST=$(printf '%s\n' "$HISTORY" | grep -oE 'v[0-9]+\.[0-9]+\.[0-9]+' | sed -n '1p')
 LATEST="${LATEST#v}"

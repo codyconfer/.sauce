@@ -26,10 +26,6 @@ run_step() {
     fi
 }
 
-# Resolve the selected tool set (chezmoi's `tools` prompt). Prints one tool per line,
-# or nothing when the selection can't be determined (caller then runs everything).
-#   1. UPDATE_TOOLS env (set — even to "") by the run-updaters wrapper at apply time.
-#   2. `chezmoi data` .tools fallback for manual `update-all` runs.
 _selected_tools() {
     if [ -n "${UPDATE_TOOLS+x}" ]; then
         printf '%s\n' ${UPDATE_TOOLS:-}
@@ -41,8 +37,6 @@ _selected_tools() {
 
 run_update_scripts() {
     local dir="${1:-$SCRIPT_DIR}" mode="${2:-}" script name tool
-    # Only filter when a selection is resolvable; otherwise run every updater
-    # (backward-compatible with installs that predate the `tools` prompt).
     local filter=0
     local -A selected=()
     if [ -n "${UPDATE_TOOLS+x}" ]; then

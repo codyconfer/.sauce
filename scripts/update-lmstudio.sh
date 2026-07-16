@@ -15,7 +15,7 @@ cleanup() {
     remove_paths "$APPIMAGE" "$ICONS/lm-studio.png"
     remove_stamp lm-studio
     log_done "LM Studio removed."
-    log_hint "The .desktop launcher is chezmoi-managed — deselect 'lmstudio' from the tools prompt and re-apply to remove it."
+    log_hint "The .desktop launcher is chezmoi-managed — deselect 'lmstudio' from the GUI apps prompt and re-apply to remove it."
 }
 dispatch_remove "$@"
 
@@ -28,7 +28,6 @@ if [ -z "$VERSION" ]; then
 fi
 log_found "Latest version found: $VERSION"
 
-# The AppImage has no version flag; compare against the last install.
 if [ -z "${FORCE:-}" ] && [ -f "$APPIMAGE" ] && [ "$(read_stamp lm-studio)" = "$VERSION" ]; then
     log_done "LM Studio $VERSION is already installed — skipping. (set FORCE=1 to reinstall)"
     exit 0

@@ -25,11 +25,13 @@ the next `chezmoi apply`. No script to write.
   `flatpaks` selection resolves through the parallel `caskCatalog` map in
   `home/.chezmoidata.yaml`, so add a `<choice>: <cask-name>` entry there too when the app
   has a Homebrew cask equivalent.
-- **Distro desktop app** (firefox/steam/sway-style, bespoke install) → add its
-  install logic to the `onchange_distro_apps` function in `scripts/onchange.sh` and add
-  its name to the `distroApps` `promptMultichoiceOnce` list in `home/.chezmoi.toml.tmpl`.
-  `.desktop` (which gates desktop-only externals/configs) is derived from the
-  `distroApps` and `flatpaks` prompt lists being non-empty.
+- **GUI app** (firefox/sway/gnuradio-style, bespoke install) → add its
+  install logic to the `onchange_gui_apps` function in `scripts/onchange.sh` and add
+  its name to the `guiApps` `promptMultichoiceOnce` list in `home/.chezmoi.toml.tmpl`
+  (emulators are the sibling `$emulators` prompt → `onchange_emulators`). `.desktop`
+  (which gates desktop-only externals/configs) is derived from the `emulators`, `guiApps`,
+  and `flatpaks` prompt lists being non-empty, and the whole desktop layer is skipped when
+  `$headless` is true. See `add-distro-app` for the full pattern.
 - **Windows GUI app** (native Windows only) → add its winget id to `winget.apps` in
   `home/.chezmoidata.yaml` and add the choice to the `winApps` `promptMultichoiceOnce`
   list in `home/.chezmoi.toml.tmpl`.
@@ -39,11 +41,11 @@ the next `chezmoi apply`. No script to write.
   (Linux + macOS) and does not run on native Windows — winget is the only path there.
 
 The install *logic* lives in `scripts/setup.sh` (run-once steps: `base-packages`,
-`github-auth`, ...) and `scripts/onchange.sh` (re-runnable steps: `distro-apps`,
+`github-auth`, ...) and `scripts/onchange.sh` (re-runnable steps: `gui-apps`,
 `flatpaks`, `nvim-bootstrap`). The `home/.chezmoiscripts/run_{once,onchange}_*` files are
 thin wrappers that pass the selection as env vars and call a subcommand. A
 `run_onchange_*` step re-runs only when its *rendered wrapper content* changes (the
-interpolated data — FAMILY, DISTRO_APPS, FLATPAK_IDS, …); editing `onchange.sh` logic
+interpolated data — FAMILY, GUI_APPS, FLATPAK_IDS, …); editing `onchange.sh` logic
 alone does **not** retrigger it, so to force a re-run bump the selection/data or just run
 the `onchange` alias by hand. Both scripts are also exposed as the `setup`/`onchange`
 aliases (they fall back to `chezmoi data` when run by hand). Distro packages / flatpaks

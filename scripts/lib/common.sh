@@ -26,9 +26,9 @@ ensure_node() {
     command -v npm >/dev/null 2>&1
 }
 
-fetch()                 { curl -fsSL "$1"; }                       # URL -> stdout
-download()              { curl -fL --output "$2" "$1"; }           # URL, dest
-download_with_headers() { curl -fL -D "$3" --output "$2" "$1"; }   # URL, dest, headers-file
+fetch()                 { curl -fsSL "$1"; }
+download()              { curl -fL --output "$2" "$1"; }
+download_with_headers() { curl -fL -D "$3" --output "$2" "$1"; }
 
 verify_sha256() {
     log_verify "Verifying checksum..."
@@ -57,19 +57,12 @@ verify_md5_etag() {
     fi
 }
 
-# extract_appimage_icon <appimage> <dest.png>
-# Pull the app's icon (.DirIcon) out of an AppImage into <dest> without unpacking the
-# whole (possibly gigabyte-sized) image. Best-effort: warns and returns non-zero if no
-# icon is found — callers should treat it as optional (append `|| true`).
 extract_appimage_icon() {
     local appimage="$1" dest="$2"
     local workdir root src target
     workdir=$(mktemp -d)
     root="$workdir/squashfs-root"
 
-    # .DirIcon is the canonical app icon: usually a symlink to the real PNG. Extract the
-    # pointer first, then the single file it references (extracting an exact path pulls
-    # only that file, not the entire squashfs).
     if ! ( cd "$workdir" && "$appimage" --appimage-extract '.DirIcon' >/dev/null 2>&1 ); then
         log_warn "Could not read icon from $(basename "$appimage")."
         rm -rf "$workdir"
@@ -94,9 +87,6 @@ extract_appimage_icon() {
     log_link "Extracted icon -> $dest"
 }
 
-# --- version gating ---------------------------------------------------------
-# version_current <installed> <latest> -> 0 if same (ignoring a leading "v").
-# Empty installed/latest, or FORCE set, => 1 ("not current, proceed").
 version_current() {
     local installed="$1" latest="$2"
     [ -n "${FORCE:-}" ] && return 1
@@ -104,8 +94,6 @@ version_current() {
     [ "${installed#v}" = "${latest#v}" ]
 }
 
-# version_gate <label> <installed> <latest> -> logs + returns 0 when up to date.
-# Intended use:  version_gate "Go" "$INSTALLED" "$LATEST" && exit 0
 version_gate() {
     if version_current "$2" "$3"; then
         log_done "$1 $2 is already the latest — skipping. (set FORCE=1 to reinstall)"
@@ -114,7 +102,6 @@ version_gate() {
     return 1
 }
 
-# Stamp store for tools that can't report their own version (e.g. AppImages).
 VERSIONS_DIR="${VERSIONS_DIR:-${XDG_STATE_HOME:-$HOME/.local/state}/sauce/versions}"
 read_stamp()  { cat "$VERSIONS_DIR/$1" 2>/dev/null || true; }
 write_stamp() { ensure_dir "$VERSIONS_DIR"; printf '%s\n' "$2" > "$VERSIONS_DIR/$1"; }

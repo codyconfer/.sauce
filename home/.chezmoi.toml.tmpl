@@ -19,9 +19,19 @@
 
 {{- if eq $family "windows" -}}
 {{-   $winAppChoices := list "vscode" "cursor" "zed" "obsidian" "docker-desktop" "jetbrains-toolbox" "ghidra" "ollama" "lmstudio" "slack" "discord" "signal" "obs-studio" "bitwarden" "zen" "retroarch" "zoom" "1password" -}}
-{{-   $winApps := promptMultichoiceOnce . "winApps" "GUI apps to install via winget (all selected by default; leave empty for none)" $winAppChoices $winAppChoices -}}
+{{-   $winAppsDefault := $winAppChoices -}}
+{{-   if env "SAUCE_WIN_APPS" -}}
+{{-     if eq (lower (env "SAUCE_WIN_APPS")) "none" -}}{{- $winAppsDefault = list -}}
+{{-     else -}}{{- $winAppsDefault = (splitList " " (env "SAUCE_WIN_APPS") | compact) -}}{{- end -}}
+{{-   end -}}
+{{-   $winApps := promptMultichoiceOnce . "winApps" "GUI apps to install via winget (all selected by default; leave empty for none)" $winAppChoices $winAppsDefault -}}
 {{-   $winToolChoices := list "go" "dotnet" "aws" "gcloud" "azure-cli" "kubectl" "k9s" "node" "nvm" "yarn" "neovim" "gh" "oh-my-posh" "cloudflared" "adb" "1password-cli" "bitwarden-cli" -}}
-{{-   $winTools := promptMultichoiceOnce . "winTools" "CLI / dev tools to install via winget (all selected by default; leave empty for none)" $winToolChoices $winToolChoices -}}
+{{-   $winToolsDefault := $winToolChoices -}}
+{{-   if env "SAUCE_WIN_TOOLS" -}}
+{{-     if eq (lower (env "SAUCE_WIN_TOOLS")) "none" -}}{{- $winToolsDefault = list -}}
+{{-     else -}}{{- $winToolsDefault = (splitList " " (env "SAUCE_WIN_TOOLS") | compact) -}}{{- end -}}
+{{-   end -}}
+{{-   $winTools := promptMultichoiceOnce . "winTools" "CLI / dev tools to install via winget (all selected by default; leave empty for none)" $winToolChoices $winToolsDefault -}}
 
 sourceDir = "{{ .chezmoi.homeDir }}/.sauce"
 
@@ -31,24 +41,62 @@ sourceDir = "{{ .chezmoi.homeDir }}/.sauce"
     winApps = {{ $winApps | toJson }}
     winTools = {{ $winTools | toJson }}
 {{- else -}}
-{{-   $distroApps := list -}}
+{{-   $headless := false -}}
+{{-   $emulators := list -}}
+{{-   $guiApps := list -}}
 {{-   $flatpaks := list -}}
 {{-   if not $wsl -}}
-{{-     $distroApps = promptMultichoiceOnce . "distroApps" "Distro desktop apps to install (all selected by default; leave empty for none)" (list "firefox" "steam" "sway" "fish" "wine" "qemu") (list "firefox" "steam" "sway" "fish" "wine" "qemu") -}}
-{{-     $flatpaks = promptMultichoiceOnce . "flatpaks" "Flatpak (Flathub) apps to install (all selected by default; leave empty for none)" (list "slack" "discord" "signal" "easyeffects" "obs-studio" "bitwarden" "zen" "lutris" "retroarch" "zoom" "1password" "chirp" "sonic-pi") (list "slack" "discord" "signal" "easyeffects" "obs-studio" "bitwarden" "zen" "lutris" "retroarch" "zoom" "1password" "chirp" "sonic-pi") -}}
+{{-     $headlessDefault := false -}}
+{{-     if env "SAUCE_HEADLESS" -}}{{- $headlessDefault = eq (lower (env "SAUCE_HEADLESS")) "true" -}}{{- end -}}
+{{-     $headless = promptBoolOnce . "headless" "Headless machine? Skips the entire desktop layer (emulators, GUI apps, Flatpaks)" $headlessDefault -}}
+{{-     if not $headless -}}
+{{-       $emulatorChoices := list "steam" "wine" "qemu" -}}
+{{-       $emulatorsDefault := $emulatorChoices -}}
+{{-       if env "SAUCE_EMULATORS" -}}
+{{-         if eq (lower (env "SAUCE_EMULATORS")) "none" -}}{{- $emulatorsDefault = list -}}
+{{-         else -}}{{- $emulatorsDefault = (splitList " " (env "SAUCE_EMULATORS") | compact) -}}{{- end -}}
+{{-       end -}}
+{{-       $emulators = promptMultichoiceOnce . "emulators" "Emulators to install (all selected by default; leave empty for none)" $emulatorChoices $emulatorsDefault -}}
+{{-       $guiAppChoices := list "firefox" "sway" "gnuradio" "qdmr" "vscode" "zed" "codex" "cursor" "docker" "ghidra" "jetbrains-toolbox" "lmstudio" "obsidian" -}}
+{{-       $guiAppsDefault := $guiAppChoices -}}
+{{-       if env "SAUCE_GUI_APPS" -}}
+{{-         if eq (lower (env "SAUCE_GUI_APPS")) "none" -}}{{- $guiAppsDefault = list -}}
+{{-         else -}}{{- $guiAppsDefault = (splitList " " (env "SAUCE_GUI_APPS") | compact) -}}{{- end -}}
+{{-       end -}}
+{{-       $guiApps = promptMultichoiceOnce . "guiApps" "GUI apps to install (all selected by default; leave empty for none)" $guiAppChoices $guiAppsDefault -}}
+{{-       $flatpakChoices := list "slack" "discord" "signal" "easyeffects" "obs-studio" "bitwarden" "zen" "lutris" "retroarch" "zoom" "1password" "chirp" "sonic-pi" -}}
+{{-       $flatpaksDefault := $flatpakChoices -}}
+{{-       if env "SAUCE_FLATPAKS" -}}
+{{-         if eq (lower (env "SAUCE_FLATPAKS")) "none" -}}{{- $flatpaksDefault = list -}}
+{{-         else -}}{{- $flatpaksDefault = (splitList " " (env "SAUCE_FLATPAKS") | compact) -}}{{- end -}}
+{{-       end -}}
+{{-       $flatpaks = promptMultichoiceOnce . "flatpaks" "Flatpak (Flathub) apps to install (all selected by default; leave empty for none)" $flatpakChoices $flatpaksDefault -}}
+{{-     end -}}
 {{-   end -}}
-{{-   $toolChoices := list "1password-cli" "adb" "aws" "azure-cli" "bitwarden-cli" "claude-code" "cloudflared" "codex" "cursor" "docker" "dotnet" "fonts" "gcloud" "gcx" "ghidra" "go" "jetbrains-toolbox" "k9s" "kubectl" "lmstudio" "loglit" "nvim" "nvm" "obsidian" "ollama" "opencode" "pi" "poetry" "pyenv" "qdmr" "vscode" "wrangler" "yarn" "zed" "zsh-plugins" -}}
-{{-   $tools := promptMultichoiceOnce . "tools" "CLI / dev tools to install and keep updated (all selected by default; leave empty for none)" $toolChoices $toolChoices -}}
-{{-   $desktop := or (gt (len $distroApps) 0) (gt (len $flatpaks) 0) -}}
-{{-   $tailscale := promptBoolOnce . "tailscale" "Connect this machine to Tailscale now (installs Tailscale and runs `sudo tailscale up`)?" false -}}
-{{-   $netTools := promptBoolOnce . "netTools" "Install common network/security CLI tools (nmap, dig, nslookup, netcat, tcpdump, mtr, whois, ...)?" true -}}
+{{-   $toolChoices := list "1password-cli" "aws" "azure-cli" "bitwarden-cli" "cloudflared" "gcloud" "gcx" "wrangler" "adb" "claude-code" "dotnet" "go" "k9s" "kubectl" "loglit" "nvim" "nvm" "ollama" "opencode" "pi" "poetry" "pyenv" "rustup" "yarn" -}}
+{{-   if and $headless (ne $family "macos") -}}{{- $toolChoices = append $toolChoices "k3s" -}}{{- end -}}
+{{-   $toolsDefault := $toolChoices -}}
+{{-   if env "SAUCE_TOOLS" -}}
+{{-     if eq (lower (env "SAUCE_TOOLS")) "none" -}}{{- $toolsDefault = list -}}
+{{-     else -}}{{- $toolsDefault = (splitList " " (env "SAUCE_TOOLS") | compact) -}}{{- end -}}
+{{-   end -}}
+{{-   $tools := promptMultichoiceOnce . "tools" "CLI / dev tools to install and keep updated (all selected by default; leave empty for none)" $toolChoices $toolsDefault -}}
+{{-   $desktop := or (gt (len $emulators) 0) (or (gt (len $guiApps) 0) (gt (len $flatpaks) 0)) -}}
+{{-   $tailscaleDefault := false -}}
+{{-   if env "SAUCE_TAILSCALE" -}}{{- $tailscaleDefault = eq (lower (env "SAUCE_TAILSCALE")) "true" -}}{{- end -}}
+{{-   $tailscale := promptBoolOnce . "tailscale" "Connect this machine to Tailscale now (installs Tailscale and runs `sudo tailscale up`)?" $tailscaleDefault -}}
+{{-   $netToolsDefault := true -}}
+{{-   if env "SAUCE_NET_TOOLS" -}}{{- $netToolsDefault = eq (lower (env "SAUCE_NET_TOOLS")) "true" -}}{{- end -}}
+{{-   $netTools := promptBoolOnce . "netTools" "Install common network/security CLI tools (nmap, dig, nslookup, netcat, tcpdump, mtr, whois, ...)?" $netToolsDefault -}}
 
 sourceDir = "{{ .chezmoi.homeDir }}/.sauce"
 
 [data]
     family = {{ $family | quote }}
     wsl = {{ $wsl }}
-    distroApps = {{ $distroApps | toJson }}
+    headless = {{ $headless }}
+    emulators = {{ $emulators | toJson }}
+    guiApps = {{ $guiApps | toJson }}
     flatpaks = {{ $flatpaks | toJson }}
     tools = {{ $tools | toJson }}
     desktop = {{ $desktop }}

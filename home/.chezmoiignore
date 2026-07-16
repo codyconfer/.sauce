@@ -26,13 +26,13 @@ Documents/PowerShell
 .config/foot
 .local/share/applications
 {{- end }}
-{{- $tools := (index . "tools") | default (list) }}
-{{- if not (has "obsidian" $tools) }}
+{{- $guiApps := (index . "guiApps") | default (list) }}
+{{- if not (has "obsidian" $guiApps) }}
 .local/share/applications/obsidian.desktop
 {{- end }}
-{{- if not (has "lmstudio" $tools) }}
+{{- if not (has "lmstudio" $guiApps) }}
 .local/share/applications/lm-studio.desktop
 {{- end }}
-{{- if not (has "cursor" $tools) }}
+{{- if not (has "cursor" $guiApps) }}
 .local/share/applications/cursor.desktop
 {{- end }}

@@ -48,31 +48,43 @@ The glue only works if these line up — check each:
   `scripts/setup.sh <step>` or `scripts/onchange.sh <step>`; that `<step>` must have a
   matching arm in the dispatcher's `case`. Current steps: setup → `base-packages`,
   `github-auth`, `oh-my-posh`, `run-updaters`, `chsh-zsh`, `tailscale`; onchange →
-  `distro-apps`, `flatpaks`, `net-tools`, `nvim-bootstrap`. A removed arm with a
+  `gui-apps`, `emulators`, `flatpaks`, `net-tools`, `nvim-bootstrap`. A removed arm with a
   surviving wrapper makes `chezmoi apply` exit non-zero (`unknown … step`); a step added
   to a dispatcher should also be added to its `all)` arm.
 - **tools prompt ↔ installer.** Every key in `$toolChoices`
   (`home/.chezmoi.toml.tmpl`) resolves to *exactly one* install path: a
   `scripts/update-<key>.sh` **or** a `.chezmoiexternal.toml.tmpl` table gated on
-  `has "<key>" $tools`. No `update-*.sh` without a matching choice, and no choice without
-  an installer.
+  `has "<key>" $tools`. No choice without an installer. Note the inverse no longer holds:
+  some `update-*.sh` are driven by *other* prompts — `fonts`/`zsh-plugins` always run, and
+  `vscode`/`zed`/`qdmr` (and the other launcher tools) are selected via `$guiApps`; the
+  union is assembled as `UPDATE_TOOLS` in `run_once_after_70-run-updaters.sh.tmpl`. Also,
+  `$toolChoices` is built conditionally — `k3s` is `append`ed only on headless Linux — so
+  a key can be absent from the static list yet still valid. When auditing that any
+  `update-*.sh` is reachable, check that wrapper's union and the conditional appends, not
+  just the base `$toolChoices`.
 - **flatpak prompt ↔ catalogs.** Every key in the `$flatpaks` prompt must have an entry
   in `flatpakCatalog` (Linux → Flathub id) in `.chezmoidata.yaml`; a key missing there
   renders an empty id and silently installs nothing. If the app has a macOS equivalent,
   it also needs a `caskCatalog` entry (the darwin branch of
   `run_onchange_before_50-flatpaks.sh.tmpl` reads `caskCatalog`; a missing entry just
   skips it on mac).
-- **distroApps / winget prompt ↔ consumer.** Every `$distroApps` key needs an `_has`
-  branch in `onchange_distro_apps`. Every `winApps` / `winTools` key needs an id under
-  `winget.apps` / `winget.tools` in `.chezmoidata.yaml` (consumed by
+- **guiApps / emulators / winget prompt ↔ consumer.** Every `$guiApps` key needs an
+  `_has` branch in `onchange_gui_apps` — *except* the `update-*.sh`-backed ones
+  (`vscode`, `zed`, `qdmr`, `cursor`, `ghidra`, `jetbrains-toolbox`, `lmstudio`,
+  `obsidian`, `docker`, `codex`), which install via the run-updaters union
+  (`$desktopTools` in `run_once_after_70-run-updaters.sh.tmpl`) and take no branch. Keep
+  that `$desktopTools` list in sync with such `$guiApps` keys. Every `$emulators` key
+  needs an `_has` branch in `onchange_emulators`. Every `winApps` / `winTools` key needs
+  an id under `winget.apps` / `winget.tools` in `.chezmoidata.yaml` (consumed by
   `run_onchange_before_40-winget.ps1`).
 - **data ↔ consumers.** Lists in `.chezmoidata.yaml` (`packages.essential`,
   `packages.extras`, `packages.netTools`, `sway.common`) are read by `scripts/setup.sh` /
   `scripts/onchange.sh` via `_data`; a renamed key silently yields an empty install.
 - **.desktop launcher gating.** GUI `.desktop` files under
-  `dot_local/share/applications/` are gated in `home/.chezmoiignore` on `tools`
+  `dot_local/share/applications/` are gated in `home/.chezmoiignore` on `$guiApps`
   membership (obsidian, lmstudio, cursor). A new GUI tool that ships a launcher needs a
-  matching ignore stanza, or it deploys for everyone.
+  matching ignore stanza, or it deploys for everyone. (These gate on `$guiApps`, not
+  `$tools` — the launcher-shipping tools live in the GUI apps prompt.)
 - **no hardcoded org/user/machine-specific values.** `~/.sauce` is a template meant to be
   forked — a script must not bake in emails, org domains, cluster names, repo URLs, or
   absolute user paths (beyond the fixed `$HOME/.sauce` source dir). Such values belong in

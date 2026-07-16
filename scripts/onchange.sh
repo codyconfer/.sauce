@@ -1,33 +1,21 @@
 #!/usr/bin/env bash
-# Idempotent, re-runnable steps for ~/.sauce (things that should re-run when their
-# inputs change).
-#
-# Invoked two ways:
-#   1. During `chezmoi apply` by the home/.chezmoiscripts/run_onchange_* wrappers, which
-#      pass the current selection as env vars and embed a hash of this file so chezmoi
-#      re-runs the step when either the selection or this logic changes.
-#   2. Manually via the generated `onchange` alias (`onchange`, `onchange flatpaks`, ...),
-#      falling back to `chezmoi data` for any value the env doesn't provide.
 
 set -uo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-# shellcheck source=lib/common.sh
 source "$SCRIPT_DIR/lib/common.sh"
 
-# _data <jq args...> — read a value from chezmoi's merged template data (fallback path
-# for manual runs only; the apply path always passes env vars). Never called mid-apply.
 _data() { chezmoi data --format json 2>/dev/null | jq -r "$@" 2>/dev/null || true; }
 
-onchange_distro_apps() {
+onchange_gui_apps() {
     local family
     family="${FAMILY:-$(detect_family)}"
 
     local -a apps sway_pkgs
-    if [ -n "${DISTRO_APPS+x}" ]; then
-        read -ra apps <<<"${DISTRO_APPS:-}"
+    if [ -n "${GUI_APPS+x}" ]; then
+        read -ra apps <<<"${GUI_APPS:-}"
     else
-        mapfile -t apps < <(_data '.distroApps[]?')
+        mapfile -t apps < <(_data '.guiApps[]?')
     fi
     if [ -n "${SWAY_PKGS+x}" ]; then
         read -ra sway_pkgs <<<"${SWAY_PKGS:-}"
@@ -37,10 +25,10 @@ onchange_distro_apps() {
 
     _has() { local x; for x in "${apps[@]:-}"; do [ "$x" = "$1" ] && return 0; done; return 1; }
 
-    log_info "Installing selected distro desktop apps: ${apps[*]:-(none)}"
+    log_info "Installing selected GUI apps: ${apps[*]:-(none)}"
 
-    if _has fish; then
-        install_pkgs fish || log_warn "fish install failed."
+    if _has gnuradio; then
+        install_pkgs gnuradio || log_warn "gnuradio install failed."
     fi
 
     if _has firefox; then
@@ -62,6 +50,37 @@ onchange_distro_apps() {
                 install_pkgs firefox || log_warn "firefox install failed." ;;
         esac
     fi
+
+    if _has sway; then
+        if [ "$family" = macos ]; then
+            log_info "sway (Wayland WM) is Linux-only — skipping on macOS."
+        else
+            log_install "Installing sway and companions..."
+            install_pkgs "${sway_pkgs[@]:-}" || log_warn "sway stack partial install."
+            case "$family" in
+                debian) install_pkgs mako-notifier || log_warn "mako install failed." ;;
+                *)      install_pkgs mako || log_warn "mako install failed." ;;
+            esac
+        fi
+    fi
+
+    log_done "GUI apps installed."
+}
+
+onchange_emulators() {
+    local family
+    family="${FAMILY:-$(detect_family)}"
+
+    local -a apps
+    if [ -n "${EMULATORS+x}" ]; then
+        read -ra apps <<<"${EMULATORS:-}"
+    else
+        mapfile -t apps < <(_data '.emulators[]?')
+    fi
+
+    _has() { local x; for x in "${apps[@]:-}"; do [ "$x" = "$1" ] && return 0; done; return 1; }
+
+    log_info "Installing selected emulators: ${apps[*]:-(none)}"
 
     if _has steam; then
         case "$family" in
@@ -114,19 +133,6 @@ onchange_distro_apps() {
         esac
     fi
 
-    if _has sway; then
-        if [ "$family" = macos ]; then
-            log_info "sway (Wayland WM) is Linux-only — skipping on macOS."
-        else
-            log_install "Installing sway and companions..."
-            install_pkgs "${sway_pkgs[@]:-}" || log_warn "sway stack partial install."
-            case "$family" in
-                debian) install_pkgs mako-notifier || log_warn "mako install failed." ;;
-                *)      install_pkgs mako || log_warn "mako install failed." ;;
-            esac
-        fi
-    fi
-
     if _has qemu; then
         log_install "Installing QEMU..."
         case "$family" in
@@ -144,7 +150,7 @@ onchange_distro_apps() {
         fi
     fi
 
-    log_done "Distro desktop apps installed."
+    log_done "Emulators installed."
 }
 
 onchange_flatpaks() {
@@ -195,10 +201,8 @@ onchange_casks() {
 onchange_net_tools() {
     local -a pkgs
     if [ -n "${NET_TOOLS+x}" ]; then
-        # Apply path: the wrapper only sets NET_TOOLS when the netTools prompt is on.
         read -ra pkgs <<<"${NET_TOOLS:-}"
     else
-        # Manual path: honor the bool, then resolve the per-family list from data.
         [ "$(_data '.netTools')" = true ] || { log_info "netTools=false — skipping."; return 0; }
         local family
         family="${FAMILY:-$(detect_family)}"
@@ -243,12 +247,14 @@ onchange_nvim_bootstrap() {
 }
 
 case "${1:-all}" in
-    distro-apps)    onchange_distro_apps ;;
+    gui-apps)       onchange_gui_apps ;;
+    emulators)      onchange_emulators ;;
     flatpaks)       onchange_flatpaks ;;
     net-tools)      onchange_net_tools ;;
     nvim-bootstrap) onchange_nvim_bootstrap ;;
     all)
-        onchange_distro_apps
+        onchange_emulators
+        onchange_gui_apps
         onchange_flatpaks
         onchange_net_tools
         onchange_nvim_bootstrap

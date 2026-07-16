@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+
+set -uo pipefail
+FAMILY="{{ .family }}" \
+EMULATORS="{{ (index . "emulators") | default (list) | join " " }}" \
+    bash "$HOME/.sauce/scripts/onchange.sh" emulators

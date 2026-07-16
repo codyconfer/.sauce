@@ -1,14 +1,12 @@
 #! /bin/bash
 
-# --- paths ---
 OPT="${OPT:-$HOME/.local/opt}"
 BIN="${BIN:-$HOME/.local/bin}"
 ICONS="${ICONS:-$HOME/.local/share/icons}"
 CACHE="${CACHE:-${XDG_CACHE_HOME:-$HOME/.cache}/sauce}"
-ZSH_PLUGINS="${ZSH_PLUGINS:-$HOME/.zsh}"    # where zsh plugins are cloned (match .zshrc)
+ZSH_PLUGINS="${ZSH_PLUGINS:-$HOME/.zsh}"
 
-# --- identity & dotfiles ---
-SAUCE_DIR="${SAUCE_DIR:-$HOME/.sauce}"      # local dotfiles/config repo (chezmoi sourceDir)
+SAUCE_DIR="${SAUCE_DIR:-$HOME/.sauce}"
 
 OS="$(uname -s | tr '[:upper:]' '[:lower:]')"
 ARCH="$(uname -m)"
@@ -17,6 +15,5 @@ case "$ARCH" in
     aarch64|arm64) ARCH=arm64 ;;
 esac
 
-# --- per-tool tunables ---
-DOTNET_CHANNEL="${DOTNET_CHANNEL:-LTS}"     # LTS | STS | e.g. 8.0
+DOTNET_CHANNEL="${DOTNET_CHANNEL:-LTS}"
 GO_ARCH="${GO_ARCH:-${OS}-${ARCH}}"
