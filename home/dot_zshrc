@@ -72,6 +72,11 @@ fi
 
 eval "$(oh-my-posh init zsh --config ~/.config/oh-my-posh/sauce.toml)"
 
+for _rc in ~/.zshrc.dev ~/.zshrc.ops ~/.zshrc.yggdrasil; do
+    [ -r "$_rc" ] && source "$_rc"
+done
+unset _rc
+
 [ -f "$HOME/.zshrc.local" ] && source "$HOME/.zshrc.local"
 
 [ -f "$HOME/.zsh/plugins.zsh" ] && source "$HOME/.zsh/plugins.zsh"
