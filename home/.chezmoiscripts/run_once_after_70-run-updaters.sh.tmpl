@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 
 set -uo pipefail
-{{- $tools := (index . "tools") | default (list) -}}
+{{ $tools := (index . "tools") | default (list) -}}
 {{- $guiApps := (index . "guiApps") | default (list) -}}
 {{- $desktopTools := list "vscode" "zed" "qdmr" "codex" "cursor" "docker" "ghidra" "jetbrains-toolbox" "lmstudio" "obsidian" -}}
 {{- $guiTools := list -}}
 {{- range $guiApps -}}{{- if has . $desktopTools -}}{{- $guiTools = append $guiTools . -}}{{- end -}}{{- end -}}
-{{- $updateTools := concat (list "fonts" "zsh-plugins") $tools $guiTools -}}
+{{- $updateTools := concat (list "fonts" "zsh-plugins") $tools $guiTools | uniq -}}
 UPDATE_TOOLS="{{ $updateTools | join " " }}" \
     bash "$HOME/.sauce/scripts/setup.sh" run-updaters
