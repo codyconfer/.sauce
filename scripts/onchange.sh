@@ -170,6 +170,9 @@ onchange_flatpaks() {
         log_info "no flatpaks selected — skipping."
         return 0
     fi
+
+    ids+=(it.mijorus.gearlever com.github.tchx84.Flatseal)
+
     log_info "Installing/updating selected Flathub apps..."
     local id
     for id in "${ids[@]}"; do
