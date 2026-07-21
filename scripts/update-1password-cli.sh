@@ -19,7 +19,10 @@ dispatch_remove "$@"
 
 log_search "Fetching the latest 1Password CLI version..."
 HISTORY=$(fetch "https://app-updates.agilebits.com/product_history/CLI2")
-LATEST=$(printf '%s\n' "$HISTORY" | grep -oE 'v[0-9]+\.[0-9]+\.[0-9]+' | sed -n '1p')
+LATEST=$(printf '%s\n' "$HISTORY" \
+    | grep -oE "op_linux_${ARCH}_v[0-9]+\.[0-9]+\.[0-9]+\.zip" \
+    | sed -n '1p' \
+    | grep -oE 'v[0-9]+\.[0-9]+\.[0-9]+')
 LATEST="${LATEST#v}"
 if [ -z "$LATEST" ]; then
     log_error "Could not determine the latest 1Password CLI version."
