@@ -1,11 +1,21 @@
-
-case $- in *i*) ;; *) return ;; esac
-
-# Path handlers
+case $- in *i*) ;; *) return ;; esac 
+echo "☄⧗...loading ~/.bashrc"
+# path handlers -------------------------------------------------------------------
 export DOTNET_ROOT="$HOME/.dotnet"
-export NVM_DIR="$([ -z "${XDG_CONFIG_HOME-}" ] && printf %s "${HOME}/.nvm" || printf %s "${XDG_CONFIG_HOME}/nvm")"
 export PYENV_ROOT="$HOME/.pyenv"
-[ -d "$NVM_DIR" ] && [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+export NVM_DIR="${NVM_DIR:-$HOME/.nvm}"
+if [[ -s $NVM_DIR/nvm.sh ]]; then
+    __nvm_load() {
+        unset -f nvm node npm npx corepack yarn __nvm_load
+        . "$NVM_DIR/nvm.sh" --no-use
+        [[ -s $NVM_DIR/bash_completion ]] && . "$NVM_DIR/bash_completion"
+        nvm use default --silent >/dev/null 2>&1
+    }
+    for c in nvm node npm npx corepack yarn; do
+        eval "$c() { __nvm_load; command $c \"\$@\"; }"
+    done
+    unset c
+fi
 if [ -d "$PYENV_ROOT" ]; then
     command -v pyenv >/dev/null || PATH="$PYENV_ROOT/bin:$PATH"
     eval "$(pyenv init -)"
@@ -27,14 +37,12 @@ for dir in "${PATH_DIRS[@]}"; do
     [ -d "$dir" ] && PATH="$PATH:$dir"
 done
 export PATH
-
-# editor config
+# editor config -------------------------------------------------------------------
 export EDITOR="nvim"
 export VISUAL="nvim"
 alias vi="nvim"
 alias vim="nvim"
-
-# bash config
+# configure bash ------------------------------------------------------------------
 HISTFILE=~/.bash_history
 HISTSIZE=10000
 HISTFILESIZE=10000
@@ -46,16 +54,14 @@ for _bc in \
     [ -f "$_bc" ] && source "$_bc" && break
 done
 unset _bc
-
-# homebrew setup if macos
+# homebrew setup if macos ----------------------------------------------------------
 if [[ "$(uname)" == "Darwin" ]]; then
     for _brew in /opt/homebrew/bin/brew /usr/local/bin/brew; do
         [ -x "$_brew" ] && eval "$("$_brew" shellenv)" && break
     done
     unset _brew
 fi
-
-# .sauce script handlers
+# .sauce script handlers -----------------------------------------------------------
 [ -f ~/.sauce/scripts/functions.sh ] && source ~/.sauce/scripts/functions.sh
 for _script in ~/.sauce/scripts/*.sh; do
     [ -e "$_script" ] || continue
@@ -63,14 +69,17 @@ for _script in ~/.sauce/scripts/*.sh; do
     alias "$(basename "$_script" .sh)"="bash $_script"
 done
 unset _script
-
-# visual components
+# visual components -----------------------------------------------------------------
 _sauce_print_header
 eval "$(oh-my-posh init zsh --config ~/.config/oh-my-posh/sauce.toml)"
-
-# post load
-for _rc in ~/.bashrc.dev ~/.bashrc.ops ~/.bashrc.yggdrasil; do
+# post load -------------------------------------------------------------------------
+RCs=(
+    "$HOME/.bashrc.dev"
+    "$HOME/.bashrc.ops"
+    "$HOME/.bashrc.yggdrasil"
+    "$HOME/.bashrc.local"
+)
+for _rc in "${RCs[@]}"; do
     [ -r "$_rc" ] && source "$_rc"
 done
 unset _rc
-[ -f "$HOME/.bashrc.local" ] && source "$HOME/.bashrc.local"
