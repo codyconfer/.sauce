@@ -94,6 +94,7 @@ _brew_spec() {
         obsidian)          echo "cask obsidian" ;;
         ollama)            echo "cask ollama" ;;
         qdmr)              echo "cask qdmr" ;;
+        tmux)              echo "formula tmux" ;;
         vscode)            echo "cask visual-studio-code" ;;
         *) return 1 ;;
     esac

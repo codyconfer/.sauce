@@ -108,6 +108,7 @@ own directories aren't mistaken for things to deploy.
       oh-my-posh/sauce.toml           # → ~/.config/oh-my-posh/sauce.toml (prompt theme)
       nvim/**                         # → ~/.config/nvim (lazy.nvim setup)
       nvim/lua/sauce/generated.lua.tmpl  # LSP/parser list, detected via lookPath
+      tmux/tmux.conf                  # → ~/.config/tmux/tmux.conf
       sway/ waybar/ wofi/ mako/       # → ~/.config/* (tracked WM config; Linux only, ignored on macOS)
     create_dot_zshrc.local            # → ~/.zshrc.local (created once, never overwritten)
     create_dot_bashrc.local           #    "  ~/.bashrc.local
@@ -157,7 +158,8 @@ Two mechanisms, by tool type:
   run a vendor `curl | sh` installer, self-update, or are a plain binary download
   (go, dotnet, gcloud, aws, pyenv, poetry, zed, opencode, claude-code, codex, gcx,
   pi, nvm, wrangler, yarn, azure-cli, vscode, docker, jetbrains-toolbox, rustup,
-  fonts, zsh-plugins, loglit, k9s, kubectl, cloudflared). Run once at setup, then any
+  fonts, zsh-plugins, loglit, k9s, kubectl, cloudflared) or a source build (tmux).
+  Run once at setup, then any
   time via the alias matching the filename (e.g. `update-go`) or `update-all` for all
   of them.
 

@@ -73,7 +73,7 @@ sourceDir = "{{ .chezmoi.homeDir }}/.sauce"
 {{-       $flatpaks = promptMultichoiceOnce . "flatpaks" "Flatpak (Flathub) apps to install (all selected by default; leave empty for none)" $flatpakChoices $flatpaksDefault -}}
 {{-     end -}}
 {{-   end -}}
-{{-   $toolChoices := list "1password-cli" "aws" "azure-cli" "bitwarden-cli" "cloudflared" "gcloud" "gcx" "wrangler" "adb" "claude-code" "dotnet" "go" "k9s" "kubectl" "loglit" "nvim" "nvm" "ollama" "opencode" "pi" "poetry" "pyenv" "rustup" "yarn" -}}
+{{-   $toolChoices := list "1password-cli" "aws" "azure-cli" "bitwarden-cli" "cloudflared" "gcloud" "gcx" "wrangler" "adb" "claude-code" "dotnet" "go" "k9s" "kubectl" "loglit" "nvim" "nvm" "ollama" "opencode" "pi" "poetry" "pyenv" "rustup" "tmux" "yarn" -}}
 {{-   if and $headless (ne $family "macos") -}}{{- $toolChoices = append $toolChoices "k3s" -}}{{- end -}}
 {{-   $toolsDefault := $toolChoices -}}
 {{-   if env "SAUCE_TOOLS" -}}
