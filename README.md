@@ -135,7 +135,7 @@ written, `after_` scripts once everything is in place:
 | `run_onchange_before_40-gui-apps` | firefox/sway/gnuradio installers (skipped if headless) | on change |
 | `run_onchange_before_45-net-tools` | network/security CLI tools (opt-in via `netTools`) | on change |
 | `run_onchange_before_50-flatpaks` | flatpak `install-*.sh` (skipped if headless) | on change |
-| `run_once_after_70-run-updaters` | `setup.sh` update loop (always runs fonts + zsh-plugins; installs the `update-*.sh`-backed GUI apps — vscode/zed/qdmr/cursor/ghidra/jetbrains-toolbox/lmstudio/obsidian/docker/codex — when selected) | once |
+| `run_once_after_70-run-updaters` | `setup.sh` update loop (always runs fonts + zsh-plugins; installs the `update-*.sh`-backed GUI apps — vscode/zed/qdmr/claude/cursor/ghidra/jetbrains-toolbox/lmstudio/obsidian/docker/codex — when selected) | once |
 | `run_onchange_after_80-nvim-bootstrap` | `build-nvim.sh` sync tail | on lockfile/toolchain change |
 | `run_once_after_90-chsh-zsh` | `setup.sh` chsh | once |
 | `run_once_after_95-tailscale` | `setup.sh` tailscale | once (opt-in) |
@@ -167,7 +167,7 @@ downloaded when its key is selected, and `run_update_scripts` only runs an
 from `chezmoi data`; running `update-go` by hand still works regardless). Two
 exceptions, wired via the run-updaters step: `fonts` and `zsh-plugins` are part of the
 always-installed base and run unconditionally, while the GUI-oriented ones
-(`vscode`, `zed`, `qdmr`, `cursor`, `ghidra`, `jetbrains-toolbox`, `lmstudio`,
+(`vscode`, `zed`, `qdmr`, `claude`, `cursor`, `ghidra`, `jetbrains-toolbox`, `lmstudio`,
 `obsidian`, `docker`, `codex`) are selected through the **GUI apps** prompt (and so
 skipped on headless/WSL) rather than `tools`.
 

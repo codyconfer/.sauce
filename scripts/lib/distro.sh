@@ -79,6 +79,7 @@ _brew_spec() {
         adb)               echo "cask android-platform-tools" ;;
         aws)               echo "formula awscli" ;;
         bitwarden-cli)     echo "formula bitwarden-cli" ;;
+        claude)            echo "cask claude" ;;
         cloudflared)       echo "formula cloudflared" ;;
         cursor)            echo "cask cursor" ;;
         docker)            echo "cask docker" ;;
