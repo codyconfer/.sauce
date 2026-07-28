@@ -5,7 +5,6 @@ done
 unset _brew
 
 [ -f ~/.sauce/scripts/functions.sh ] && source ~/.sauce/scripts/functions.sh
-_sauce_print_header
 
 for _script in ~/.sauce/scripts/*.sh; do
     [ -e "$_script" ] || continue
@@ -69,6 +68,8 @@ if command -v dotnet >/dev/null 2>&1; then
     }
     compdef _dotnet_zsh_complete dotnet
 fi
+
+_sauce_print_header
 
 eval "$(oh-my-posh init zsh --config ~/.config/oh-my-posh/sauce.toml)"
 
