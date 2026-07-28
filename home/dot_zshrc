@@ -9,10 +9,10 @@ if [ -d "$PYENV_ROOT" ]; then
     eval "$(pyenv init -)"
 fi
 PATH_DIRS=(
-    "$HOME/.local/bin"
     "/usr/local/bin"
     "/opt/bin"
     "/usr/local/go/bin"
+    "$HOME/.local/bin"
     "$HOME/go/bin"
     "$DOTNET_ROOT"
     "$DOTNET_ROOT/tools"
