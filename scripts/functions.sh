@@ -142,7 +142,7 @@ update() {
         return
     fi
     (command -v apt > /dev/null \
-        && sudo apt update && sudo apt upgrade -y && sudo apt dist-upgrade -y && sudo snap refresh) \
+        && sudo apt update && sudo apt upgrade -y && sudo apt dist-upgrade -y) \
         || (command -v pacman > /dev/null \
         && sudo pacman -Syu && paru -Syu) \
         || (command -v dnf > /dev/null \
