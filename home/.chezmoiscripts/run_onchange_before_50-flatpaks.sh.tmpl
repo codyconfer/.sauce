@@ -5,6 +5,6 @@ set -uo pipefail
 FLATPAK_CASKS="{{ range (index . "flatpaks" | default (list)) }}{{ with (index $.caskCatalog .) }}{{ . }} {{ end }}{{ end }}" \
     bash "$HOME/.sauce/scripts/onchange.sh" flatpaks
 {{- else }}
-FLATPAK_IDS="{{ range (index . "flatpaks" | default (list)) }}{{ index $.flatpakCatalog . }} {{ end }}" \
+FLATPAK_IDS="{{ range (index . "flatpaks" | default (list)) }}{{ with (index $.flatpakCatalog .) }}{{ . }} {{ end }}{{ end }}" \
     bash "$HOME/.sauce/scripts/onchange.sh" flatpaks
 {{- end }}

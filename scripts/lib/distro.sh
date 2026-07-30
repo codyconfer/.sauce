@@ -75,9 +75,11 @@ install_cask() { ensure_brew && brew install --cask "$@"; }
 
 _brew_spec() {
     case "$1" in
+        1password)         echo "cask 1password" ;;
         1password-cli)     echo "cask 1password-cli" ;;
         adb)               echo "cask android-platform-tools" ;;
         aws)               echo "formula awscli" ;;
+        bitwarden)         echo "cask bitwarden" ;;
         bitwarden-cli)     echo "formula bitwarden-cli" ;;
         claude)            echo "cask claude" ;;
         cloudflared)       echo "formula cloudflared" ;;

@@ -57,14 +57,14 @@ sourceDir = "{{ .chezmoi.homeDir }}/.sauce"
 {{-         else -}}{{- $emulatorsDefault = (splitList " " (env "SAUCE_EMULATORS") | compact) -}}{{- end -}}
 {{-       end -}}
 {{-       $emulators = promptMultichoiceOnce . "emulators" "Emulators to install (all selected by default; leave empty for none)" $emulatorChoices $emulatorsDefault -}}
-{{-       $guiAppChoices := list "firefox" "sway" "gnuradio" "qdmr" "vscode" "zed" "claude" "codex" "cursor" "docker" "ghidra" "jetbrains-toolbox" "lmstudio" "obsidian" -}}
+{{-       $guiAppChoices := list "firefox" "sway" "gnuradio" "qdmr" "vscode" "zed" "claude" "codex" "cursor" "docker" "ghidra" "jetbrains-toolbox" "lmstudio" "obsidian" "bitwarden" "1password" -}}
 {{-       $guiAppsDefault := $guiAppChoices -}}
 {{-       if env "SAUCE_GUI_APPS" -}}
 {{-         if eq (lower (env "SAUCE_GUI_APPS")) "none" -}}{{- $guiAppsDefault = list -}}
 {{-         else -}}{{- $guiAppsDefault = (splitList " " (env "SAUCE_GUI_APPS") | compact) -}}{{- end -}}
 {{-       end -}}
 {{-       $guiApps = promptMultichoiceOnce . "guiApps" "GUI apps to install (all selected by default; leave empty for none)" $guiAppChoices $guiAppsDefault -}}
-{{-       $flatpakChoices := list "slack" "discord" "signal" "easyeffects" "obs-studio" "bitwarden" "zen" "lutris" "retroarch" "zoom" "1password" "chirp" "sonic-pi" -}}
+{{-       $flatpakChoices := list "slack" "discord" "signal" "easyeffects" "obs-studio" "zen" "lutris" "retroarch" "zoom" "chirp" "sonic-pi" -}}
 {{-       $flatpaksDefault := $flatpakChoices -}}
 {{-       if env "SAUCE_FLATPAKS" -}}
 {{-         if eq (lower (env "SAUCE_FLATPAKS")) "none" -}}{{- $flatpaksDefault = list -}}

@@ -39,6 +39,26 @@ verify_sha256() {
     fi
 }
 
+verify_sha512_base64() {
+    local expected="$1" file="$2" actual
+    if [ -z "$expected" ]; then
+        log_warn "No checksum published for $(basename "$file"); skipping hash check."
+        return 0
+    fi
+    if ! command -v openssl >/dev/null 2>&1; then
+        log_warn "openssl not available; skipping hash check."
+        return 0
+    fi
+    log_verify "Verifying SHA-512 checksum..."
+    actual=$(openssl dgst -sha512 -binary "$file" | openssl base64 -A)
+    if [ "$actual" = "$expected" ]; then
+        log_done "$(basename "$file"): OK"
+    else
+        log_error "$(basename "$file"): FAILED SHA-512 check"
+        return 1
+    fi
+}
+
 verify_md5_etag() {
     local etag actual
     etag=$(grep -i '^etag:' "$1" | tail -n1 | tr -d ' \r"' | sed 's/^[Ee][Tt][Aa][Gg]://' || true)

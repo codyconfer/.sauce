@@ -47,7 +47,7 @@ A **base set is always installed** with no prompt: essential packages (git, curl
 neovim, gcc, make, …), extras (pipx, htop, btop, fish, plus the Nerd Fonts and
 zsh-plugins), and the GitHub CLI. On first `init` you then pick from multi-select
 lists — emulators (Steam, Wine, QEMU), GUI apps (Firefox, Sway, GNU Radio, qdmr, VS Code,
-Zed, Cursor, Ghidra, JetBrains Toolbox, LM Studio, Obsidian, Docker, Codex), flatpaks
+Zed, Cursor, Ghidra, JetBrains Toolbox, LM Studio, Obsidian, Docker, Codex, Bitwarden, 1Password), flatpaks
 (Slack, Discord, Signal, …), and CLI/dev tools (the "Access" cloud CLIs plus go, k9s,
 rustup, … — every `update-*.sh`) — plus yes/no questions:
 whether the machine is **headless** (skips the entire desktop layer — emulators, GUI
@@ -170,7 +170,7 @@ from `chezmoi data`; running `update-go` by hand still works regardless). Two
 exceptions, wired via the run-updaters step: `fonts` and `zsh-plugins` are part of the
 always-installed base and run unconditionally, while the GUI-oriented ones
 (`vscode`, `zed`, `qdmr`, `claude`, `cursor`, `ghidra`, `jetbrains-toolbox`, `lmstudio`,
-`obsidian`, `docker`, `codex`) are selected through the **GUI apps** prompt (and so
+`obsidian`, `docker`, `codex`, `bitwarden`, `1password`) are selected through the **GUI apps** prompt (and so
 skipped on headless/WSL) rather than `tools`.
 
 Distro packages and flatpaks are kept current by the system: the `update` alias
