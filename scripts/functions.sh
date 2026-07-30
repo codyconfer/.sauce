@@ -51,9 +51,14 @@ get_ips() {
         fi
     done
     if command -v tailscale >/dev/null 2>&1; then
-        tailnet_domain=$(tailscale whois $(tailscale ip --4) | grep -o -P "$(hostname).*.ts.net")
-        ips="${ips}tailnet:    ${cyan}$(tailscale ip --4) ${blue}"${linebreak}
-        ips="${ips}            ${tailnet_domain}"${linebreak}
+        local ts_ip ts_domain
+        ts_ip=$(tailscale ip --4 2>/dev/null | head -n1)
+        if [ -n "$ts_ip" ]; then
+            ts_domain=$(tailscale whois "$ts_ip" 2>/dev/null \
+                | grep -oE "$(hostname)[^[:space:]]*\.ts\.net" | head -n1)
+            ips="${ips}tailnet:    ${cyan}${ts_ip} ${blue}"${linebreak}
+            [ -n "$ts_domain" ] && ips="${ips}            ${ts_domain}"${linebreak}
+        fi
     fi
 
     printf '%s' "$ips"
@@ -68,8 +73,11 @@ _sauce_print_header() {
     local nameColor=$blue
     local date
     date=$(date +'%A, %b %d, %Y')
-    local host
-    host=$(figlet -f smslant "@$(hostname)" | sed "s/^/$(printf '%*s' "1" '')/")
+    local host=""
+    if command -v figlet >/dev/null 2>&1; then
+        host=$(figlet -f smslant "@$(hostname)" 2>/dev/null | sed "s/^/$(printf '%*s' "1" '')/")
+    fi
+    [ -n "$host" ] || host=" @$(hostname)"
     clear
     cat <<-_END_
 ${yellow}${line}${clear}
@@ -89,6 +97,14 @@ _END_
 }
 
 list_docker_containers() {
+    if ! command -v docker >/dev/null 2>&1; then
+        echo "docker is not installed."
+        return 1
+    fi
+    if ! docker info >/dev/null 2>&1; then
+        echo "The Docker daemon is not running."
+        return 1
+    fi
     local tmp_ifs=$IFS
     IFS=$'\n'
     local container=""; local group=""
@@ -115,7 +131,7 @@ list_docker_containers() {
                 display_status=$container_status
                 ;;
         esac
-        for ps_result in $(docker ps -a --format "{{.Status}} | {{.Names}} | {{.Image}} | {{.Ports}}" | grep "${container_status} "); do
+        for ps_result in $(docker ps -a --format "{{.Status}} | {{.Names}} | {{.Image}} | {{.Ports}}" 2>/dev/null | grep "${container_status} "); do
             container=""
             i=1
             while iter=$(echo "$ps_result" | cut -d\| -f$i | xargs) ; [ -n "$iter" ] ; do
@@ -151,7 +167,7 @@ update() {
     command -v flatpak > /dev/null && flatpak update --user -y
 }
 
-alias docker-containers=$(list_docker_containers)
+alias docker-containers='list_docker_containers'
 alias sauce="chezmoi apply"
 alias sauce-edit="chezmoi edit --apply"
 alias sauce-cd="chezmoi cd"

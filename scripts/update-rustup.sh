@@ -16,6 +16,8 @@ cleanup() {
 }
 dispatch_remove "$@"
 
+export CARGO_HOME="${CARGO_HOME:-$HOME/.cargo}"
+
 if command -v rustup >/dev/null 2>&1; then
     log_download "Updating the existing Rust toolchain..."
     rustup self update || log_warn "rustup self update failed (package-managed rustup?)."
@@ -23,10 +25,19 @@ if command -v rustup >/dev/null 2>&1; then
 else
     log_download "Installing rustup (official installer)..."
     fetch https://sh.rustup.rs | sh -s -- -y --no-modify-path
-    [ -f "$HOME/.cargo/env" ] && . "$HOME/.cargo/env"
 fi
 
-command -v rustup >/dev/null 2>&1 && rustup default stable || true
+[ -f "$CARGO_HOME/env" ] && . "$CARGO_HOME/env"
+
+if ! command -v rustup >/dev/null 2>&1; then
+    log_error "rustup is not on PATH after install."
+    exit 1
+fi
+
+log_install "Initializing the default stable toolchain..."
+rustup default stable
 
 log_done
-command -v rustc >/dev/null && rustc --version || true
+rustc --version
+cargo --version
+log_hint "Restart your shell to pick up $CARGO_HOME/bin on your PATH."

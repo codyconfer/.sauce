@@ -161,7 +161,13 @@ Two mechanisms, by tool type:
   fonts, zsh-plugins, loglit, k9s, kubectl, cloudflared) or a source build (tmux).
   Run once at setup, then any
   time via the alias matching the filename (e.g. `update-go`) or `update-all` for all
-  of them.
+  of them. The language runtimes run first in every batch, in this order — `go`,
+  `rustup`, `dotnet`, `nvm`, `poetry`, `pyenv`, `docker` — and each one leaves a usable
+  default in place (`rustup default stable`, PowerShell as a dotnet global tool, the
+  latest Node LTS as the nvm `default`, the latest CPython as the pyenv `global`). The
+  rest follow in alphabetical order, so the npm-based installers (codex, wrangler, yarn,
+  pi) find `npm` on a first run. The order lives in `_DEV_ENV_ORDER`
+  (`scripts/lib/runner.sh`).
 
 Most `update-*.sh` are gated by the `tools` init-prompt selection: an external is only
 downloaded when its key is selected, and `run_update_scripts` only runs an

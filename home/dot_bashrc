@@ -41,7 +41,7 @@ alias vim="nvim"
 # dev env setup --------------------------------------------------------------------
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
-[ -d "$PYENV_ROOT" ] && eval "$(pyenv init -)"
+[ -d "$PYENV_ROOT" ] && command -v pyenv >/dev/null 2>&1 && eval "$(pyenv init -)"
 # homebrew setup if macos ----------------------------------------------------------
 if [[ "$(uname)" == "Darwin" ]]; then
     for _brew in /opt/homebrew/bin/brew /usr/local/bin/brew; do
@@ -59,19 +59,31 @@ done
 unset _script
 # configure bash ------------------------------------------------------------------
 HISTFILE=~/.bash_history
-HISTSIZE=10000
-HISTFILESIZE=10000
-shopt -s histappend
-PROMPT_COMMAND="history -a${PROMPT_COMMAND:+; $PROMPT_COMMAND}"
+HISTSIZE=500
+HISTFILESIZE=500
+HISTCONTROL=ignoreboth:erasedups
+shopt -s histappend cmdhist
+PROMPT_COMMAND="history -a; history -n${PROMPT_COMMAND:+; $PROMPT_COMMAND}"
 for _bc in \
     /usr/share/bash-completion/bash_completion \
     /etc/bash_completion; do
     [ -f "$_bc" ] && source "$_bc" && break
 done
 unset _bc
+if command -v dotnet >/dev/null 2>&1; then
+    _dotnet_bash_complete() {
+        local cur="${COMP_WORDS[COMP_CWORD]}"
+        local candidates
+        candidates=$(dotnet complete --position "$COMP_POINT" "$COMP_LINE" 2>/dev/null)
+        COMPREPLY=($(compgen -W "$candidates" -- "$cur"))
+    }
+    complete -f -F _dotnet_bash_complete dotnet
+fi
 # visual components -----------------------------------------------------------------
 _sauce_print_header
-eval "$(oh-my-posh init bash --config ~/.config/oh-my-posh/sauce.toml)"
+if command -v oh-my-posh >/dev/null 2>&1 && [ -f "$THEME_DIR/sauce.toml" ]; then
+    eval "$(oh-my-posh init bash --config "$THEME_DIR/sauce.toml")"
+fi
 # post load -------------------------------------------------------------------------
 for _rc in "${RCs[@]}"; do
     [ -r "$_rc" ] && source "$_rc"

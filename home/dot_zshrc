@@ -40,7 +40,7 @@ alias vim="nvim"
 # dev env setup --------------------------------------------------------------------
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
-[ -d "$PYENV_ROOT" ] && eval "$(pyenv init -)"
+[ -d "$PYENV_ROOT" ] && command -v pyenv >/dev/null 2>&1 && eval "$(pyenv init -)"
 # homebrew setup if macos ----------------------------------------------------------
 if [[ "$(uname)" == "Darwin" ]]; then
     for _brew in $OPT/homebrew/bin/brew $USR/bin/brew; do
@@ -85,7 +85,9 @@ if command -v dotnet >/dev/null 2>&1; then
 fi
 # visual components -----------------------------------------------------------------
 _sauce_print_header
-eval "$(oh-my-posh init zsh --config $THEME_DIR/sauce.toml)"
+if command -v oh-my-posh >/dev/null 2>&1 && [ -f "$THEME_DIR/sauce.toml" ]; then
+    eval "$(oh-my-posh init zsh --config "$THEME_DIR/sauce.toml")"
+fi
 # post load -------------------------------------------------------------------------
 for _rc in "${RCs[@]}"; do
     [ -r "$_rc" ] && source "$_rc"

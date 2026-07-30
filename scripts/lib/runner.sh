@@ -26,6 +26,16 @@ run_step() {
     fi
 }
 
+_DEV_ENV_ORDER=(go rustup dotnet nvm poetry pyenv docker)
+
+_is_dev_env() {
+    local t
+    for t in "${_DEV_ENV_ORDER[@]}"; do
+        [ "$t" = "$1" ] && return 0
+    done
+    return 1
+}
+
 _selected_tools() {
     if [ -n "${UPDATE_TOOLS+x}" ]; then
         printf '%s\n' ${UPDATE_TOOLS:-}
@@ -51,14 +61,30 @@ run_update_scripts() {
         fi
     fi
 
+    local -A dev=()
+    local -a first=() rest=()
     for script in "$dir"/update-*.sh; do
         name=$(basename "$script")
         [ "$name" = "update-all.sh" ] && continue
+        tool="${name#update-}"; tool="${tool%.sh}"
         if [ "$filter" -eq 1 ]; then
-            tool="${name#update-}"; tool="${tool%.sh}"
             [ -n "${selected[$tool]:-}" ] || continue
         fi
-        run_step "$name" bash "$script" ${mode:+"$mode"}
+        if _is_dev_env "$tool"; then
+            dev["$tool"]="$script"
+        else
+            rest+=("$script")
+        fi
+    done
+
+    for tool in "${_DEV_ENV_ORDER[@]}"; do
+        if [ -n "${dev[$tool]:-}" ]; then
+            first+=("${dev[$tool]}")
+        fi
+    done
+
+    for script in ${first[@]+"${first[@]}"} ${rest[@]+"${rest[@]}"}; do
+        run_step "$(basename "$script")" bash "$script" ${mode:+"$mode"}
     done
 }
 
