@@ -82,7 +82,8 @@ ${nameColor}$(get_ips)${clear}${linebreak}
 _END_
     cat <<-_END_
 ${yellow}${line}${clear}${linebreak}
-$(pretty_lights 3)${linebreak}
+$(pretty_lights 3)${linebreak}${linebreak}
+${magenta}${oil}${pad}across the universe divide...${clear}${linebreak}
 ${yellow}${line}${clear}${linebreak}
 _END_
 }

@@ -133,7 +133,7 @@ cache_duration = 'none'
 style = 'full'
 
 [[blocks.segments]]
-template = '❯ '
+template = '⌨ '
 foreground = 'green'
 type = 'text'
 style = 'plain'
