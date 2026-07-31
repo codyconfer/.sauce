@@ -5,7 +5,7 @@ set $up k
 set $right l
 
 set $term alacritty
-set $menu wofi --show drun
+set $menu fuzzel
 set $lock swaylock -f
 
 output * bg #263238 solid_color

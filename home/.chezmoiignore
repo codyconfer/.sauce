@@ -3,7 +3,7 @@
 .config/sway
 .config/swaylock
 .config/waybar
-.config/wofi
+.config/fuzzel
 .config/mako
 .config/foot
 .local/share/applications
@@ -24,7 +24,7 @@ Documents/PowerShell
 .config/sway
 .config/swaylock
 .config/waybar
-.config/wofi
+.config/fuzzel
 .config/mako
 .config/foot
 .config/alacritty

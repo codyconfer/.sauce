@@ -22,7 +22,7 @@ sway:
     - swayidle
     - swaylock
     - waybar
-    - wofi
+    - fuzzel
     - foot
     - pavucontrol
     - grim

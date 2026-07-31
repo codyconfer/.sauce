@@ -1,8 +1,0 @@
-show=drun
-prompt=Run
-width=600
-height=400
-lines=10
-columns=1
-allow_images=true
-insensitive=true

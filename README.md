@@ -110,7 +110,7 @@ own directories aren't mistaken for things to deploy.
       nvim/lua/sauce/generated.lua.tmpl  # LSP/parser list, detected via lookPath
       tmux/tmux.conf                  # → ~/.config/tmux/tmux.conf
       sway/ swaylock/ waybar/         # → ~/.config/* (tracked WM config; Linux only, ignored on macOS)
-      wofi/ mako/ foot/               #    "
+      fuzzel/ mako/ foot/             #    "
       alacritty/alacritty.toml        # → ~/.config/alacritty (Linux + macOS; ignored on Windows/WSL)
     create_dot_zshrc.local            # → ~/.zshrc.local (created once, never overwritten)
     create_dot_bashrc.local           #    "  ~/.bashrc.local
