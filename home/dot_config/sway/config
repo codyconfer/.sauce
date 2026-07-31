@@ -6,7 +6,7 @@ set $right l
 
 set $term foot
 set $menu wofi --show drun
-set $lock swaylock -f -c 263238
+set $lock swaylock -f
 
 output * bg #263238 solid_color
 
@@ -38,6 +38,7 @@ exec swayidle -w \
 bindsym $mod+Return exec $term
 bindsym $mod+d exec $menu
 bindsym $mod+q kill
+bindsym $mod+BackSpace kill
 bindsym $mod+Shift+c reload
 bindsym $mod+Shift+e exec swaynag -t warning \
     -m 'Exit sway?' -B 'Exit' 'swaymsg exit'

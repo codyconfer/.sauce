@@ -1,0 +1,234 @@
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+indent_style = space
+indent_size = 2
+insert_final_newline = true
+trim_trailing_whitespace = true
+max_line_length = off
+
+[*.md]
+trim_trailing_whitespace = false
+
+# --- Web / markup / data -----------------------------------------------------
+
+[*.{ts,tsx,mts,cts,js,jsx,mjs,cjs}]
+indent_size = 2
+
+[*.{vue,svelte,astro}]
+indent_size = 2
+
+[*.{html,htm,xhtml,ejs,hbs,njk}]
+indent_size = 2
+
+[*.{css,scss,sass,less,styl}]
+indent_size = 2
+
+[*.{json,json5,jsonc,webmanifest}]
+indent_size = 2
+
+[*.{graphql,gql}]
+indent_size = 2
+
+[*.{yml,yaml}]
+indent_style = space
+indent_size = 2
+
+[*.toml]
+indent_size = 2
+
+# --- Go ----------------------------------------------------------------------
+
+[*.go]
+indent_style = tab
+indent_size = 4
+
+[{go.mod,go.sum,go.work,go.work.sum}]
+indent_style = tab
+indent_size = 4
+
+[*.templ]
+indent_style = tab
+indent_size = 4
+
+# --- Rust --------------------------------------------------------------------
+
+[*.rs]
+indent_size = 4
+max_line_length = 100
+
+# --- Python ------------------------------------------------------------------
+
+[*.{py,pyi,pyx}]
+indent_size = 4
+max_line_length = 88
+
+# --- .NET --------------------------------------------------------------------
+
+[*.{cs,csx,vb,fs,fsx,fsi}]
+indent_size = 4
+
+[*.{cshtml,razor,vbhtml}]
+indent_size = 4
+
+[*.{csproj,fsproj,vbproj,props,targets,nuspec,resx,config,xml,xsd,xslt}]
+indent_size = 2
+
+[*.sln]
+indent_style = tab
+indent_size = 4
+end_of_line = crlf
+
+# --- C / C++ -----------------------------------------------------------------
+
+[*.{c,h,cpp,cxx,cc,c++,hpp,hxx,hh,h++,inl,ipp,cu,cuh,ino}]
+indent_size = 2
+
+[{CMakeLists.txt,*.cmake}]
+indent_size = 2
+
+# --- JVM ---------------------------------------------------------------------
+
+[*.{java,groovy,gradle}]
+indent_size = 4
+
+[*.{kt,kts}]
+indent_size = 4
+
+[*.{scala,sbt,sc}]
+indent_size = 2
+
+[*.{clj,cljs,cljc,edn}]
+indent_size = 2
+
+# --- Other compiled ----------------------------------------------------------
+
+[*.swift]
+indent_size = 4
+
+[*.zig]
+indent_size = 4
+
+[*.dart]
+indent_size = 2
+
+[*.{ex,exs}]
+indent_size = 2
+
+[*.{erl,hrl}]
+indent_size = 4
+
+[*.{hs,lhs}]
+indent_size = 2
+
+[*.{ml,mli}]
+indent_size = 2
+
+[*.jl]
+indent_size = 4
+
+[*.nim]
+indent_size = 2
+
+[*.sol]
+indent_size = 4
+
+# --- Scripting ---------------------------------------------------------------
+
+[*.rb]
+indent_size = 2
+
+[{Gemfile,Rakefile,Guardfile,*.gemspec,*.rake}]
+indent_size = 2
+
+[*.php]
+indent_size = 4
+
+[*.{pl,pm,t}]
+indent_size = 4
+
+[*.{r,R,Rmd}]
+indent_size = 2
+
+[*.lua]
+indent_size = 2
+
+[*.fish]
+indent_size = 4
+
+[*.{ps1,psm1,psd1}]
+indent_size = 4
+
+[*.{sh,bash,zsh,ksh,bats}]
+indent_size = 2
+
+[.{bashrc,bash_profile,zshrc,zprofile,profile,zshenv}]
+indent_size = 2
+
+[*.{vim,vimrc}]
+indent_size = 2
+
+# --- Infra / tooling ---------------------------------------------------------
+
+[*.{tf,tfvars,hcl}]
+indent_size = 2
+
+[{Dockerfile,Dockerfile.*,*.dockerfile,Containerfile}]
+indent_size = 4
+
+[*.nix]
+indent_size = 2
+
+[*.proto]
+indent_size = 2
+
+[*.{sql,psql}]
+indent_size = 2
+
+[*.{tex,bib}]
+indent_size = 2
+
+[*.{ini,cfg,conf,desktop,service,properties}]
+indent_size = 2
+
+[{Makefile,makefile,GNUmakefile,*.mk}]
+indent_style = tab
+indent_size = 4
+
+[Justfile]
+indent_size = 4
+
+[*.{bat,cmd}]
+end_of_line = crlf
+
+# --- chezmoi source names ----------------------------------------------------
+
+[*.{ps1,psm1,psd1}.tmpl]
+indent_size = 4
+
+[*.fish.tmpl]
+indent_size = 4
+
+[*.{cs,py,rs}.tmpl]
+indent_size = 4
+
+[*.go.tmpl]
+indent_style = tab
+indent_size = 4
+
+# --- Vendored / generated / lockfiles ----------------------------------------
+
+[{home/dot_config/nvim/create_lazy-lock.json,LICENSE,package-lock.json,yarn.lock,pnpm-lock.yaml,bun.lockb,Cargo.lock,poetry.lock,uv.lock,Gemfile.lock,composer.lock,packages.lock.json,flake.lock}]
+indent_style = unset
+indent_size = unset
+insert_final_newline = unset
+trim_trailing_whitespace = unset
+max_line_length = unset
+
+[*.{min.js,min.css,map,svg,lock}]
+indent_style = unset
+indent_size = unset
+trim_trailing_whitespace = unset
+max_line_length = unset

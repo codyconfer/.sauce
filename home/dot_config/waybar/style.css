@@ -2,29 +2,18 @@
     font-family: "Terminess Nerd Font";
     font-size: 13px;
     min-height: 0;
+    border: none;
+    border-radius: 0;
 }
 
 window#waybar {
     background: #263238;
     color: #eceff1;
+    border: 2px solid #37474f;
+    border-radius: 10px;
 }
 
-#workspaces button {
-    padding: 0 8px;
-    color: #90a4ae;
-    background: transparent;
-}
-#workspaces button.focused {
-    color: #263238;
-    background: #03a9f4;
-    border-radius: 4px;
-}
-#workspaces button.urgent {
-    color: #263238;
-    background: #e91e63;
-    border-radius: 4px;
-}
-
+#workspaces,
 #mode,
 #clock,
 #battery,
@@ -32,9 +21,80 @@ window#waybar {
 #pulseaudio,
 #backlight,
 #tray {
-    padding: 0 10px;
+    background: #37474f;
+    border-radius: 8px;
+    padding: 2px 10px;
+    margin: 4px 0;
 }
 
+.modules-left > widget:first-child > #workspaces { margin-left: 6px; }
+.modules-right > widget:last-child > * { margin-right: 6px; }
+
+#workspaces {
+    padding: 2px 4px;
+}
+#workspaces button {
+    padding: 0 8px;
+    margin: 0 2px;
+    color: #90a4ae;
+    background: transparent;
+    border-radius: 6px;
+}
+#workspaces button:hover {
+    background: #455a64;
+    color: #eceff1;
+    box-shadow: inherit;
+    text-shadow: inherit;
+}
+#workspaces button.focused,
+#workspaces button.visible {
+    color: #263238;
+    background: #03a9f4;
+}
+#workspaces button.urgent {
+    color: #263238;
+    background: #e91e63;
+}
+
+#mode {
+    color: #263238;
+    background: #e91e63;
+}
+
+#window {
+    color: #90a4ae;
+    padding: 0 10px;
+}
+window#waybar.empty #window {
+    background: transparent;
+    padding: 0;
+}
+
+#pulseaudio { color: #009688; }
+#pulseaudio.muted { color: #90a4ae; }
+#network { color: #03a9f4; }
+#network.disconnected { color: #e91e63; }
+#backlight { color: #ffc107; }
+#clock { color: #eceff1; }
+
+#battery { color: #8bc34a; }
+#battery.charging { color: #8bc34a; }
 #battery.warning { color: #ffc107; }
 #battery.critical { color: #e91e63; }
-#network.disconnected { color: #e91e63; }
+
+#tray > .passive { -gtk-icon-effect: dim; }
+#tray > .needs-attention {
+    -gtk-icon-effect: highlight;
+    background: #e91e63;
+    border-radius: 6px;
+}
+
+tooltip {
+    background: #263238;
+    border: 2px solid #03a9f4;
+    border-radius: 8px;
+}
+tooltip label {
+    color: #eceff1;
+    padding: 4px;
+}

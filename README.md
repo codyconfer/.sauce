@@ -46,7 +46,7 @@ idempotent.
 A **base set is always installed** with no prompt: essential packages (git, curl, zsh,
 neovim, gcc, make, …), extras (pipx, htop, btop, fish, plus the Nerd Fonts and
 zsh-plugins), and the GitHub CLI. On first `init` you then pick from multi-select
-lists — emulators (Steam, Wine, QEMU), GUI apps (Firefox, Sway, GNU Radio, qdmr, VS Code,
+lists — emulators (Steam, Wine, QEMU), GUI apps (Firefox, Sway, Alacritty, GNU Radio, qdmr, VS Code,
 Zed, Cursor, Ghidra, JetBrains Toolbox, LM Studio, Obsidian, Docker, Codex, Bitwarden, 1Password), flatpaks
 (Slack, Discord, Signal, …), and CLI/dev tools (the "Access" cloud CLIs plus go, k9s,
 rustup, … — every `update-*.sh`) — plus yes/no questions:
@@ -109,7 +109,9 @@ own directories aren't mistaken for things to deploy.
       nvim/**                         # → ~/.config/nvim (lazy.nvim setup)
       nvim/lua/sauce/generated.lua.tmpl  # LSP/parser list, detected via lookPath
       tmux/tmux.conf                  # → ~/.config/tmux/tmux.conf
-      sway/ waybar/ wofi/ mako/       # → ~/.config/* (tracked WM config; Linux only, ignored on macOS)
+      sway/ swaylock/ waybar/         # → ~/.config/* (tracked WM config; Linux only, ignored on macOS)
+      wofi/ mako/ foot/               #    "
+      alacritty/alacritty.toml        # → ~/.config/alacritty (Linux + macOS; ignored on Windows/WSL)
     create_dot_zshrc.local            # → ~/.zshrc.local (created once, never overwritten)
     create_dot_bashrc.local           #    "  ~/.bashrc.local
     create_dot_config/fish/user.fish  #    "  ~/.config/fish/user.fish
@@ -133,7 +135,7 @@ written, `after_` scripts once everything is in place:
 | `run_once_before_20-github-auth` | `setup.sh` github step | once |
 | `run_once_before_30-oh-my-posh` | `setup.sh` oh-my-posh step | once |
 | `run_onchange_before_38-emulators` | steam/wine/qemu installers (skipped if headless) | on change |
-| `run_onchange_before_40-gui-apps` | firefox/sway/gnuradio installers (skipped if headless) | on change |
+| `run_onchange_before_40-gui-apps` | firefox/sway/alacritty/gnuradio installers (skipped if headless) | on change |
 | `run_onchange_before_45-net-tools` | network/security CLI tools (opt-in via `netTools`) | on change |
 | `run_onchange_before_50-flatpaks` | flatpak `install-*.sh` (skipped if headless) | on change |
 | `run_once_after_70-run-updaters` | `setup.sh` update loop (always runs fonts + zsh-plugins; installs the `update-*.sh`-backed GUI apps — vscode/zed/qdmr/claude/cursor/ghidra/jetbrains-toolbox/lmstudio/obsidian/docker/codex — when selected) | once |

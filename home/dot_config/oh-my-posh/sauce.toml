@@ -123,7 +123,7 @@ alignment = 'left'
 newline = true
 
 [[blocks.segments]]
-template = '{{ .Path }} '
+template = '{{ .Path }}'
 foreground = 'cyan'
 type = 'path'
 style = 'plain'
@@ -133,7 +133,7 @@ cache_duration = 'none'
 style = 'full'
 
 [[blocks.segments]]
-template = '⌨ '
+template = ' - Ⲗ: '
 foreground = 'green'
 type = 'text'
 style = 'plain'

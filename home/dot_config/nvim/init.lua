@@ -14,9 +14,9 @@ end
 vim.opt.rtp:prepend(lazypath)
 
 require("lazy").setup("plugins", {
-    install = { colorscheme = { "default" } },
+    install = { colorscheme = { "one-dark-vivid" } },
     checker = { enabled = false },
     change_detection = { notify = false },
 })
 
-pcall(vim.cmd.colorscheme, "default")
+pcall(vim.cmd.colorscheme, "one-dark-vivid")

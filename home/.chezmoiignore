@@ -1,6 +1,7 @@
 {{- $wsl := and (eq .chezmoi.os "linux") (.chezmoi.kernel.osrelease | default "" | lower | contains "microsoft") -}}
 {{- if ne .chezmoi.os "linux" }}
 .config/sway
+.config/swaylock
 .config/waybar
 .config/wofi
 .config/mako
@@ -14,16 +15,19 @@
 .zshrc.local
 .bashrc.local
 .config/fish
+.config/alacritty
 {{- else }}
 .chezmoiscripts/*.ps1
 Documents/PowerShell
 {{- end }}
 {{- if $wsl }}
 .config/sway
+.config/swaylock
 .config/waybar
 .config/wofi
 .config/mako
 .config/foot
+.config/alacritty
 .local/share/applications
 {{- end }}
 {{- $guiApps := (index . "guiApps") | default (list) }}

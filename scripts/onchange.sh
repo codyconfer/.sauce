@@ -51,6 +51,13 @@ onchange_gui_apps() {
         esac
     fi
 
+    if _has alacritty; then
+        case "$family" in
+            macos) install_cask alacritty || log_warn "alacritty install failed." ;;
+            *)     install_pkgs alacritty || log_warn "alacritty install failed." ;;
+        esac
+    fi
+
     if _has sway; then
         if [ "$family" = macos ]; then
             log_info "sway (Wayland WM) is Linux-only — skipping on macOS."
