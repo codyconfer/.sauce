@@ -10,7 +10,7 @@ window#waybar {
     background: #263238;
     color: #eceff1;
     border: 2px solid #37474f;
-    border-radius: 10px;
+    border-radius: 2px;
 }
 
 #workspaces,
@@ -22,8 +22,8 @@ window#waybar {
 #backlight,
 #tray {
     background: #37474f;
-    border-radius: 8px;
-    padding: 2px 10px;
+    border-radius: 2px;
+    padding: 1px 8px;
     margin: 4px 0;
 }
 
@@ -31,14 +31,14 @@ window#waybar {
 .modules-right > widget:last-child > * { margin-right: 6px; }
 
 #workspaces {
-    padding: 2px 4px;
+    padding: 1px 2px;
 }
 #workspaces button {
-    padding: 0 8px;
-    margin: 0 2px;
+    padding: 0 7px;
+    margin: 0 1px;
     color: #90a4ae;
     background: transparent;
-    border-radius: 6px;
+    border-radius: 2px;
 }
 #workspaces button:hover {
     background: #455a64;
@@ -63,7 +63,7 @@ window#waybar {
 
 #window {
     color: #90a4ae;
-    padding: 0 10px;
+    padding: 0 8px;
 }
 window#waybar.empty #window {
     background: transparent;
@@ -86,13 +86,13 @@ window#waybar.empty #window {
 #tray > .needs-attention {
     -gtk-icon-effect: highlight;
     background: #e91e63;
-    border-radius: 6px;
+    border-radius: 2px;
 }
 
 tooltip {
     background: #263238;
     border: 2px solid #03a9f4;
-    border-radius: 8px;
+    border-radius: 2px;
 }
 tooltip label {
     color: #eceff1;

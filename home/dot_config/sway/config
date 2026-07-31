@@ -4,7 +4,7 @@ set $down j
 set $up k
 set $right l
 
-set $term foot
+set $term alacritty
 set $menu wofi --show drun
 set $lock swaylock -f
 
@@ -36,7 +36,7 @@ exec swayidle -w \
     before-sleep '$lock'
 
 bindsym $mod+Return exec $term
-bindsym $mod+d exec $menu
+bindsym $mod+d focus mode_toggle
 bindsym $mod+q kill
 bindsym $mod+BackSpace kill
 bindsym $mod+Shift+c reload
@@ -100,7 +100,7 @@ bindsym $mod+w layout tabbed
 bindsym $mod+e layout toggle split
 bindsym $mod+f fullscreen
 bindsym $mod+Shift+space floating toggle
-bindsym $mod+space focus mode_toggle
+bindsym $mod+space exec $menu
 bindsym $mod+a focus parent
 
 bindsym $mod+Shift+minus move scratchpad
