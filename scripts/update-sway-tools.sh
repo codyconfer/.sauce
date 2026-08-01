@@ -127,7 +127,7 @@ build_deps() {
             install_pkgs meson ninja-build pkg-config cmake \
                 libwayland-dev wayland-protocols libxkbcommon-dev \
                 libcairo2-dev libgdk-pixbuf-2.0-dev scdoc \
-                libpango1.0-dev libjson-c-dev \
+                libpango1.0-dev libjson-c-dev libgbm-dev \
                 libyaml-cpp-dev libinput-dev libudev-dev \
                 || log_warn "some build deps failed to install."
             # zofi (GPUI) — dep list from the project's own ubuntu CI
@@ -143,12 +143,12 @@ build_deps() {
             install_pkgs meson ninja-build pkgconf-pkg-config cmake \
                 wayland-devel wayland-protocols-devel libxkbcommon-devel \
                 cairo-devel gdk-pixbuf2-devel scdoc pango-devel json-c-devel \
-                yaml-cpp-devel libinput-devel systemd-devel \
+                yaml-cpp-devel libinput-devel systemd-devel mesa-libgbm-devel \
                 || log_warn "some build deps failed to install." ;;
         arch)
             install_pkgs meson ninja pkgconf cmake \
                 wayland wayland-protocols libxkbcommon cairo gdk-pixbuf2 scdoc \
-                pango json-c yaml-cpp libinput \
+                pango json-c yaml-cpp libinput mesa \
                 || log_warn "some build deps failed to install." ;;
     esac
 }
@@ -164,7 +164,8 @@ install_waylogout() {
     [ -n "$CLONE_SKIP" ] && return 0
     log_install "Building waylogout (meson)..."
     ( cd "$CLONE_DIR" \
-        && meson setup build --prefix="$HOME/.local" >/dev/null \
+        && meson setup build --prefix="$HOME/.local" \
+            -Dbash-completions=false -Dfish-completions=false >/dev/null \
         && ninja -C build >/dev/null \
         && ninja -C build install >/dev/null ) || return 1
     write_stamp waylogout "$CLONE_REV"
