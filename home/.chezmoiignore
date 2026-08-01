@@ -6,6 +6,12 @@
 .config/fuzzel
 .config/mako
 .config/foot
+.config/swayimg
+.config/mpv
+.config/havoc
+.config/way-displays
+.config/waylogout
+.config/zskins
 .local/share/applications
 {{- end }}
 {{- if eq .chezmoi.os "windows" }}
@@ -27,6 +33,12 @@ Documents/PowerShell
 .config/fuzzel
 .config/mako
 .config/foot
+.config/swayimg
+.config/mpv
+.config/havoc
+.config/way-displays
+.config/waylogout
+.config/zskins
 .config/alacritty
 .local/share/applications
 {{- end }}

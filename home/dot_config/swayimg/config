@@ -1,0 +1,19 @@
+# swayimg v4 config (Ubuntu 26.04 ships 4.7 — INI format, not the v5 Lua one)
+
+[general]
+mode = viewer
+overlay = yes
+
+[viewer]
+window = #00000000
+scale = optimal
+antialiasing = mks13
+loop = yes
+
+[gallery]
+size = 200
+pstore = yes
+
+[list]
+order = alpha
+all = yes

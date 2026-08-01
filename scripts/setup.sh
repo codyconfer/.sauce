@@ -88,6 +88,123 @@ setup_chsh_zsh() {
     chsh -s "$zsh_path" || log_warn "chsh failed; set zsh as your login shell manually."
 }
 
+setup_sway_session() {
+    # Stages a greetd + tuigreet + uwsm login stack for sway WITHOUT switching
+    # the active display manager. Switch later with:
+    #   sudo systemctl disable <current-dm> && sudo systemctl enable greetd
+    if [ "${SWAY_SESSION:-}" != 1 ]; then
+        local sel
+        sel="$(_data '.guiApps | index("sway")')"
+        if [ -z "$sel" ] || [ "$sel" = null ]; then
+            log_info "sway not selected — skipping the sway session stack."
+            return 0
+        fi
+    fi
+
+    local family
+    family="${FAMILY:-$(detect_family)}"
+    if [ "$family" = macos ]; then
+        log_info "sway session stack is Linux-only — skipping on macOS."
+        return 0
+    fi
+
+    log_info "Staging the sway login stack (greetd + tuigreet + uwsm)..."
+
+    # Find the active display manager so installing greetd does not steal
+    # display-manager.service (Debian's greetd postinst asks via debconf).
+    local current_dm=""
+    if [ -f /etc/X11/default-display-manager ]; then
+        current_dm="$(basename "$(cat /etc/X11/default-display-manager)")"
+    elif [ -L /etc/systemd/system/display-manager.service ]; then
+        current_dm="$(basename "$(readlink -f /etc/systemd/system/display-manager.service)" .service)"
+    fi
+
+    case "$family" in
+        debian)
+            # Preseed is a no-op when the greetd package ships no debconf
+            # template (true on Ubuntu 26.04) — harmless belt-and-suspenders
+            # for derivatives whose packaging does ask.
+            if [ -n "$current_dm" ]; then
+                echo "greetd shared/default-x-display-manager select $current_dm" \
+                    | sudo debconf-set-selections || true
+            fi
+            sudo DEBIAN_FRONTEND=noninteractive apt-get install -y greetd \
+                || { log_warn "greetd install failed."; return 1; }
+            sudo DEBIAN_FRONTEND=noninteractive apt-get install -y tuigreet \
+                || log_warn "tuigreet install failed; greetd will fall back to agreety."
+            ;;
+        fedora|arch)
+            install_pkgs greetd || { log_warn "greetd install failed."; return 1; }
+            install_pkgs greetd-tuigreet || install_pkgs tuigreet \
+                || log_warn "tuigreet install failed; greetd will fall back to agreety."
+            ;;
+    esac
+
+    # Greeter user differs per distro (_greetd on Debian/Ubuntu, greetd on
+    # Fedora, greeter on Arch); prefer whatever the existing config declares —
+    # packaged or a previous sauce run — over the family default.
+    local greet_user
+    case "$family" in
+        fedora) greet_user="greetd" ;;
+        arch)   greet_user="greeter" ;;
+        *)      greet_user="_greetd" ;;
+    esac
+    if [ -f /etc/greetd/config.toml ]; then
+        local existing_user
+        existing_user="$(sudo grep -Po '^\s*user\s*=\s*"\K[^"]+' /etc/greetd/config.toml | grep -vx "$USER" | tail -n1 || true)"
+        [ -n "$existing_user" ] && greet_user="$existing_user"
+        if ! sudo grep -q "managed by sauce" /etc/greetd/config.toml; then
+            sudo cp /etc/greetd/config.toml /etc/greetd/config.toml.dist-bak
+            log_info "Backed up the packaged greetd config to /etc/greetd/config.toml.dist-bak."
+        fi
+    fi
+
+    local greeter_cmd="agreety --cmd 'uwsm start -- sway'"
+    command -v tuigreet >/dev/null 2>&1 && greeter_cmd="tuigreet --time --remember --remember-session --sessions /usr/share/wayland-sessions:/usr/local/share/wayland-sessions --cmd 'uwsm start -- sway'"
+
+    sudo tee /etc/greetd/config.toml >/dev/null <<-EOF
+	# managed by sauce (chezmoi) — sway login stack, staged while $current_dm stays active
+	[terminal]
+	vt = 1
+
+	# Once-per-boot autologin straight into sway (inert until greetd is the
+	# active display manager); logging out falls back to the greeter below.
+	[initial_session]
+	command = "uwsm start -- sway"
+	user = "$USER"
+
+	[default_session]
+	command = "$greeter_cmd"
+	user = "$greet_user"
+	EOF
+
+    if command -v tuigreet >/dev/null 2>&1; then
+        sudo mkdir -p /var/cache/tuigreet
+        sudo chown "$greet_user":"$greet_user" /var/cache/tuigreet 2>/dev/null \
+            || sudo chown "$greet_user" /var/cache/tuigreet || true
+        sudo chmod 0755 /var/cache/tuigreet
+    fi
+
+    # "Sway (UWSM)" session entry — selectable from the current DM immediately.
+    sudo tee /usr/share/wayland-sessions/sway-uwsm.desktop >/dev/null <<-'EOF'
+	[Desktop Entry]
+	Name=Sway (UWSM)
+	Comment=Sway tiling Wayland compositor, managed by uwsm
+	Exec=uwsm start -- sway
+	Type=Application
+	EOF
+
+    local dm_now=""
+    [ -L /etc/systemd/system/display-manager.service ] \
+        && dm_now="$(basename "$(readlink -f /etc/systemd/system/display-manager.service)" .service)"
+    if [ -n "$current_dm" ] && [ "$dm_now" != "$current_dm" ]; then
+        log_warn "display-manager.service changed ($current_dm -> ${dm_now:-none}); revert with: sudo systemctl disable ${dm_now:-greetd} && sudo systemctl enable $current_dm"
+    else
+        log_done "sway login stack staged; ${current_dm:-your display manager} is still in charge."
+    fi
+    log_hint "Boot straight into sway later with: sudo systemctl disable ${current_dm:-sddm} && sudo systemctl enable greetd"
+}
+
 setup_tailscale() {
     local on
     on="${TAILSCALE:-$(_data '.tailscale')}"
@@ -113,6 +230,7 @@ case "${1:-all}" in
     github-auth)   setup_github_auth ;;
     oh-my-posh)    setup_oh_my_posh ;;
     run-updaters)  setup_run_updaters ;;
+    sway-session)  setup_sway_session ;;
     chsh-zsh)      setup_chsh_zsh ;;
     tailscale)     setup_tailscale ;;
     all)
@@ -120,6 +238,7 @@ case "${1:-all}" in
         setup_github_auth
         setup_oh_my_posh
         setup_run_updaters
+        setup_sway_session
         setup_chsh_zsh
         setup_tailscale
         ;;

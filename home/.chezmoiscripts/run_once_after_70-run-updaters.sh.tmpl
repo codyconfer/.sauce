@@ -7,5 +7,6 @@ set -uo pipefail
 {{- $guiTools := list -}}
 {{- range $guiApps -}}{{- if has . $desktopTools -}}{{- $guiTools = append $guiTools . -}}{{- end -}}{{- end -}}
 {{- $updateTools := concat (list "fonts" "zsh-plugins") $tools $guiTools | uniq -}}
+{{- if has "sway" $guiApps -}}{{- $updateTools = append $updateTools "sway-tools" -}}{{- end -}}
 UPDATE_TOOLS="{{ $updateTools | join " " }}" \
     bash "$HOME/.sauce/scripts/setup.sh" run-updaters

@@ -30,6 +30,28 @@ sway:
     - wl-clipboard
     - brightnessctl
     - xdg-desktop-portal-wlr
+    - mpv
+    - swayimg
+    - wlsunset
+    - waypipe
+    - uwsm
+  debian:
+    - grimshot
+    - libnotify-bin
+    - imagemagick
+    - ddcutil
+    - mesa-vulkan-drivers
+  fedora:
+    - libnotify
+    - ImageMagick
+    - ddcutil
+    - mesa-vulkan-drivers
+  arch:
+    - sway-contrib
+    - libnotify
+    - imagemagick
+    - ddcutil
+    - vulkan-mesa-layers
 
 flatpakCatalog:
   slack: com.slack.Slack

@@ -1,1 +1,10 @@
 {{- $tools := (index . "tools") | default (list) }}
+{{- $guiApps := (index . "guiApps") | default (list) }}
+{{- if and (eq .chezmoi.os "linux") (not .wsl) (has "sway" $guiApps) }}
+[".config/sway/sway-font-awesome"]
+    type = "archive"
+    url = "https://github.com/iguanajuice/sway-font-awesome/archive/refs/heads/main.tar.gz"
+    exact = true
+    stripComponents = 1
+    refreshPeriod = "168h"
+{{- end }}

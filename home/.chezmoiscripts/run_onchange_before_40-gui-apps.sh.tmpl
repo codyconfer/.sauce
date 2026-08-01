@@ -3,5 +3,5 @@
 set -uo pipefail
 FAMILY="{{ .family }}" \
 GUI_APPS="{{ (index . "guiApps") | default (list) | join " " }}" \
-SWAY_PKGS="{{ .sway.common | join " " }}" \
+SWAY_PKGS="{{ .sway.common | join " " }}{{ with (index .sway .family) }} {{ . | join " " }}{{ end }}" \
     bash "$HOME/.sauce/scripts/onchange.sh" gui-apps

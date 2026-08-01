@@ -62,12 +62,19 @@ onchange_gui_apps() {
         if [ "$family" = macos ]; then
             log_info "sway (Wayland WM) is Linux-only — skipping on macOS."
         else
-            log_install "Installing sway and companions..."
-            install_pkgs "${sway_pkgs[@]:-}" || log_warn "sway stack partial install."
+            log_install "Installing sway and companions (best-effort)..."
+            local sp
+            for sp in "${sway_pkgs[@]:-}"; do
+                [ -n "$sp" ] || continue
+                install_pkgs "$sp" || log_warn "skipped (unavailable): $sp"
+            done
             case "$family" in
                 debian) install_pkgs mako-notifier || log_warn "mako install failed." ;;
                 *)      install_pkgs mako || log_warn "mako install failed." ;;
             esac
+            log_install "Installing/updating sway companion tools built from source..."
+            bash "$HOME/.sauce/scripts/update-sway-tools.sh" \
+                || log_warn "sway-tools updater reported failures; re-run 'bash ~/.sauce/scripts/update-sway-tools.sh'."
         fi
     fi
 

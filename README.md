@@ -111,6 +111,8 @@ own directories aren't mistaken for things to deploy.
       tmux/tmux.conf                  # → ~/.config/tmux/tmux.conf
       sway/ swaylock/ waybar/         # → ~/.config/* (tracked WM config; Linux only, ignored on macOS)
       fuzzel/ mako/ foot/             #    "
+      swayimg/ mpv/ havoc/            #    "  (sway companion tools)
+      way-displays/ waylogout/ zskins/ #   "
       alacritty/alacritty.toml        # → ~/.config/alacritty (Linux + macOS; ignored on Windows/WSL)
     create_dot_zshrc.local            # → ~/.zshrc.local (created once, never overwritten)
     create_dot_bashrc.local           #    "  ~/.bashrc.local
@@ -138,7 +140,8 @@ written, `after_` scripts once everything is in place:
 | `run_onchange_before_40-gui-apps` | firefox/sway/alacritty/gnuradio installers (skipped if headless) | on change |
 | `run_onchange_before_45-net-tools` | network/security CLI tools (opt-in via `netTools`) | on change |
 | `run_onchange_before_50-flatpaks` | flatpak `install-*.sh` (skipped if headless) | on change |
-| `run_once_after_70-run-updaters` | `setup.sh` update loop (always runs fonts + zsh-plugins; installs the `update-*.sh`-backed GUI apps — vscode/zed/qdmr/claude/cursor/ghidra/jetbrains-toolbox/lmstudio/obsidian/docker/codex — when selected) | once |
+| `run_once_after_70-run-updaters` | `setup.sh` update loop (always runs fonts + zsh-plugins; installs the `update-*.sh`-backed GUI apps — vscode/zed/qdmr/claude/cursor/ghidra/jetbrains-toolbox/lmstudio/obsidian/docker/codex — when selected; adds `sway-tools` when sway is selected) | once |
+| `run_once_after_75-sway-session` | greetd + tuigreet + uwsm login stack, staged without switching the active display manager (sway selected, not headless/WSL) | once |
 | `run_onchange_after_80-nvim-bootstrap` | `build-nvim.sh` sync tail | on lockfile/toolchain change |
 | `run_once_after_90-chsh-zsh` | `setup.sh` chsh | once |
 | `run_once_after_95-tailscale` | `setup.sh` tailscale | once (opt-in) |
@@ -154,7 +157,8 @@ Two mechanisms, by tool type:
 - **Declarative externals** (`home/.chezmoiexternal.toml.tmpl`) — tools that are
   just a downloaded binary/tarball/AppImage into a user directory. chezmoi
   re-downloads each when its `refreshPeriod` lapses, or on
-  `chezmoi apply --refresh-externals`. None are currently defined; see
+  `chezmoi apply --refresh-externals`. Currently: `sway-font-awesome`
+  (per-app window-title icons included by the sway config). See
   `skills/add-tool-installer` (Path B) to add one.
 - **`scripts/update-*.sh`** — tools that need `sudo`, install into `/usr/local`,
   run a vendor `curl | sh` installer, self-update, or are a plain binary download
@@ -184,6 +188,37 @@ skipped on headless/WSL) rather than `tools`.
 Distro packages and flatpaks are kept current by the system: the `update` alias
 runs `apt upgrade` / `pacman -Syu` / `dnf upgrade` plus `flatpak update` (on macOS it
 runs `brew update && brew upgrade && brew upgrade --cask`).
+
+### The sway desktop stack
+
+Selecting **sway** in the GUI apps prompt installs and configures the whole
+Wayland desktop, three ways:
+
+- **Distro packages** (`sway:` lists in `.chezmoidata.yaml`, family-aware):
+  sway, swaybg, swayidle, swaylock, waybar, fuzzel, foot, mako, grim, slurp,
+  grimshot, wl-clipboard, brightnessctl, pavucontrol, xdg-desktop-portal-wlr,
+  mpv, swayimg, wlsunset, waypipe, uwsm (+ runtime helpers: libnotify,
+  imagemagick, ddcutil, mesa-vulkan-drivers).
+- **`update-sway-tools.sh`** — companions with no Ubuntu/Debian package, built
+  from source into `~/.local/bin` and re-run like any updater
+  (`update-sway-tools`): wayshot, sway-overfocus, wl-clip-persist, lumactl,
+  zofi, waylogout, havoc, exposway, way-displays, swaycycle, sway-screenshot,
+  swaydim, plus Font Awesome 6 / Nerd Fonts Symbols and the Kooha screen
+  recorder (flatpak). Also sets swayimg/mpv as xdg-mime defaults.
+- **Login stack (staged)** — `run_once_after_75-sway-session` installs
+  greetd + tuigreet, writes `/etc/greetd/config.toml` (tuigreet → `uwsm start
+  -- sway`, with once-per-boot autologin) and a "Sway (UWSM)" session entry
+  for the current display manager. It does **not** switch DMs; when ready:
+  `sudo systemctl disable sddm && sudo systemctl enable greetd`.
+
+Deliberately skipped from the wishlist: `autologin` (greetd's
+`[initial_session]` already covers it, with a greeter fallback) and `wlrobs`
+(flatpak OBS ships native PipeWire screen capture; no flathub plugin exists).
+
+Key sway bindings added: `$mod+h/j/k/l` → sway-overfocus, `$mod+Tab` /
+`Mod1+Tab` → group cycle / swaycycle Alt-Tab, `$mod+Shift+e` → waylogout,
+`Print` family → wayshot + sway-screenshot, brightness keys → lumactl,
+`$mod+x` → zofi, `$mod+z` → exposway, `$mod+Shift+r` → Kooha.
 
 ### macOS notes
 
