@@ -1,0 +1,7 @@
+{{ if has "sway" ((index . "guiApps") | default (list)) -}}
+#!/usr/bin/env bash
+
+set -uo pipefail
+SAUCE_SWAY_TOOLS_REV="{{ include "../scripts/update-sway-tools.sh" | sha256sum }}" \
+    bash "$HOME/.sauce/scripts/update-sway-tools.sh"
+{{ end -}}
