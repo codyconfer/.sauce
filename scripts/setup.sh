@@ -207,6 +207,20 @@ write_uwsm_session() {
     sudo chmod 0755 "/etc/lemurs/wayland/$id"
 }
 
+retire_session_entry() {
+    local entry="$1"
+    if ! command -v dpkg-divert >/dev/null 2>&1; then
+        [ -e "$entry" ] || return 0
+        sudo rm -f "$entry"
+        log_clean "Removed $entry."
+        return 0
+    fi
+    [ -n "$(dpkg-divert --list "$entry")" ] && return 0
+    [ -e "$entry" ] || return 0
+    sudo dpkg-divert --add --rename --divert "$entry.sauce-disabled" "$entry" >/dev/null
+    log_clean "Diverted $entry (restore with: sudo dpkg-divert --remove $entry)."
+}
+
 retire_greetd() {
     local current_dm="$1"
     [ "$current_dm" = greetd ] && return 0
@@ -267,6 +281,7 @@ setup_sway_session() {
             "KDE" \
             "uwsm start -N Plasma -D KDE -e -- startplasma-wayland"
         log_info "Added a UWSM wrapper for the KDE Plasma Wayland session."
+        retire_session_entry /usr/share/wayland-sessions/plasma.desktop
     fi
 
     retire_greetd "$current_dm"
