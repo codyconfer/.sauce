@@ -23,16 +23,12 @@
     "max-length": 60,
   },
   "custom/weather": {
-    "exec": "$HOME/.local/bin/wttrbar --nerd --fahrenheit --mph --hide-conditions --location 40.6,-105.1 --custom-indicator '{ICON} {temp_F}°'",
+    "exec": "$HOME/.local/bin/wttrbar --nerd --mph --hide-conditions --location 40.6,-105.1 --custom-indicator '{ICON} {temp_C}°'",
     "return-type": "json",
     "format": "{}",
     "interval": 1800,
     "tooltip": true,
     "on-click": "xdg-open https://wttr.in/40.6,-105.1",
-  },
-  "clock": {
-    "format": "󰃭 {:%Y.%m.%d} 󰥔 {:%H:%M}",
-    "tooltip-format": "<tt><small>{calendar}</small></tt>",
   },
   "battery": {
     "format": "{icon} {capacity}%",
@@ -40,6 +36,10 @@
     "format-plugged": "󰚥 {capacity}%",
     "format-icons": ["󰁺", "󰁼", "󰁾", "󰂀", "󰂂", "󰁹"],
     "states": { "warning": 30, "critical": 15 },
+  },
+  "clock": {
+    "format": "󰃭 {0:%Y.%m.%d} 󰥔 {0:%H:%M}",
+    "tooltip-format": "<tt><small>{calendar}</small></tt>",
   },
   "network": {
     "format-wifi": "{icon} {essid}",

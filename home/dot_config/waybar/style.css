@@ -25,7 +25,8 @@ window#waybar {
     background: #37474f;
     border-radius: 2px;
     padding: 1px 8px;
-    margin: 4px 0;
+    margin-top: 4px;
+    margin-bottom: 4px;
 }
 
 .modules-left > widget:first-child > #workspaces { margin-left: 6px; }
@@ -35,12 +36,15 @@ window#waybar {
     padding: 1px 2px;
 }
 #workspaces button {
-    font-size: 16px;
+    font-size: 12px;
     padding: 0 7px;
     margin: 0 1px;
     color: #90a4ae;
     background: transparent;
     border-radius: 2px;
+}
+#workspaces button label {
+    font-family: "Terminess Nerd Font Propo";
 }
 #workspaces button:hover {
     background: #455a64;
