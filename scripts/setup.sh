@@ -27,7 +27,18 @@ setup_base_packages() {
     else
         mapfile -t extras < <(_data '.packages.extras.common[]')
     fi
-    [ "$family" = arch ] && extras=("${extras[@]/pipx/python-pipx}")
+    if [ "$family" = arch ]; then
+        local -a arch_extras=()
+        local e
+        for e in "${extras[@]}"; do
+            case "$e" in
+                gh)   arch_extras+=(github-cli) ;;
+                pipx) arch_extras+=(python-pipx) ;;
+                *)    arch_extras+=("$e") ;;
+            esac
+        done
+        extras=("${arch_extras[@]}")
+    fi
 
     pkg_refresh || true
 
