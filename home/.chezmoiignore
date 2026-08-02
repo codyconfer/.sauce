@@ -1,6 +1,8 @@
 {{- $wsl := and (eq .chezmoi.os "linux") (.chezmoi.kernel.osrelease | default "" | lower | contains "microsoft") -}}
 {{- if ne .chezmoi.os "linux" }}
 .config/sway
+.config/uwsm
+.config/systemd
 .config/swaylock
 .config/waybar
 .config/fuzzel
@@ -28,6 +30,8 @@ Documents/PowerShell
 {{- end }}
 {{- if $wsl }}
 .config/sway
+.config/uwsm
+.config/systemd
 .config/swaylock
 .config/waybar
 .config/fuzzel

@@ -10,6 +10,7 @@ set $lock swaylock -f
 # Source-built tools live in ~/.local/bin, which is NOT on PATH when the
 # session comes up via SDDM/greetd — always exec them through $bin.
 set $bin ~/.local/bin
+set $app uwsm app -s b --
 
 output * bg #263238 solid_color
 
@@ -30,15 +31,15 @@ input "type:keyboard" {
     repeat_rate 40
 }
 
-exec waybar
-exec mako
-exec $bin/way-displays > /tmp/way-displays.${XDG_VTNR}.${USER}.log 2>&1
-exec $bin/wl-clip-persist --clipboard regular
-exec wlsunset -l 40.6 -L -105.1
-exec $bin/zofi clipd
-exec mkdir -p $HOME/.local/state/exposway && env EXPOSWAYDIR=$HOME/.local/state/exposway/ EXPOSWAYMON=$HOME/.local/state/exposway/output $bin/exposwayd
-exec dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP=sway
-exec swayidle -w \
+exec uwsm finalize
+exec $app waybar
+exec $app mako
+exec $app $bin/way-displays > /tmp/way-displays.${XDG_VTNR}.${USER}.log 2>&1
+exec $app $bin/wl-clip-persist --clipboard regular
+exec $app wlsunset -l 40.6 -L -105.1
+exec $app $bin/zofi clipd
+exec mkdir -p $EXPOSWAYDIR && $app $bin/exposwayd
+exec $app swayidle -w \
     timeout 240 'brightnessctl -s set 10%' resume 'brightnessctl -r' \
     timeout 300 '$lock' \
     timeout 600 'swaymsg "output * power off"' \
@@ -119,7 +120,7 @@ bindsym $mod+f fullscreen
 bindsym $mod+Shift+space floating toggle
 bindsym $mod+space exec $menu
 bindsym $mod+x exec $bin/zofi
-bindsym $mod+z exec env EXPOSWAYDIR=$HOME/.local/state/exposway/ EXPOSWAYMON=$HOME/.local/state/exposway/output $bin/exposway
+bindsym $mod+z exec $bin/exposway
 bindsym $mod+Shift+r exec flatpak run io.github.seadve.Kooha
 bindsym $mod+a focus parent
 

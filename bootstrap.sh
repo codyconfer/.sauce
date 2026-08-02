@@ -3,6 +3,13 @@ set -euo pipefail
 
 SAUCE_DIR="${SAUCE_DIR:-$HOME/.sauce}"
 BIN_DIR="${BIN_DIR:-$HOME/.local/bin}"
+DRY_RUN=false
+
+case "${1:-}" in
+    "") ;;
+    --dry-run) DRY_RUN=true ;;
+    *) echo "Usage: $0 [--dry-run]" >&2; exit 2 ;;
+esac
 
 log() { echo "▶️  $*"; }
 
@@ -27,7 +34,18 @@ if [ -f "$SAUCE_DIR/.env" ]; then
     set +a
 fi
 
-log "Running chezmoi init --apply..."
-"$CHEZMOI" init --source="$SAUCE_DIR" --apply
+if [ "$DRY_RUN" = true ]; then
+    log "Initializing chezmoi and validating a full apply (dry run)..."
+    "$CHEZMOI" init --source="$SAUCE_DIR" --promptDefaults --no-tty
+    "$CHEZMOI" apply --source="$SAUCE_DIR" --dry-run --verbose --no-tty \
+        --refresh-externals=never
+else
+    log "Running chezmoi init --apply..."
+    "$CHEZMOI" init --source="$SAUCE_DIR" --apply
+fi
 
-echo "✅ Done. Start a new shell (zsh) to pick everything up."
+if [ "$DRY_RUN" = true ]; then
+    echo "✅ Dry run passed. No dotfiles, packages, or applications were changed."
+else
+    echo "✅ Done. Start a new shell (zsh) to pick everything up."
+fi

@@ -160,7 +160,7 @@ setup_sway_session() {
     fi
 
     local greeter_cmd="agreety --cmd 'uwsm start -- sway'"
-    command -v tuigreet >/dev/null 2>&1 && greeter_cmd="tuigreet --time --remember --remember-session --sessions /usr/share/wayland-sessions:/usr/local/share/wayland-sessions --cmd 'uwsm start -- sway'"
+    command -v tuigreet >/dev/null 2>&1 && greeter_cmd="tuigreet --time --remember --remember-session --sessions /usr/local/share/wayland-sessions:/usr/share/wayland-sessions --cmd 'uwsm start -- sway'"
 
     sudo tee /etc/greetd/config.toml >/dev/null <<-EOF
 	# managed by sauce (chezmoi) — sway login stack, staged while $current_dm stays active
@@ -185,14 +185,16 @@ setup_sway_session() {
         sudo chmod 0755 /var/cache/tuigreet
     fi
 
-    # "Sway (UWSM)" session entry — selectable from the current DM immediately.
-    sudo tee /usr/share/wayland-sessions/sway-uwsm.desktop >/dev/null <<-'EOF'
+    sudo mkdir -p /usr/local/share/wayland-sessions
+    sudo tee /usr/local/share/wayland-sessions/sway.desktop >/dev/null <<-'EOF'
 	[Desktop Entry]
-	Name=Sway (UWSM)
+	Name=Sway
 	Comment=Sway tiling Wayland compositor, managed by uwsm
 	Exec=uwsm start -- sway
 	Type=Application
+	DesktopNames=sway
 	EOF
+    sudo rm -f /usr/share/wayland-sessions/sway-uwsm.desktop
 
     local dm_now=""
     [ -L /etc/systemd/system/display-manager.service ] \

@@ -27,6 +27,11 @@ bash <(curl -fsSL https://raw.githubusercontent.com/codyconfer/.sauce/main/boots
 Already have the repo cloned? Just run `bash ~/.sauce/bootstrap.sh`, or if chezmoi
 is installed, `chezmoi init --source=~/.sauce --apply`.
 
+To validate the complete selected configuration without changing dotfiles or installing
+packages/apps, pass `--dry-run` (`./bootstrap.sh --dry-run` on Unix or
+`./bootstrap.ps1 -DryRun` on Windows). This initializes chezmoi, renders all selected
+templates and run scripts, and plans the full apply.
+
 On **native Windows** (PowerShell), bootstrap with winget instead:
 
 ```powershell
@@ -149,6 +154,24 @@ written, `after_` scripts once everything is in place:
 
 `run_once_*` run a single time (keyed on content hash); `run_onchange_*` re-run
 whenever their rendered content changes (e.g. you edit a package list).
+
+## Testing bootstrap
+
+GitHub Actions validates the full/default bootstrap selection on macOS, native Windows,
+Ubuntu, Fedora, Arch Linux, and CachyOS. The apply is a dry run: all selected templates
+and run scripts are rendered, while host packages and applications are not installed.
+
+Run the Linux coverage locally with Docker:
+
+```bash
+./tests/bootstrap/run-docker.sh              # Ubuntu + Fedora + Arch + CachyOS
+./tests/bootstrap/run-docker.sh arch         # one target
+./tests/bootstrap/run-docker.sh cachyos      # one target
+```
+
+The CachyOS container is forced to `linux/amd64`, so Docker Desktop can emulate it on
+Arm-based Macs. The macOS and native-Windows jobs require those host operating systems
+and run `tests/bootstrap/test-unix.sh` or `tests/bootstrap/test-windows.ps1` directly.
 
 ## Keeping tools current
 

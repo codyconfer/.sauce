@@ -6,8 +6,8 @@
 {{-   $family = "macos" -}}
 {{- else if eq .chezmoi.os "linux" -}}
 {{-   if (.chezmoi.kernel.osrelease | default "" | lower | contains "microsoft") -}}{{- $wsl = true -}}{{- end -}}
-{{-   $id := .chezmoi.osRelease.id | default "" -}}
-{{-   $idLike := .chezmoi.osRelease.idLike | default "" -}}
+{{-   $id := get .chezmoi.osRelease "id" | default "" -}}
+{{-   $idLike := get .chezmoi.osRelease "idLike" | default "" -}}
 {{-   if or (eq $id "debian" "ubuntu" "pop" "linuxmint" "raspbian") (or (contains "debian" $idLike) (contains "ubuntu" $idLike)) -}}
 {{-     $family = "debian" -}}
 {{-   else if or (eq $id "fedora" "rhel" "centos" "rocky" "almalinux") (or (contains "fedora" $idLike) (contains "rhel" $idLike)) -}}

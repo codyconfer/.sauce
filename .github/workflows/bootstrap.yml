@@ -1,0 +1,45 @@
+name: Bootstrap
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: bootstrap-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  linux:
+    name: ${{ matrix.distro }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        distro: [ubuntu, fedora, arch, cachyos]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run full bootstrap dry run in Docker
+        run: bash tests/bootstrap/run-docker.sh "${{ matrix.distro }}"
+
+  macos:
+    runs-on: macos-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run full bootstrap dry run
+        run: bash tests/bootstrap/test-unix.sh "$PWD" macos
+
+  windows:
+    runs-on: windows-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run full bootstrap dry run
+        shell: pwsh
+        run: ./tests/bootstrap/test-windows.ps1 -SourceDir $PWD
