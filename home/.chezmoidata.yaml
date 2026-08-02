@@ -29,7 +29,6 @@ sway:
     - slurp
     - wl-clipboard
     - brightnessctl
-    - xdg-desktop-portal-wlr
     - mpv
     - swayimg
     - wlsunset
@@ -52,6 +51,10 @@ sway:
     - imagemagick
     - ddcutil
     - vulkan-mesa-layers
+
+portals:
+  sway: [xdg-desktop-portal, xdg-desktop-portal-wlr, xdg-desktop-portal-gtk]
+  kde: [xdg-desktop-portal, xdg-desktop-portal-gtk]
 
 flatpakCatalog:
   slack: com.slack.Slack

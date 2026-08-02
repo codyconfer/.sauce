@@ -17,6 +17,8 @@ PATH_DIRS=(
     "$HOME/.lmstudio/bin"
     "$HOME/.opencode/bin"
     "$HOME/google-cloud-sdk/bin"
+    "$HOME/.local/share/flatpak/exports/bin"
+    "/var/lib/flatpak/exports/bin"
 )
 RCs=(
     "$HOME/.zshrc.dev"

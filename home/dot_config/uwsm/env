@@ -2,7 +2,25 @@ case ":${PATH}:" in
     *:"${HOME}/.local/bin":*) ;;
     *) PATH="${HOME}/.local/bin${PATH:+:}${PATH}" ;;
 esac
+
+for _fp_bin in "${HOME}/.local/share/flatpak/exports/bin" /var/lib/flatpak/exports/bin; do
+    case ":${PATH}:" in
+        *:"${_fp_bin}":*) ;;
+        *) PATH="${PATH:+${PATH}:}${_fp_bin}" ;;
+    esac
+done
+unset _fp_bin
 export PATH
+
+XDG_DATA_DIRS="${XDG_DATA_DIRS:-/usr/local/share:/usr/share}"
+for _fp_share in "${HOME}/.local/share/flatpak/exports/share" /var/lib/flatpak/exports/share; do
+    case ":${XDG_DATA_DIRS}:" in
+        *:"${_fp_share}":*) ;;
+        *) XDG_DATA_DIRS="${XDG_DATA_DIRS}:${_fp_share}" ;;
+    esac
+done
+unset _fp_share
+export XDG_DATA_DIRS
 
 export MOZ_ENABLE_WAYLAND=1
 export ELECTRON_OZONE_PLATFORM_HINT=auto

@@ -58,6 +58,11 @@ grep -Fq 'ly_set waylandsessions "$LY_SESSIONS"' "$SAUCE_DIR/scripts/setup.sh"
 ! grep -Fq 'lemurs' "$SAUCE_DIR/home/dot_config/sway/config"
 ! grep -Fq 'greetd/config.toml >/dev/null' "$SAUCE_DIR/scripts/setup.sh"
 
+grep -Fq 'setup.sh" portals' "$SAUCE_DIR/home/.chezmoiscripts/run_once_after_76-portals.sh.tmpl"
+grep -Fq 'portals)       setup_portals ;;' "$SAUCE_DIR/scripts/setup.sh"
+grep -Fq 'default=wlr;gtk' "$SAUCE_DIR/home/dot_config/xdg-desktop-portal/sway-portals.conf"
+grep -Fq 'default=gtk;kde' "$SAUCE_DIR/home/dot_config/xdg-desktop-portal/kde-portals.conf"
+
 ALL_SELECTIONS="$SAUCE_EMULATORS $SAUCE_GUI_APPS $SAUCE_FLATPAKS $SAUCE_TOOLS"
 for selection in $ALL_SELECTIONS; do
     grep -Fq "\"$selection\"" <<<"$DATA"

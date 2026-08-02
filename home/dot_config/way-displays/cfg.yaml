@@ -1,11 +1,10 @@
-# way-displays owns output layout (wlr-output-management) — keep `output`
-# mode/position commands out of the sway config; `output * bg` is fine.
-ARRANGE: ROW
+ARRANGE: COLUMN
 ALIGN: BOTTOM
 
 ORDER:
   - "eDP-1"
 
+AUTO_SCALE_MAX: 1.5
 AUTO_SCALE: TRUE
 
 LOG_THRESHOLD: INFO

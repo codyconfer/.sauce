@@ -18,7 +18,7 @@
     "max-length": 60,
   },
   "clock": {
-    "format": "{:%a %d %b  %H:%M}",
+    "format": "{:%Y.%m.%d | %H:%M}",
     "tooltip-format": "<tt><small>{calendar}</small></tt>",
   },
   "battery": {

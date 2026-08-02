@@ -1,5 +1,3 @@
-# waylogout — long-option=value format, flag options on their own line.
-# Buttons appear only for actions with a *-command set.
 hide-cancel
 default-action=logout
 fa-font=Font Awesome 6 Free

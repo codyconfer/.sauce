@@ -103,7 +103,7 @@ own directories aren't mistaken for things to deploy.
   .chezmoiroot                        # "home" — the source root
   home/
     .chezmoi.toml.tmpl                # generates ~/.config/chezmoi/chezmoi.toml (os/family, prompts)
-    .chezmoidata.yaml                 # package lists (essential/extras, netTools, sway, flatpakCatalog, caskCatalog, winget)
+    .chezmoidata.yaml                 # package lists (essential/extras, netTools, sway, portals, flatpakCatalog, caskCatalog, winget)
     .chezmoiexternal.toml.tmpl        # download-only tools (none currently; see skills/add-tool-installer Path B)
     .chezmoiignore                    # per-OS / per-flag exclusions
     Documents/PowerShell/Microsoft.PowerShell_profile.ps1  # → ~/Documents/PowerShell/... (native Windows)
@@ -118,6 +118,7 @@ own directories aren't mistaken for things to deploy.
       fuzzel/ mako/ foot/             #    "
       swayimg/ mpv/ havoc/            #    "  (sway companion tools)
       way-displays/ waylogout/ zskins/ #   "
+      xdg-desktop-portal/             #    "  (per-desktop portal backend preferences)
       alacritty/alacritty.toml        # → ~/.config/alacritty (Linux + macOS; ignored on Windows/WSL)
     create_dot_zshrc.local            # → ~/.zshrc.local (created once, never overwritten)
     create_dot_bashrc.local           #    "  ~/.bashrc.local
@@ -147,6 +148,7 @@ written, `after_` scripts once everything is in place:
 | `run_onchange_before_50-flatpaks` | flatpak `install-*.sh` (skipped if headless) | on change |
 | `run_once_after_70-run-updaters` | `setup.sh` update loop (always runs fonts + zsh-plugins; installs the `update-*.sh`-backed GUI apps — vscode/zed/qdmr/claude/cursor/ghidra/jetbrains-toolbox/lmstudio/obsidian/docker/codex — when selected; adds `sway-tools` when sway is selected) | once |
 | `run_once_after_75-sway-session` | ly + uwsm login stack, with ly enabled as the default display manager (sway selected, not headless/WSL) | once |
+| `run_once_after_76-portals` | `setup.sh` portals step — xdg-desktop-portal backends (wlr for sway, gtk for KDE Plasma) | once |
 | `run_onchange_after_80-nvim-bootstrap` | `build-nvim.sh` sync tail | on lockfile/toolchain change |
 | `run_once_after_90-chsh-zsh` | `setup.sh` chsh | once |
 | `run_once_after_95-tailscale` | `setup.sh` tailscale | once (opt-in) |
@@ -219,9 +221,18 @@ Wayland desktop, three ways:
 
 - **Distro packages** (`sway:` lists in `.chezmoidata.yaml`, family-aware):
   sway, swaybg, swayidle, swaylock, waybar, fuzzel, foot, mako, grim, slurp,
-  grimshot, wl-clipboard, brightnessctl, pavucontrol, xdg-desktop-portal-wlr,
-  mpv, swayimg, wlsunset, waypipe, uwsm (+ runtime helpers: libnotify,
-  imagemagick, ddcutil, mesa-vulkan-drivers).
+  grimshot, wl-clipboard, brightnessctl, pavucontrol, mpv, swayimg, wlsunset,
+  waypipe, uwsm (+ runtime helpers: libnotify, imagemagick, ddcutil,
+  mesa-vulkan-drivers).
+- **Desktop portals** (`portals:` in `.chezmoidata.yaml`, installed by
+  `run_once_after_76-portals`): `xdg-desktop-portal-wlr` for sway and
+  `xdg-desktop-portal-gtk` for KDE Plasma (detected at runtime via
+  `startplasma-wayland`, so a Plasma box gets the gtk backend even without sway
+  selected). The preference per desktop is pinned by
+  `~/.config/xdg-desktop-portal/{sway,kde}-portals.conf`: under sway `wlr` owns
+  Screenshot/ScreenCast with `gtk` for the file chooser (wlr implements neither),
+  under KDE `gtk` is preferred with `kde` as the fallback and `kwallet` kept for
+  Secret.
 - **`update-sway-tools.sh`** — companions with no Ubuntu/Debian package, built
   from source into `~/.local/bin` and re-run like any updater
   (`update-sway-tools`): wayshot, sway-overfocus, wl-clip-persist, lumactl,
@@ -266,7 +277,8 @@ capture; no flathub plugin exists).
 Key sway bindings added: `$mod+h/j/k/l` → sway-overfocus, `$mod+Tab` /
 `Mod1+Tab` → group cycle / swaycycle Alt-Tab, `$mod+Shift+e` → waylogout,
 `Print` family → wayshot + sway-screenshot, brightness keys → lumactl,
-`$mod+x` → zofi, `$mod+z` → exposway, `$mod+Shift+r` → Kooha.
+`$mod+x` → zofi launcher, `$mod+Shift+x` → zofi clipboard history,
+`$mod+Shift+Return` → havoc, `$mod+z` → exposway, `$mod+Shift+r` → Kooha.
 
 ### macOS notes
 
@@ -307,7 +319,11 @@ Two independent chezmoi "machines" run off this one repo:
 The rc files (`~/.zshrc`, `~/.bashrc`, `~/.config/fish/config.fish`) are managed by
 chezmoi — edit the source with `chezmoi edit ~/.zshrc` (aliased `sauce-edit`), or
 edit in the repo and `chezmoi apply`. Each carries a runtime-guarded env/PATH block
-per tool that no-ops when the tool is absent.
+per tool that no-ops when the tool is absent. Both flatpak export dirs
+(`~/.local/share/flatpak/exports/bin`, `/var/lib/flatpak/exports/bin`) are on
+`PATH`, and `.config/uwsm/env` adds them plus the matching `exports/share` dirs
+to `XDG_DATA_DIRS` for the sway session, so flatpak apps are runnable by name and
+show up in fuzzel/zofi (ly-launched sessions never read `/etc/profile.d`).
 
 Your **personal** tweaks go in the `*.local` files (`~/.zshrc.local`,
 `~/.bashrc.local`, `~/.config/fish/user.fish`), which each rc sources at the end.

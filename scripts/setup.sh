@@ -368,6 +368,51 @@ setup_sway_session() {
     enable_ly "$current_dm"
 }
 
+setup_portals() {
+    local family
+    family="${FAMILY:-$(detect_family)}"
+    if [ "$family" = macos ]; then
+        log_info "xdg-desktop-portal is Linux-only — skipping on macOS."
+        return 0
+    fi
+
+    local -a desktops=()
+    local sway="${SWAY_PORTALS:-}"
+    if [ -z "$sway" ]; then
+        local sel
+        sel="$(_data '.guiApps | index("sway")')"
+        [ -n "$sel" ] && [ "$sel" != null ] && sway=1
+    fi
+    [ "$sway" = 1 ] && desktops+=(sway)
+    command -v startplasma-wayland >/dev/null 2>&1 && desktops+=(kde)
+
+    if [ "${#desktops[@]}" -eq 0 ]; then
+        log_info "neither sway nor KDE Plasma is present — skipping portal backends."
+        return 0
+    fi
+
+    local -a pkgs=() dpkgs=()
+    local d
+    for d in "${desktops[@]}"; do
+        mapfile -t dpkgs < <(_data --arg d "$d" '.portals[$d][]?')
+        pkgs+=("${dpkgs[@]}")
+    done
+    mapfile -t pkgs < <(printf '%s\n' "${pkgs[@]}" | awk 'NF && !seen[$0]++')
+
+    if [ "${#pkgs[@]}" -eq 0 ]; then
+        log_warn "no portal packages resolved from chezmoi data; skipping."
+        return 0
+    fi
+
+    log_install "Installing xdg-desktop-portal backends for: ${desktops[*]}"
+    local p
+    for p in "${pkgs[@]}"; do
+        install_pkgs "$p" || log_warn "skipped (unavailable): $p"
+    done
+    log_done "Portal backends installed (wlr under sway, gtk under KDE Plasma)."
+    log_hint "Backend preferences live in ~/.config/xdg-desktop-portal/{sway,kde}-portals.conf; log out and back in to apply."
+}
+
 setup_tailscale() {
     local on
     on="${TAILSCALE:-$(_data '.tailscale')}"
@@ -394,6 +439,7 @@ case "${1:-all}" in
     oh-my-posh)    setup_oh_my_posh ;;
     run-updaters)  setup_run_updaters ;;
     sway-session)  setup_sway_session ;;
+    portals)       setup_portals ;;
     chsh-zsh)      setup_chsh_zsh ;;
     tailscale)     setup_tailscale ;;
     all)
@@ -402,6 +448,7 @@ case "${1:-all}" in
         setup_oh_my_posh
         setup_run_updaters
         setup_sway_session
+        setup_portals
         setup_chsh_zsh
         setup_tailscale
         ;;

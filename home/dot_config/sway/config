@@ -14,7 +14,7 @@ set $app uwsm app -s b --
 
 output * bg #263238 solid_color
 
-font pango:Terminess Nerd Font 9
+font pango:Terminess Nerd Font 11
 default_border pixel 2
 gaps inner 6
 smart_gaps on
@@ -22,7 +22,7 @@ client.focused #03a9f4 #03a9f4 #263238 #03a9f4 #03a9f4
 
 input "type:touchpad" {
     tap enabled
-    natural_scroll enabled
+    natural_scroll disabled
     dwt enabled
 }
 input "type:keyboard" {
@@ -47,6 +47,7 @@ exec $app swayidle -w \
     before-sleep '$lock'
 
 bindsym $mod+Return exec $term
+bindsym $mod+Shift+Return exec $bin/havoc
 bindsym $mod+d focus mode_toggle
 bindsym $mod+q kill
 bindsym $mod+BackSpace kill
@@ -119,7 +120,8 @@ bindsym $mod+e layout toggle split
 bindsym $mod+f fullscreen
 bindsym $mod+Shift+space floating toggle
 bindsym $mod+space exec $menu
-bindsym $mod+x exec $bin/zofi
+bindsym $mod+x exec $bin/zofi launch
+bindsym $mod+Shift+x exec $bin/zofi clipboard
 bindsym $mod+z exec $bin/exposway
 bindsym $mod+Shift+r exec flatpak run io.github.seadve.Kooha
 bindsym $mod+a focus parent

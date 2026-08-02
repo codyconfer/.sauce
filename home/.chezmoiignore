@@ -14,6 +14,7 @@
 .config/way-displays
 .config/waylogout
 .config/zskins
+.config/xdg-desktop-portal
 .local/share/applications
 {{- end }}
 {{- if eq .chezmoi.os "windows" }}
@@ -43,6 +44,7 @@ Documents/PowerShell
 .config/way-displays
 .config/waylogout
 .config/zskins
+.config/xdg-desktop-portal
 .config/alacritty
 .local/share/applications
 {{- end }}

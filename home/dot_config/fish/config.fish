@@ -16,7 +16,9 @@ set -g PATH_DIRS \
     $HOME/.cargo/bin \
     $HOME/.lmstudio/bin \
     $HOME/.opencode/bin \
-    $HOME/google-cloud-sdk/bin
+    $HOME/google-cloud-sdk/bin \
+    $HOME/.local/share/flatpak/exports/bin \
+    /var/lib/flatpak/exports/bin
 set -g RCs \
     ~/.config/fish/dev.fish \
     ~/.config/fish/ops.fish \
