@@ -88,10 +88,141 @@ setup_chsh_zsh() {
     chsh -s "$zsh_path" || log_warn "chsh failed; set zsh as your login shell manually."
 }
 
+LEMURS_REPO="coastalwhite/lemurs"
+LEMURS_TARBALL="lemurs-x86_64-unknown-linux-gnu.tar.xz"
+
+lemurs_version() {
+    command -v lemurs >/dev/null 2>&1 || return 0
+    lemurs --version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1
+}
+
+lemurs_files_present() {
+    [ -f /etc/lemurs/config.toml ] && [ -f /etc/pam.d/lemurs ] && {
+        [ -f /usr/lib/systemd/system/lemurs.service ] \
+            || [ -f /etc/systemd/system/lemurs.service ]
+    }
+}
+
+lemurs_fetch_extra() {
+    local ref="$1" tmp="$2" f
+    ensure_dir "$tmp/extra"
+    for f in config.toml xsetup.sh lemurs.pam lemurs.service; do
+        fetch "https://raw.githubusercontent.com/$LEMURS_REPO/$ref/extra/$f" \
+            >"$tmp/extra/$f" || return 1
+    done
+    LEMURS_EXTRA="$tmp/extra"
+}
+
+lemurs_from_source() {
+    local latest="$1" tmp="$2"
+    log_info "No lemurs release build for $(uname -m) — building from source (cargo)."
+    install_pkgs libpam0g-dev || install_pkgs pam-devel || install_pkgs pam || true
+    command -v cargo >/dev/null 2>&1 || install_pkgs cargo || install_pkgs rust || return 1
+    cargo install --locked --git "https://github.com/$LEMURS_REPO" --tag "$latest" \
+        --root "$tmp/cargo" || return 1
+    sudo install -Dm0755 "$tmp/cargo/bin/lemurs" /usr/bin/lemurs || return 1
+    lemurs_fetch_extra "$latest" "$tmp"
+}
+
+lemurs_from_release() {
+    local latest="$1" tmp="$2" base expected dir
+    base="https://github.com/$LEMURS_REPO/releases/download/$latest"
+    dir="$tmp/${LEMURS_TARBALL%.tar.xz}"
+
+    log_download "Downloading lemurs $latest..."
+    download "$base/$LEMURS_TARBALL" "$tmp/$LEMURS_TARBALL" || return 1
+    expected="$(fetch "$base/sha256.sum" \
+        | awk -v f="$LEMURS_TARBALL" '$2 == f || $2 == "*"f {print $1}' | head -1)"
+    if [ -n "$expected" ]; then
+        verify_sha256 "$expected" "$tmp/$LEMURS_TARBALL" || return 1
+    else
+        log_warn "No checksum published for $LEMURS_TARBALL; skipping hash check."
+    fi
+    tar -C "$tmp" -xJf "$tmp/$LEMURS_TARBALL" || return 1
+    sudo install -Dm0755 "$dir/lemurs" /usr/bin/lemurs || return 1
+    LEMURS_EXTRA="$dir/extra"
+}
+
+install_lemurs() {
+    local family="$1" tmp="$2" latest
+    LEMURS_EXTRA=""
+
+    latest="$(fetch "https://api.github.com/repos/$LEMURS_REPO/releases/latest" | jq -r '.tag_name')"
+    if [ -z "$latest" ] || [ "$latest" = null ]; then
+        log_error "Could not determine the latest lemurs version."
+        return 1
+    fi
+
+    if [ "$family" = arch ] && install_pkgs lemurs; then
+        log_done "lemurs installed from the Arch repos."
+        lemurs_files_present || lemurs_fetch_extra "$latest" "$tmp"
+        return 0
+    fi
+
+    if version_gate "lemurs" "$(lemurs_version)" "$latest"; then
+        lemurs_files_present || lemurs_fetch_extra "$latest" "$tmp"
+        return 0
+    fi
+
+    if [ "$(uname -m)" = x86_64 ]; then
+        lemurs_from_release "$latest" "$tmp" || return 1
+    else
+        lemurs_from_source "$latest" "$tmp" || return 1
+    fi
+    log_done "lemurs $latest installed -> /usr/bin/lemurs"
+}
+
+stage_lemurs_files() {
+    sudo mkdir -p /etc/lemurs/wayland /etc/lemurs/wms
+    [ -n "${LEMURS_EXTRA:-}" ] || return 0
+
+    if [ ! -f /etc/lemurs/config.toml ]; then
+        sudo install -Dm0644 "$LEMURS_EXTRA/config.toml" /etc/lemurs/config.toml
+        log_info "Installed the stock lemurs config to /etc/lemurs/config.toml."
+    fi
+    [ -f /etc/lemurs/xsetup.sh ] \
+        || sudo install -Dm0755 "$LEMURS_EXTRA/xsetup.sh" /etc/lemurs/xsetup.sh
+    [ -f /etc/pam.d/lemurs ] \
+        || sudo install -Dm0644 "$LEMURS_EXTRA/lemurs.pam" /etc/pam.d/lemurs
+    if [ ! -f /usr/lib/systemd/system/lemurs.service ] \
+        && [ ! -f /etc/systemd/system/lemurs.service ]; then
+        sudo install -Dm0644 "$LEMURS_EXTRA/lemurs.service" /etc/systemd/system/lemurs.service
+        sudo systemctl daemon-reload || true
+    fi
+}
+
+write_uwsm_session() {
+    local id="$1" name="$2" comment="$3" desktop_names="$4" cmd="$5"
+    sudo mkdir -p /usr/local/share/wayland-sessions /etc/lemurs/wayland
+    sudo tee "/usr/local/share/wayland-sessions/$id.desktop" >/dev/null <<-EOF
+	[Desktop Entry]
+	Name=$name
+	Comment=$comment
+	Exec=$cmd
+	TryExec=uwsm
+	Type=Application
+	DesktopNames=$desktop_names
+	EOF
+    printf '#!/bin/sh\nexec %s\n' "$cmd" | sudo tee "/etc/lemurs/wayland/$id" >/dev/null
+    sudo chmod 0755 "/etc/lemurs/wayland/$id"
+}
+
+retire_greetd() {
+    local current_dm="$1"
+    [ "$current_dm" = greetd ] && return 0
+    [ -f /etc/greetd/config.toml ] || return 0
+    sudo grep -q "managed by sauce" /etc/greetd/config.toml || return 0
+    if [ -f /etc/greetd/config.toml.dist-bak ]; then
+        sudo mv -f /etc/greetd/config.toml.dist-bak /etc/greetd/config.toml
+        log_clean "Restored the packaged greetd config; sauce no longer manages greetd."
+    else
+        sudo rm -f /etc/greetd/config.toml
+        log_clean "Removed the sauce-managed /etc/greetd/config.toml."
+    fi
+    log_hint "greetd is unused now — uninstall it with your package manager if you want it gone."
+}
+
 setup_sway_session() {
-    # Stages a greetd + tuigreet + uwsm login stack for sway WITHOUT switching
-    # the active display manager. Switch later with:
-    #   sudo systemctl disable <current-dm> && sudo systemctl enable greetd
     if [ "${SWAY_SESSION:-}" != 1 ]; then
         local sel
         sel="$(_data '.guiApps | index("sway")')"
@@ -108,7 +239,7 @@ setup_sway_session() {
         return 0
     fi
 
-    log_info "Staging the sway login stack (greetd + tuigreet + uwsm)..."
+    log_info "Staging the sway login stack (lemurs + uwsm)..."
 
     local current_dm=""
     if [ -f /etc/X11/default-display-manager ]; then
@@ -117,107 +248,38 @@ setup_sway_session() {
         current_dm="$(basename "$(readlink -f /etc/systemd/system/display-manager.service)" .service)"
     fi
 
-    case "$family" in
-        debian)
-            if [ -n "$current_dm" ]; then
-                echo "greetd shared/default-x-display-manager select $current_dm" \
-                    | sudo debconf-set-selections || true
-            fi
-            sudo DEBIAN_FRONTEND=noninteractive apt-get install -y greetd \
-                || { log_warn "greetd install failed."; return 1; }
-            sudo DEBIAN_FRONTEND=noninteractive apt-get install -y tuigreet \
-                || log_warn "tuigreet install failed; greetd will fall back to agreety."
-            ;;
-        fedora|arch)
-            install_pkgs greetd || { log_warn "greetd install failed."; return 1; }
-            install_pkgs greetd-tuigreet || install_pkgs tuigreet \
-                || log_warn "tuigreet install failed; greetd will fall back to agreety."
-            ;;
-    esac
+    local tmp
+    tmp="$(mktemp -d)"
+    trap 'rm -rf "$tmp"; trap - RETURN' RETURN
 
-    local greet_user
-    case "$family" in
-        fedora) greet_user="greetd" ;;
-        arch)   greet_user="greeter" ;;
-        *)      greet_user="_greetd" ;;
-    esac
-    if [ -f /etc/greetd/config.toml ]; then
-        local existing_user
-        existing_user="$(sudo grep -Po '^\s*user\s*=\s*"\K[^"]+' /etc/greetd/config.toml | grep -vx "$USER" | tail -n1 || true)"
-        [ -n "$existing_user" ] && greet_user="$existing_user"
-        if ! sudo grep -q "managed by sauce" /etc/greetd/config.toml; then
-            sudo cp /etc/greetd/config.toml /etc/greetd/config.toml.dist-bak
-            log_info "Backed up the packaged greetd config to /etc/greetd/config.toml.dist-bak."
-        fi
-    fi
+    install_lemurs "$family" "$tmp" || { log_warn "lemurs install failed."; return 1; }
+    stage_lemurs_files
 
-    local greeter_cmd="agreety --cmd 'uwsm start -- sway'"
-    command -v tuigreet >/dev/null 2>&1 && greeter_cmd="tuigreet --time --remember --remember-session --sessions /usr/local/share/wayland-sessions:/usr/share/wayland-sessions --cmd 'uwsm start -- sway'"
-
-    sudo tee /etc/greetd/config.toml >/dev/null <<-EOF
-	# managed by sauce (chezmoi) — sway login stack, staged while $current_dm stays active
-	[terminal]
-	vt = 1
-
-	# Once-per-boot autologin straight into sway (inert until greetd is the
-	# active display manager); logging out falls back to the greeter below.
-	[initial_session]
-	command = "uwsm start -- sway"
-	user = "$USER"
-
-	[default_session]
-	command = "$greeter_cmd"
-	user = "$greet_user"
-	EOF
-
-    if command -v tuigreet >/dev/null 2>&1; then
-        sudo mkdir -p /var/cache/tuigreet
-        sudo chown "$greet_user":"$greet_user" /var/cache/tuigreet 2>/dev/null \
-            || sudo chown "$greet_user" /var/cache/tuigreet || true
-        sudo chmod 0755 /var/cache/tuigreet
-    fi
-
-    sudo mkdir -p /usr/local/share/wayland-sessions
-    sudo tee /usr/local/share/wayland-sessions/sway.desktop >/dev/null <<-'EOF'
-	[Desktop Entry]
-	Name=Sway
-	Comment=Sway tiling Wayland compositor, managed by uwsm
-	Exec=uwsm start -- sway
-	Type=Application
-	DesktopNames=sway
-	EOF
+    write_uwsm_session sway "Sway" \
+        "Sway tiling Wayland compositor, managed by uwsm" \
+        "sway" \
+        "uwsm start -N Sway -D sway -e -- sway"
     sudo rm -f /usr/share/wayland-sessions/sway-uwsm.desktop
 
-    local plasma_session=""
-    local candidate
-    for candidate in plasma.desktop plasmawayland.desktop; do
-        if [ -f "/usr/share/wayland-sessions/$candidate" ]; then
-            plasma_session="$candidate"
-            break
-        fi
-    done
-    if [ -n "$plasma_session" ]; then
-        sudo tee /usr/local/share/wayland-sessions/plasma-uwsm.desktop >/dev/null <<-EOF
-	[Desktop Entry]
-	Name=Plasma (UWSM)
-	Comment=KDE Plasma Wayland session, managed by uwsm
-	Exec=uwsm start -- $plasma_session
-	TryExec=uwsm
-	Type=Application
-	DesktopNames=KDE
-	EOF
-        log_info "Added a UWSM wrapper for the $plasma_session session."
+    if command -v startplasma-wayland >/dev/null 2>&1; then
+        write_uwsm_session plasma-uwsm "Plasma (UWSM)" \
+            "KDE Plasma Wayland session, managed by uwsm" \
+            "KDE" \
+            "uwsm start -N Plasma -D KDE -e -- startplasma-wayland"
+        log_info "Added a UWSM wrapper for the KDE Plasma Wayland session."
     fi
+
+    retire_greetd "$current_dm"
 
     local dm_now=""
     [ -L /etc/systemd/system/display-manager.service ] \
         && dm_now="$(basename "$(readlink -f /etc/systemd/system/display-manager.service)" .service)"
     if [ -n "$current_dm" ] && [ "$dm_now" != "$current_dm" ]; then
-        log_warn "display-manager.service changed ($current_dm -> ${dm_now:-none}); revert with: sudo systemctl disable ${dm_now:-greetd} && sudo systemctl enable $current_dm"
+        log_warn "display-manager.service changed ($current_dm -> ${dm_now:-none}); revert with: sudo systemctl disable ${dm_now:-lemurs} && sudo systemctl enable $current_dm"
     else
         log_done "sway login stack staged; ${current_dm:-your display manager} is still in charge."
     fi
-    log_hint "Boot straight into sway later with: sudo systemctl disable ${current_dm:-sddm} && sudo systemctl enable greetd"
+    log_hint "Boot into lemurs later with: sudo systemctl disable ${current_dm:-sddm} && sudo systemctl enable lemurs"
 }
 
 setup_tailscale() {

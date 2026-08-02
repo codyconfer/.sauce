@@ -50,8 +50,11 @@ for template in "$SAUCE_DIR"/home/.chezmoiscripts/*.sh.tmpl; do
     "$CHEZMOI" execute-template --source="$SAUCE_DIR" <"$template" | bash -n
 done
 
-grep -Fq 'Exec=uwsm start -- $plasma_session' "$SAUCE_DIR/scripts/setup.sh"
-grep -Fq 'Name=Plasma (UWSM)' "$SAUCE_DIR/scripts/setup.sh"
+grep -Fq 'uwsm start -N Plasma -D KDE -e -- startplasma-wayland' "$SAUCE_DIR/scripts/setup.sh"
+grep -Fq '"Plasma (UWSM)"' "$SAUCE_DIR/scripts/setup.sh"
+grep -Fq 'uwsm start -N Sway -D sway -e -- sway' "$SAUCE_DIR/scripts/setup.sh"
+grep -Fq 'coastalwhite/lemurs' "$SAUCE_DIR/scripts/setup.sh"
+! grep -Fq 'greetd/config.toml >/dev/null' "$SAUCE_DIR/scripts/setup.sh"
 
 ALL_SELECTIONS="$SAUCE_EMULATORS $SAUCE_GUI_APPS $SAUCE_FLATPAKS $SAUCE_TOOLS"
 for selection in $ALL_SELECTIONS; do

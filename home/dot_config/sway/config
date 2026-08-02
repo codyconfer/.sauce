@@ -8,7 +8,7 @@ set $term alacritty
 set $menu fuzzel
 set $lock swaylock -f
 # Source-built tools live in ~/.local/bin, which is NOT on PATH when the
-# session comes up via SDDM/greetd — always exec them through $bin.
+# session comes up via SDDM/lemurs — always exec them through $bin.
 set $bin ~/.local/bin
 set $app uwsm app -s b --
 

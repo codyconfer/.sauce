@@ -146,7 +146,7 @@ written, `after_` scripts once everything is in place:
 | `run_onchange_before_45-net-tools` | network/security CLI tools (opt-in via `netTools`) | on change |
 | `run_onchange_before_50-flatpaks` | flatpak `install-*.sh` (skipped if headless) | on change |
 | `run_once_after_70-run-updaters` | `setup.sh` update loop (always runs fonts + zsh-plugins; installs the `update-*.sh`-backed GUI apps — vscode/zed/qdmr/claude/cursor/ghidra/jetbrains-toolbox/lmstudio/obsidian/docker/codex — when selected; adds `sway-tools` when sway is selected) | once |
-| `run_once_after_75-sway-session` | greetd + tuigreet + uwsm login stack, staged without switching the active display manager (sway selected, not headless/WSL) | once |
+| `run_once_after_75-sway-session` | lemurs + uwsm login stack, staged without switching the active display manager (sway selected, not headless/WSL) | once |
 | `run_onchange_after_80-nvim-bootstrap` | `build-nvim.sh` sync tail | on lockfile/toolchain change |
 | `run_once_after_90-chsh-zsh` | `setup.sh` chsh | once |
 | `run_once_after_95-tailscale` | `setup.sh` tailscale | once (opt-in) |
@@ -229,16 +229,32 @@ Wayland desktop, three ways:
   swaydim, plus Font Awesome 6 / Nerd Fonts Symbols and the Kooha screen
   recorder (flatpak). Also sets swayimg/mpv as xdg-mime defaults.
 - **Login stack (staged)** — `run_once_after_75-sway-session` installs
-  greetd + tuigreet, writes `/etc/greetd/config.toml` (tuigreet → `uwsm start
-  -- sway`, with once-per-boot autologin) and a Sway session entry
-  for the current display manager. When KDE Plasma is installed, it also adds a
-  "Plasma (UWSM)" entry that wraps the distro's native Wayland session. It does
-  **not** switch DMs; when ready:
-  `sudo systemctl disable sddm && sudo systemctl enable greetd`.
+  [lemurs](https://github.com/coastalwhite/lemurs) (pacman on Arch, otherwise
+  the checksummed release tarball into `/usr/bin/lemurs`; source build on
+  non-x86_64) and stages the stock `/etc/lemurs/config.toml`, `/etc/pam.d/lemurs`
+  and `lemurs.service` without clobbering files you have already edited. Each
+  uwsm session is written twice — as a desktop entry in
+  `/usr/local/share/wayland-sessions` for the current display manager, and as a
+  runnable script in `/etc/lemurs/wayland` for lemurs' own session list:
+  - `sway` → `uwsm start -N Sway -D sway -e -- sway` (shadows the distro's
+    `sway.desktop`)
+  - `plasma-uwsm` → `uwsm start -N Plasma -D KDE -e -- startplasma-wayland`,
+    added only when KDE Plasma is installed
 
-Deliberately skipped from the wishlist: `autologin` (greetd's
-`[initial_session]` already covers it, with a greeter fallback) and `wlrobs`
-(flatpak OBS ships native PipeWire screen capture; no flathub plugin exists).
+  A sauce-managed `/etc/greetd/config.toml` left over from the old stack is
+  reverted to its `.dist-bak` (or removed). It does **not** switch DMs; when
+  ready: `sudo systemctl disable sddm && sudo systemctl enable lemurs`.
+
+  The uwsm commands name the compositor binary directly and pass
+  `-D <name> -e` rather than handing uwsm a session entry ID. uwsm validates
+  entries against the desktop-entry spec, and Kubuntu's `plasma.desktop` ships
+  without a `Type=` key, so `uwsm start -- plasma.desktop` fails outright;
+  without `-e`, uwsm also derives `XDG_CURRENT_DESKTOP` from the executable name
+  (`startplasma-wayland:KDE`) instead of plain `KDE`.
+
+Deliberately skipped from the wishlist: `autologin` (lemurs caches the last
+user and session instead) and `wlrobs` (flatpak OBS ships native PipeWire
+screen capture; no flathub plugin exists).
 
 Key sway bindings added: `$mod+h/j/k/l` → sway-overfocus, `$mod+Tab` /
 `Mod1+Tab` → group cycle / swaycycle Alt-Tab, `$mod+Shift+e` → waylogout,
