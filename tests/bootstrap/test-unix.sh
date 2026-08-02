@@ -15,6 +15,10 @@ mkdir -p "$TEST_HOME/.sauce"
 cp -a "$SOURCE_DIR/." "$TEST_HOME/.sauce/"
 
 export HOME="$TEST_HOME"
+export XDG_CACHE_HOME="$HOME/.cache"
+export XDG_CONFIG_HOME="$HOME/.config"
+export XDG_DATA_HOME="$HOME/.local/share"
+export XDG_STATE_HOME="$HOME/.local/state"
 export SAUCE_DIR="$HOME/.sauce"
 export BIN_DIR="$HOME/.local/bin"
 export SAUCE_HEADLESS=false
@@ -60,8 +64,11 @@ grep -Fq 'ly_set waylandsessions "$LY_SESSIONS"' "$SAUCE_DIR/scripts/setup.sh"
 
 grep -Fq 'setup.sh" portals' "$SAUCE_DIR/home/.chezmoiscripts/run_once_after_76-portals.sh.tmpl"
 grep -Fq 'portals)       setup_portals ;;' "$SAUCE_DIR/scripts/setup.sh"
-grep -Fq 'default=wlr;gtk' "$SAUCE_DIR/home/dot_config/xdg-desktop-portal/sway-portals.conf"
+grep -Fxq 'default=wlr' "$SAUCE_DIR/home/dot_config/xdg-desktop-portal/sway-portals.conf"
+! grep -Fq 'gtk' "$SAUCE_DIR/home/dot_config/xdg-desktop-portal/sway-portals.conf"
 grep -Fq 'default=gtk;kde' "$SAUCE_DIR/home/dot_config/xdg-desktop-portal/kde-portals.conf"
+jq -e '.portals.sway == ["xdg-desktop-portal", "xdg-desktop-portal-wlr"]' \
+    <<<"$DATA" >/dev/null
 
 ALL_SELECTIONS="$SAUCE_EMULATORS $SAUCE_GUI_APPS $SAUCE_FLATPAKS $SAUCE_TOOLS"
 for selection in $ALL_SELECTIONS; do

@@ -53,7 +53,7 @@ sway:
     - vulkan-mesa-layers
 
 portals:
-  sway: [xdg-desktop-portal, xdg-desktop-portal-wlr, xdg-desktop-portal-gtk]
+  sway: [xdg-desktop-portal, xdg-desktop-portal-wlr]
   kde: [xdg-desktop-portal, xdg-desktop-portal-gtk]
 
 flatpakCatalog:

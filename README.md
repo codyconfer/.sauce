@@ -230,9 +230,10 @@ Wayland desktop, three ways:
   `startplasma-wayland`, so a Plasma box gets the gtk backend even without sway
   selected). The preference per desktop is pinned by
   `~/.config/xdg-desktop-portal/{sway,kde}-portals.conf`: under sway `wlr` owns
-  Screenshot/ScreenCast with `gtk` for the file chooser (wlr implements neither),
-  under KDE `gtk` is preferred with `kde` as the fallback and `kwallet` kept for
-  Secret.
+  every available portal interface (including Screenshot/ScreenCast), so the GTK
+  backend is not activated in a sway session. Under KDE `gtk` is preferred with
+  `kde` as the fallback and `kwallet` kept for Secret. Since wlr does not
+  implement FileChooser, sway sessions do not provide that portal interface.
 - **`update-sway-tools.sh`** — companions with no Ubuntu/Debian package, built
   from source into `~/.local/bin` and re-run like any updater
   (`update-sway-tools`): wayshot, sway-overfocus, wl-clip-persist, lumactl,

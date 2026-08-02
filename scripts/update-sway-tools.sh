@@ -25,12 +25,12 @@ cleanup() {
     log_clean "Removing sway companion tools..."
     remove_cmd wayshot sway-overfocus wl-clip-persist lumactl zofi \
         waylogout havoc exposway exposwayd way-displays swaycycle \
-        sway-screenshot swaydim
+        sway-screenshot swaydim wttrbar
     remove_paths "$SRC_CACHE" \
         "$FONT_DIR/FontAwesome6" "$FONT_DIR/NerdFontsSymbolsOnly"
     remove_stamp sway-overfocus wl-clip-persist lumactl zofi waylogout \
         havoc exposway way-displays swaycycle sway-screenshot swaydim \
-        fontawesome6 nerd-symbols
+        wttrbar fontawesome6 nerd-symbols
     remove_flatpak io.github.seadve.Kooha || true
     command -v fc-cache >/dev/null 2>&1 && fc-cache -f >/dev/null 2>&1 || true
     log_done "sway tools removed."
@@ -158,6 +158,7 @@ install_sway_overfocus()  { cargo_tool sway-overfocus https://github.com/korrema
 install_wl_clip_persist() { cargo_tool wl-clip-persist https://github.com/Linus789/wl-clip-persist; }
 install_lumactl()         { cargo_tool lumactl https://github.com/danyspin97/lumactl; }
 install_zofi()            { cargo_tool zofi https://github.com/emskin/zskins zofi; }
+install_wttrbar()         { cargo_tool wttrbar https://github.com/bjesus/wttrbar; }
 
 install_waylogout() {
     clone_at_stamp waylogout https://github.com/loserMcloser/waylogout || return 1
@@ -315,6 +316,7 @@ install_sway_overfocus   || _step_failed sway-overfocus
 install_wl_clip_persist  || _step_failed wl-clip-persist
 install_lumactl          || _step_failed lumactl
 install_zofi             || _step_failed zofi
+install_wttrbar          || _step_failed wttrbar
 install_waylogout        || _step_failed waylogout
 install_havoc            || _step_failed havoc
 install_exposway         || _step_failed exposway
