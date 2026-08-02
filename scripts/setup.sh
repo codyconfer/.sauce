@@ -88,113 +88,146 @@ setup_chsh_zsh() {
     chsh -s "$zsh_path" || log_warn "chsh failed; set zsh as your login shell manually."
 }
 
-LEMURS_REPO="coastalwhite/lemurs"
-LEMURS_TARBALL="lemurs-x86_64-unknown-linux-gnu.tar.xz"
+LY_REPO="fairyglade/ly"
+LY_SESSIONS="/usr/local/share/wayland-sessions"
+LY_TTY=2
 
-lemurs_version() {
-    command -v lemurs >/dev/null 2>&1 || return 0
-    lemurs --version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1
+ly_version() {
+    command -v ly >/dev/null 2>&1 || return 0
+    ly --version 2>&1 | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1
 }
 
-lemurs_files_present() {
-    [ -f /etc/lemurs/config.toml ] && [ -f /etc/pam.d/lemurs ] && {
-        [ -f /usr/lib/systemd/system/lemurs.service ] \
-            || [ -f /etc/systemd/system/lemurs.service ]
-    }
+ly_latest_tag() {
+    fetch "https://api.github.com/repos/$LY_REPO/tags?per_page=100" \
+        | jq -r '.[].name' \
+        | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' \
+        | sort -V | tail -1
 }
 
-lemurs_fetch_extra() {
-    local ref="$1" tmp="$2" f
-    ensure_dir "$tmp/extra"
-    for f in config.toml xsetup.sh lemurs.pam lemurs.service; do
-        fetch "https://raw.githubusercontent.com/$LEMURS_REPO/$ref/extra/$f" \
-            >"$tmp/extra/$f" || return 1
-    done
-    LEMURS_EXTRA="$tmp/extra"
+ly_build_deps() {
+    local family="$1"
+    case "$family" in
+        debian) install_pkgs git libpam0g-dev libxcb1-dev ;;
+        fedora) install_pkgs git pam-devel libxcb-devel ;;
+        arch)   install_pkgs git pam libxcb ;;
+        *)      return 1 ;;
+    esac
 }
 
-lemurs_from_source() {
-    local latest="$1" tmp="$2"
-    log_info "No lemurs release build for $(uname -m) — building from source (cargo)."
-    install_pkgs libpam0g-dev || install_pkgs pam-devel || install_pkgs pam || true
-    command -v cargo >/dev/null 2>&1 || install_pkgs cargo || install_pkgs rust || return 1
-    cargo install --locked --git "https://github.com/$LEMURS_REPO" --tag "$latest" \
-        --root "$tmp/cargo" || return 1
-    sudo install -Dm0755 "$tmp/cargo/bin/lemurs" /usr/bin/lemurs || return 1
-    lemurs_fetch_extra "$latest" "$tmp"
-}
-
-lemurs_from_release() {
-    local latest="$1" tmp="$2" base expected dir
-    base="https://github.com/$LEMURS_REPO/releases/download/$latest"
-    dir="$tmp/${LEMURS_TARBALL%.tar.xz}"
-
-    log_download "Downloading lemurs $latest..."
-    download "$base/$LEMURS_TARBALL" "$tmp/$LEMURS_TARBALL" || return 1
-    expected="$(fetch "$base/sha256.sum" \
-        | awk -v f="$LEMURS_TARBALL" '$2 == f || $2 == "*"f {print $1}' | head -1)"
-    if [ -n "$expected" ]; then
-        verify_sha256 "$expected" "$tmp/$LEMURS_TARBALL" || return 1
-    else
-        log_warn "No checksum published for $LEMURS_TARBALL; skipping hash check."
+ly_zig() {
+    local want="$1" tmp="$2" target url shasum have
+    have="$(zig version 2>/dev/null | grep -oE '^[0-9]+\.[0-9]+')"
+    if [ -n "$have" ] && [ "$have" = "$(echo "$want" | cut -d. -f1,2)" ]; then
+        ZIG="$(command -v zig)"
+        return 0
     fi
-    tar -C "$tmp" -xJf "$tmp/$LEMURS_TARBALL" || return 1
-    sudo install -Dm0755 "$dir/lemurs" /usr/bin/lemurs || return 1
-    LEMURS_EXTRA="$dir/extra"
+
+    case "$(uname -m)" in
+        x86_64)          target=x86_64-linux ;;
+        aarch64 | arm64) target=aarch64-linux ;;
+        riscv64)         target=riscv64-linux ;;
+        armv7l | armv7)  target=arm-linux ;;
+        *) log_error "No zig build published for $(uname -m)."; return 1 ;;
+    esac
+
+    local index
+    index="$(fetch https://ziglang.org/download/index.json)" || return 1
+    url="$(jq -r --arg v "$want" --arg t "$target" '.[$v][$t].tarball // empty' <<<"$index")"
+    shasum="$(jq -r --arg v "$want" --arg t "$target" '.[$v][$t].shasum // empty' <<<"$index")"
+    [ -n "$url" ] || { log_error "zig $want is not published for $target."; return 1; }
+
+    log_download "Downloading zig $want ($target) to build ly..."
+    download "$url" "$tmp/zig.tar.xz" || return 1
+    verify_sha256 "$shasum" "$tmp/zig.tar.xz" || return 1
+    ensure_dir "$tmp/zig"
+    tar -C "$tmp/zig" --strip-components=1 -xJf "$tmp/zig.tar.xz" || return 1
+    ZIG="$tmp/zig/zig"
 }
 
-install_lemurs() {
-    local family="$1" tmp="$2" latest
-    LEMURS_EXTRA=""
+ly_from_source() {
+    local family="$1" tag="$2" tmp="$3" src want step
+    src="$tmp/ly"
+    ensure_dir "$src"
 
-    latest="$(fetch "https://api.github.com/repos/$LEMURS_REPO/releases/latest" | jq -r '.tag_name')"
-    if [ -z "$latest" ] || [ "$latest" = null ]; then
-        log_error "Could not determine the latest lemurs version."
+    log_download "Downloading ly $tag source..."
+    download "https://github.com/$LY_REPO/archive/refs/tags/$tag.tar.gz" "$tmp/ly.tar.gz" || return 1
+    tar -C "$src" --strip-components=1 -xzf "$tmp/ly.tar.gz" || return 1
+
+    want="$(grep -oE 'minimum_zig_version *= *"[0-9.]+"' "$src/build.zig.zon" \
+        | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)"
+    ly_build_deps "$family" || log_warn "Could not install every ly build dependency; trying anyway."
+    ly_zig "${want:-0.16.0}" "$tmp" || return 1
+
+    step=installexe
+    [ -f /etc/ly/config.ini ] && step=installnoconf
+
+    log_install "Building ly $tag (zig ${want:-0.16.0}, $step)..."
+    (
+        cd "$src" || exit 1
+        "$ZIG" build --global-cache-dir "$tmp/zig-global" -Doptimize=ReleaseSafe \
+            -Dinit_system=systemd -Ddefault_tty="$LY_TTY" || exit 1
+        sudo "$ZIG" build "$step" --global-cache-dir "$tmp/zig-global" \
+            -Doptimize=ReleaseSafe -Dinit_system=systemd -Ddefault_tty="$LY_TTY"
+    ) || return 1
+    sudo chown -R "$(id -u):$(id -g)" "$tmp" 2>/dev/null || true
+    sudo systemctl daemon-reload || true
+}
+
+install_ly() {
+    local family="$1" tmp="$2" latest
+    case "$family" in
+        fedora | arch)
+            if install_pkgs ly; then
+                log_done "ly installed from the distro repos."
+                return 0
+            fi
+            ;;
+    esac
+
+    latest="$(ly_latest_tag)"
+    if [ -z "$latest" ]; then
+        log_error "Could not determine the latest ly version."
         return 1
     fi
 
-    if [ "$family" = arch ] && install_pkgs lemurs; then
-        log_done "lemurs installed from the Arch repos."
-        lemurs_files_present || lemurs_fetch_extra "$latest" "$tmp"
-        return 0
-    fi
+    version_gate "ly" "$(ly_version)" "$latest" && return 0
 
-    if version_gate "lemurs" "$(lemurs_version)" "$latest"; then
-        lemurs_files_present || lemurs_fetch_extra "$latest" "$tmp"
-        return 0
-    fi
-
-    if [ "$(uname -m)" = x86_64 ]; then
-        lemurs_from_release "$latest" "$tmp" || return 1
-    else
-        lemurs_from_source "$latest" "$tmp" || return 1
-    fi
-    log_done "lemurs $latest installed -> /usr/bin/lemurs"
+    ly_from_source "$family" "$latest" "$tmp" || return 1
+    log_done "ly $latest installed -> /usr/bin/ly"
 }
 
-stage_lemurs_files() {
-    sudo mkdir -p /etc/lemurs/wayland /etc/lemurs/wms
-    [ -n "${LEMURS_EXTRA:-}" ] || return 0
+ly_set() {
+    local key="$1" value="$2" file=/etc/ly/config.ini
+    if ! sudo grep -qE "^[[:space:]]*$key[[:space:]]*=" "$file"; then
+        log_warn "ly config has no '$key' key (older ly?); left untouched."
+        return 0
+    fi
+    sudo sed -i -E "s|^[[:space:]]*($key)[[:space:]]*=.*|\1 = $value|" "$file"
+}
 
-    if [ ! -f /etc/lemurs/config.toml ]; then
-        sudo install -Dm0644 "$LEMURS_EXTRA/config.toml" /etc/lemurs/config.toml
-        log_info "Installed the stock lemurs config to /etc/lemurs/config.toml."
+configure_ly() {
+    local file=/etc/ly/config.ini
+    if [ ! -f "$file" ]; then
+        log_warn "$file not found; skipping ly configuration."
+        return 0
     fi
-    [ -f /etc/lemurs/xsetup.sh ] \
-        || sudo install -Dm0755 "$LEMURS_EXTRA/xsetup.sh" /etc/lemurs/xsetup.sh
-    [ -f /etc/pam.d/lemurs ] \
-        || sudo install -Dm0644 "$LEMURS_EXTRA/lemurs.pam" /etc/pam.d/lemurs
-    if [ ! -f /usr/lib/systemd/system/lemurs.service ] \
-        && [ ! -f /etc/systemd/system/lemurs.service ]; then
-        sudo install -Dm0644 "$LEMURS_EXTRA/lemurs.service" /etc/systemd/system/lemurs.service
-        sudo systemctl daemon-reload || true
+    if ! sudo grep -q "managed by sauce" "$file"; then
+        [ -f "$file.dist-bak" ] || sudo cp -a "$file" "$file.dist-bak"
+        sudo sed -i "1i # managed by sauce: only the uwsm session entries in $LY_SESSIONS are listed" "$file"
     fi
+
+    ly_set waylandsessions "$LY_SESSIONS"
+    ly_set xsessions null
+    ly_set xinitrc null
+    ly_set shell false
+    ly_set custom_sessions null
+    log_done "ly lists only the uwsm sessions in $LY_SESSIONS."
 }
 
 write_uwsm_session() {
     local id="$1" name="$2" comment="$3" desktop_names="$4" cmd="$5"
-    sudo mkdir -p /usr/local/share/wayland-sessions /etc/lemurs/wayland
-    sudo tee "/usr/local/share/wayland-sessions/$id.desktop" >/dev/null <<-EOF
+    sudo mkdir -p "$LY_SESSIONS"
+    sudo tee "$LY_SESSIONS/$id.desktop" >/dev/null <<-EOF
 	[Desktop Entry]
 	Name=$name
 	Comment=$comment
@@ -203,8 +236,6 @@ write_uwsm_session() {
 	Type=Application
 	DesktopNames=$desktop_names
 	EOF
-    printf '#!/bin/sh\nexec %s\n' "$cmd" | sudo tee "/etc/lemurs/wayland/$id" >/dev/null
-    sudo chmod 0755 "/etc/lemurs/wayland/$id"
 }
 
 retire_session_entry() {
@@ -236,6 +267,53 @@ retire_greetd() {
     log_hint "greetd is unused now — uninstall it with your package manager if you want it gone."
 }
 
+retire_lemurs() {
+    local family="$1"
+    [ -e /usr/bin/lemurs ] || [ -d /etc/lemurs ] \
+        || [ -e /etc/systemd/system/lemurs.service ] || return 0
+
+    sudo systemctl disable --now lemurs.service >/dev/null 2>&1 || true
+    sudo rm -f /etc/systemd/system/lemurs.service /etc/pam.d/lemurs
+    sudo rm -rf /etc/lemurs
+    if [ "$family" = arch ] && pacman -Qq lemurs >/dev/null 2>&1; then
+        remove_pkgs lemurs || log_warn "pacman could not remove lemurs."
+    else
+        sudo rm -f /usr/bin/lemurs
+    fi
+    sudo systemctl daemon-reload || true
+    log_clean "Removed the old lemurs login stack (binary, /etc/lemurs, service, PAM entry)."
+}
+
+ly_unit() {
+    local u
+    for u in /usr/lib/systemd/system /lib/systemd/system /etc/systemd/system; do
+        [ -f "$u/ly@.service" ] && { echo "ly@tty$LY_TTY.service"; return 0; }
+    done
+    for u in /usr/lib/systemd/system /lib/systemd/system /etc/systemd/system; do
+        [ -f "$u/ly.service" ] && { echo "ly.service"; return 0; }
+    done
+    return 1
+}
+
+enable_ly() {
+    local current_dm="$1" unit
+    unit="$(ly_unit)" || { log_warn "No ly systemd unit found; not switching display managers."; return 1; }
+
+    if [ -n "$current_dm" ] && [ "${current_dm#ly}" = "$current_dm" ]; then
+        sudo systemctl disable "$current_dm.service" >/dev/null 2>&1 \
+            && log_clean "Disabled $current_dm."
+    fi
+    sudo systemctl disable "getty@tty$LY_TTY.service" >/dev/null 2>&1 || true
+    sudo systemctl enable "$unit" || { log_error "Could not enable $unit."; return 1; }
+    if [ -f /etc/X11/default-display-manager ] \
+        && [ "$(cat /etc/X11/default-display-manager)" != /usr/bin/ly ]; then
+        sudo cp -a /etc/X11/default-display-manager /etc/X11/default-display-manager.dist-bak
+        echo /usr/bin/ly | sudo tee /etc/X11/default-display-manager >/dev/null
+    fi
+    log_done "ly is the default display manager ($unit, tty$LY_TTY) from the next boot."
+    log_hint "Revert with: sudo systemctl disable $unit && sudo systemctl enable ${current_dm:-sddm}"
+}
+
 setup_sway_session() {
     if [ "${SWAY_SESSION:-}" != 1 ]; then
         local sel
@@ -253,7 +331,7 @@ setup_sway_session() {
         return 0
     fi
 
-    log_info "Staging the sway login stack (lemurs + uwsm)..."
+    log_info "Installing the sway login stack (ly + uwsm)..."
 
     local current_dm=""
     if [ -f /etc/X11/default-display-manager ]; then
@@ -266,8 +344,8 @@ setup_sway_session() {
     tmp="$(mktemp -d)"
     trap 'rm -rf "$tmp"; trap - RETURN' RETURN
 
-    install_lemurs "$family" "$tmp" || { log_warn "lemurs install failed."; return 1; }
-    stage_lemurs_files
+    install_ly "$family" "$tmp" || { log_warn "ly install failed."; return 1; }
+    configure_ly
 
     write_uwsm_session sway "Sway" \
         "Sway tiling Wayland compositor, managed by uwsm" \
@@ -285,16 +363,9 @@ setup_sway_session() {
     fi
 
     retire_greetd "$current_dm"
+    retire_lemurs "$family"
 
-    local dm_now=""
-    [ -L /etc/systemd/system/display-manager.service ] \
-        && dm_now="$(basename "$(readlink -f /etc/systemd/system/display-manager.service)" .service)"
-    if [ -n "$current_dm" ] && [ "$dm_now" != "$current_dm" ]; then
-        log_warn "display-manager.service changed ($current_dm -> ${dm_now:-none}); revert with: sudo systemctl disable ${dm_now:-lemurs} && sudo systemctl enable $current_dm"
-    else
-        log_done "sway login stack staged; ${current_dm:-your display manager} is still in charge."
-    fi
-    log_hint "Boot into lemurs later with: sudo systemctl disable ${current_dm:-sddm} && sudo systemctl enable lemurs"
+    enable_ly "$current_dm"
 }
 
 setup_tailscale() {

@@ -146,7 +146,7 @@ written, `after_` scripts once everything is in place:
 | `run_onchange_before_45-net-tools` | network/security CLI tools (opt-in via `netTools`) | on change |
 | `run_onchange_before_50-flatpaks` | flatpak `install-*.sh` (skipped if headless) | on change |
 | `run_once_after_70-run-updaters` | `setup.sh` update loop (always runs fonts + zsh-plugins; installs the `update-*.sh`-backed GUI apps — vscode/zed/qdmr/claude/cursor/ghidra/jetbrains-toolbox/lmstudio/obsidian/docker/codex — when selected; adds `sway-tools` when sway is selected) | once |
-| `run_once_after_75-sway-session` | lemurs + uwsm login stack, staged without switching the active display manager (sway selected, not headless/WSL) | once |
+| `run_once_after_75-sway-session` | ly + uwsm login stack, with ly enabled as the default display manager (sway selected, not headless/WSL) | once |
 | `run_onchange_after_80-nvim-bootstrap` | `build-nvim.sh` sync tail | on lockfile/toolchain change |
 | `run_once_after_90-chsh-zsh` | `setup.sh` chsh | once |
 | `run_once_after_95-tailscale` | `setup.sh` tailscale | once (opt-in) |
@@ -228,22 +228,29 @@ Wayland desktop, three ways:
   zofi, waylogout, havoc, exposway, way-displays, swaycycle, sway-screenshot,
   swaydim, plus Font Awesome 6 / Nerd Fonts Symbols and the Kooha screen
   recorder (flatpak). Also sets swayimg/mpv as xdg-mime defaults.
-- **Login stack (staged)** — `run_once_after_75-sway-session` installs
-  [lemurs](https://github.com/coastalwhite/lemurs) (pacman on Arch, otherwise
-  the checksummed release tarball into `/usr/bin/lemurs`; source build on
-  non-x86_64) and stages the stock `/etc/lemurs/config.toml`, `/etc/pam.d/lemurs`
-  and `lemurs.service` without clobbering files you have already edited. Each
-  uwsm session is written twice — as a desktop entry in
-  `/usr/local/share/wayland-sessions` for the current display manager, and as a
-  runnable script in `/etc/lemurs/wayland` for lemurs' own session list:
+- **Login stack** — `run_once_after_75-sway-session` installs
+  [ly](https://github.com/fairyglade/ly) (the distro package on Arch/Fedora,
+  otherwise the latest tag built with a checksummed zig toolchain fetched from
+  ziglang.org; `installnoconf` once `/etc/ly/config.ini` exists, so your edits
+  survive upgrades) and makes it the default display manager. Each uwsm session
+  is written as a desktop entry in `/usr/local/share/wayland-sessions`:
   - `sway` → `uwsm start -N Sway -D sway -e -- sway` (shadows the distro's
     `sway.desktop`)
   - `plasma-uwsm` → `uwsm start -N Plasma -D KDE -e -- startplasma-wayland`,
     added only when KDE Plasma is installed
 
-  A sauce-managed `/etc/greetd/config.toml` left over from the old stack is
-  reverted to its `.dist-bak` (or removed). It does **not** switch DMs; when
-  ready: `sudo systemctl disable sddm && sudo systemctl enable lemurs`.
+  `/etc/ly/config.ini` is pinned to those entries only — `waylandsessions` points
+  at `/usr/local/share/wayland-sessions` and `xsessions`, `xinitrc`,
+  `custom_sessions` and `shell` are switched off, so the greeter lists nothing
+  but the uwsm sessions. The stock config is kept as `config.ini.dist-bak`.
+
+  The switch is real: the previous display manager is disabled, `getty@tty2` is
+  disabled, `ly@tty2.service` is enabled and (on Debian family)
+  `/etc/X11/default-display-manager` becomes `/usr/bin/ly`. Revert with
+  `sudo systemctl disable ly@tty2.service && sudo systemctl enable sddm`. The
+  older greetd and lemurs stacks are torn down on the way through — a
+  sauce-managed `/etc/greetd/config.toml` is reverted to its `.dist-bak` (or
+  removed), and lemurs' binary, service, PAM entry and `/etc/lemurs` are deleted.
 
   The uwsm commands name the compositor binary directly and pass
   `-D <name> -e` rather than handing uwsm a session entry ID. uwsm validates
@@ -252,9 +259,9 @@ Wayland desktop, three ways:
   without `-e`, uwsm also derives `XDG_CURRENT_DESKTOP` from the executable name
   (`startplasma-wayland:KDE`) instead of plain `KDE`.
 
-Deliberately skipped from the wishlist: `autologin` (lemurs caches the last
-user and session instead) and `wlrobs` (flatpak OBS ships native PipeWire
-screen capture; no flathub plugin exists).
+Deliberately skipped from the wishlist: `autologin` (ly remembers the last user
+and session instead) and `wlrobs` (flatpak OBS ships native PipeWire screen
+capture; no flathub plugin exists).
 
 Key sway bindings added: `$mod+h/j/k/l` → sway-overfocus, `$mod+Tab` /
 `Mod1+Tab` → group cycle / swaycycle Alt-Tab, `$mod+Shift+e` → waylogout,

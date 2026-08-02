@@ -53,7 +53,9 @@ done
 grep -Fq 'uwsm start -N Plasma -D KDE -e -- startplasma-wayland' "$SAUCE_DIR/scripts/setup.sh"
 grep -Fq '"Plasma (UWSM)"' "$SAUCE_DIR/scripts/setup.sh"
 grep -Fq 'uwsm start -N Sway -D sway -e -- sway' "$SAUCE_DIR/scripts/setup.sh"
-grep -Fq 'coastalwhite/lemurs' "$SAUCE_DIR/scripts/setup.sh"
+grep -Fq 'fairyglade/ly' "$SAUCE_DIR/scripts/setup.sh"
+grep -Fq 'ly_set waylandsessions "$LY_SESSIONS"' "$SAUCE_DIR/scripts/setup.sh"
+! grep -Fq 'lemurs' "$SAUCE_DIR/home/dot_config/sway/config"
 ! grep -Fq 'greetd/config.toml >/dev/null' "$SAUCE_DIR/scripts/setup.sh"
 
 ALL_SELECTIONS="$SAUCE_EMULATORS $SAUCE_GUI_APPS $SAUCE_FLATPAKS $SAUCE_TOOLS"
