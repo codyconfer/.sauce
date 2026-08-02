@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 set -uo pipefail
+# Stage UWSM-managed Sway and KDE Plasma session entries.
 {{- $guiApps := (index . "guiApps") | default (list) }}
 {{- if and (not .wsl) (not (index . "headless" | default false)) (has "sway" $guiApps) (ne .family "macos") }}
 FAMILY="{{ .family }}" SWAY_SESSION=1 bash "$HOME/.sauce/scripts/setup.sh" sway-session

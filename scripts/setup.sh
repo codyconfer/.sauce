@@ -110,8 +110,6 @@ setup_sway_session() {
 
     log_info "Staging the sway login stack (greetd + tuigreet + uwsm)..."
 
-    # Find the active display manager so installing greetd does not steal
-    # display-manager.service (Debian's greetd postinst asks via debconf).
     local current_dm=""
     if [ -f /etc/X11/default-display-manager ]; then
         current_dm="$(basename "$(cat /etc/X11/default-display-manager)")"
@@ -121,9 +119,6 @@ setup_sway_session() {
 
     case "$family" in
         debian)
-            # Preseed is a no-op when the greetd package ships no debconf
-            # template (true on Ubuntu 26.04) — harmless belt-and-suspenders
-            # for derivatives whose packaging does ask.
             if [ -n "$current_dm" ]; then
                 echo "greetd shared/default-x-display-manager select $current_dm" \
                     | sudo debconf-set-selections || true
@@ -140,9 +135,6 @@ setup_sway_session() {
             ;;
     esac
 
-    # Greeter user differs per distro (_greetd on Debian/Ubuntu, greetd on
-    # Fedora, greeter on Arch); prefer whatever the existing config declares —
-    # packaged or a previous sauce run — over the family default.
     local greet_user
     case "$family" in
         fedora) greet_user="greetd" ;;
@@ -195,6 +187,27 @@ setup_sway_session() {
 	DesktopNames=sway
 	EOF
     sudo rm -f /usr/share/wayland-sessions/sway-uwsm.desktop
+
+    local plasma_session=""
+    local candidate
+    for candidate in plasma.desktop plasmawayland.desktop; do
+        if [ -f "/usr/share/wayland-sessions/$candidate" ]; then
+            plasma_session="$candidate"
+            break
+        fi
+    done
+    if [ -n "$plasma_session" ]; then
+        sudo tee /usr/local/share/wayland-sessions/plasma-uwsm.desktop >/dev/null <<-EOF
+	[Desktop Entry]
+	Name=Plasma (UWSM)
+	Comment=KDE Plasma Wayland session, managed by uwsm
+	Exec=uwsm start -- $plasma_session
+	TryExec=uwsm
+	Type=Application
+	DesktopNames=KDE
+	EOF
+        log_info "Added a UWSM wrapper for the $plasma_session session."
+    fi
 
     local dm_now=""
     [ -L /etc/systemd/system/display-manager.service ] \

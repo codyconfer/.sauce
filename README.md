@@ -230,8 +230,10 @@ Wayland desktop, three ways:
   recorder (flatpak). Also sets swayimg/mpv as xdg-mime defaults.
 - **Login stack (staged)** — `run_once_after_75-sway-session` installs
   greetd + tuigreet, writes `/etc/greetd/config.toml` (tuigreet → `uwsm start
-  -- sway`, with once-per-boot autologin) and a "Sway (UWSM)" session entry
-  for the current display manager. It does **not** switch DMs; when ready:
+  -- sway`, with once-per-boot autologin) and a Sway session entry
+  for the current display manager. When KDE Plasma is installed, it also adds a
+  "Plasma (UWSM)" entry that wraps the distro's native Wayland session. It does
+  **not** switch DMs; when ready:
   `sudo systemctl disable sddm && sudo systemctl enable greetd`.
 
 Deliberately skipped from the wishlist: `autologin` (greetd's
