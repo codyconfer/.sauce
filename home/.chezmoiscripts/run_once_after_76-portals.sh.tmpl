@@ -5,6 +5,8 @@ set -uo pipefail
 {{- $guiApps := (index . "guiApps") | default (list) }}
 {{- if and (not .wsl) (not (index . "headless" | default false)) (ne .family "macos") }}
 SWAY_PORTALS="{{ if has "sway" $guiApps }}1{{ else }}0{{ end }}" \
+PORTAL_PKGS_SWAY="{{ .portals.sway | join " " }}" \
+PORTAL_PKGS_KDE="{{ .portals.kde | join " " }}" \
 FAMILY="{{ .family }}" \
     bash "$HOME/.sauce/scripts/setup.sh" portals
 {{- end }}

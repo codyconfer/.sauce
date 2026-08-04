@@ -153,6 +153,15 @@ list_docker_containers() {
     IFS=$tmp_ifs
 }
 
+if ! command -v prime-run >/dev/null 2>&1; then
+    prime-run() {
+        __NV_PRIME_RENDER_OFFLOAD=1 \
+            __VK_LAYER_NV_optimus=NVIDIA_only \
+            __GLX_VENDOR_LIBRARY_NAME=nvidia \
+            "$@"
+    }
+fi
+
 update() {
     if [ "$(uname -s)" = Darwin ]; then
         brew update && brew upgrade && brew upgrade --cask

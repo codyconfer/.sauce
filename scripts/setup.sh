@@ -56,6 +56,241 @@ setup_base_packages() {
     log_done "Base packages installed."
 }
 
+nvidia_gpus() {
+    local d vendor class device found=1
+    for d in /sys/bus/pci/devices/*; do
+        [ -r "$d/vendor" ] && [ -r "$d/class" ] && [ -r "$d/device" ] || continue
+        read -r vendor <"$d/vendor"
+        [ "$vendor" = 0x10de ] || continue
+        read -r class <"$d/class"
+        case "$class" in 0x0300* | 0x0302* | 0x0380*) ;; *) continue ;; esac
+        read -r device <"$d/device"
+        printf '%s ' "10de:${device#0x}"
+        found=0
+    done
+    return $found
+}
+
+nvidia_arch() {
+    local -a pkgs=(nvidia-utils nvidia-settings opencl-nvidia nvidia-prime)
+    local -a kernels=()
+    local k dkms=0
+    mapfile -t kernels < <(pacman -Qq linux linux-lts linux-zen linux-hardened 2>/dev/null)
+    [ "${#kernels[@]}" -eq 0 ] && kernels=(linux)
+    for k in "${kernels[@]}"; do
+        case "$k" in
+            linux | linux-lts) ;;
+            *) dkms=1 ;;
+        esac
+    done
+    if [ "$dkms" -eq 1 ]; then
+        pkgs+=(nvidia-open-dkms)
+        for k in "${kernels[@]}"; do pkgs+=("$k-headers"); done
+    else
+        for k in "${kernels[@]}"; do
+            [ "$k" = linux ] && pkgs+=(nvidia-open)
+            [ "$k" = linux-lts ] && pkgs+=(nvidia-open-lts)
+        done
+    fi
+    install_pkgs "${pkgs[@]}" || return 1
+    if grep -q '^\[multilib\]' /etc/pacman.conf; then
+        install_pkgs lib32-nvidia-utils || log_warn "lib32-nvidia-utils failed; 32-bit games may not find the driver."
+    else
+        log_hint "multilib is disabled, so lib32-nvidia-utils was skipped (Steam needs it)."
+    fi
+}
+
+nvidia_debian() {
+    command -v ubuntu-drivers >/dev/null 2>&1 || install_pkgs ubuntu-drivers-common || true
+    if command -v ubuntu-drivers >/dev/null 2>&1; then
+        log_install "Letting ubuntu-drivers pick the recommended driver..."
+        sudo ubuntu-drivers install && return 0
+        log_warn "ubuntu-drivers install failed; looking for the Debian driver packages."
+    fi
+    if apt-cache policy nvidia-open-kernel-dkms 2>/dev/null | grep -q 'Candidate: [0-9]'; then
+        install_pkgs nvidia-open-kernel-dkms nvidia-driver firmware-misc-nonfree && return 0
+        log_error "Driver install failed; check that non-free and non-free-firmware are enabled."
+        return 1
+    fi
+    log_error "No NVIDIA driver package is available: on Ubuntu run 'sudo ubuntu-drivers install' by hand, on Debian enable the non-free and non-free-firmware components."
+    return 1
+}
+
+nvidia_fedora() {
+    if ! rpm -q rpmfusion-nonfree-release >/dev/null 2>&1; then
+        log_install "Enabling RPM Fusion for the NVIDIA driver..."
+        sudo dnf install -y \
+            "https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm" \
+            "https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm" \
+            || log_warn "Could not enable RPM Fusion."
+    fi
+    install_pkgs akmod-nvidia xorg-x11-drv-nvidia-cuda || return 1
+}
+
+setup_nvidia() {
+    local family
+    family="${FAMILY:-$(detect_family)}"
+    case "$family" in
+        debian | fedora | arch) ;;
+        *) log_info "NVIDIA driver setup is Linux-only — skipping on $family."; return 0 ;;
+    esac
+    if [ "${NVIDIA:-1}" = 0 ]; then
+        log_info "NVIDIA=0 — skipping driver setup."
+        return 0
+    fi
+
+    local gpus
+    gpus="$(nvidia_gpus)" || {
+        log_info "No NVIDIA GPU on the PCI bus — skipping driver setup."
+        return 0
+    }
+    log_found "NVIDIA GPU detected (${gpus% })."
+
+    if command -v nvidia-smi >/dev/null 2>&1 \
+        && nvidia-smi --query-gpu=driver_version --format=csv,noheader >/dev/null 2>&1; then
+        log_info "Driver already loaded: $(nvidia-smi --query-gpu=driver_version --format=csv,noheader | head -1)."
+        return 0
+    fi
+
+    log_install "Installing the NVIDIA open kernel modules and userspace..."
+    case "$family" in
+        arch)   nvidia_arch ;;
+        debian) nvidia_debian ;;
+        fedora) nvidia_fedora ;;
+    esac || { log_error "NVIDIA driver install failed."; return 1; }
+
+    log_done "NVIDIA drivers installed."
+    log_hint "Reboot to load the module. Under Secure Boot the module must be signed (enroll a MOK), or the GPU falls back to nouveau."
+}
+
+CLAMAV_SCAN_BIN=/usr/local/bin/sauce-clamav-scan
+CLAMAV_UNIT_DIR=/etc/systemd/system
+
+clamav_pkgs() {
+    case "$1" in
+        debian) echo "clamav clamav-daemon clamav-freshclam" ;;
+        fedora) echo "clamav clamav-update clamd" ;;
+        arch)   echo "clamav" ;;
+        *)      return 1 ;;
+    esac
+}
+
+clamav_daemon_unit() {
+    case "$1" in
+        fedora) echo "clamd@scan.service" ;;
+        *)      echo "clamav-daemon.service" ;;
+    esac
+}
+
+write_clamav_scanner() {
+    local paths="$1"
+    sudo tee "$CLAMAV_SCAN_BIN" >/dev/null <<-EOF
+	#!/usr/bin/env bash
+	set -uo pipefail
+	PATHS="\${CLAMAV_SCAN_PATHS:-$paths}"
+	EXCLUDE_DIRS='^/(proc|sys|dev|run|snap|var/lib/docker|var/lib/flatpak)'
+	SCANNER=clamscan
+	if command -v clamdscan >/dev/null 2>&1 \
+	    && systemctl is-active --quiet clamav-daemon.service 2>/dev/null; then
+	    SCANNER=clamdscan
+	fi
+	echo "sauce-clamav-scan: \$SCANNER over \$PATHS"
+	# shellcheck disable=SC2086
+	if [ "\$SCANNER" = clamdscan ]; then
+	    clamdscan --multiscan --fdpass --infected \$PATHS
+	else
+	    clamscan --recursive --infected --exclude-dir="\$EXCLUDE_DIRS" \$PATHS
+	fi
+	rc=\$?
+	case "\$rc" in
+	    0) echo "sauce-clamav-scan: clean" ;;
+	    1) echo "sauce-clamav-scan: INFECTED FILES FOUND (nothing was deleted or quarantined)" ;;
+	    *) echo "sauce-clamav-scan: scanner exited \$rc" ;;
+	esac
+	exit 0
+	EOF
+    sudo chmod 0755 "$CLAMAV_SCAN_BIN"
+}
+
+write_clamav_units() {
+    local schedule="$1"
+    sudo tee "$CLAMAV_UNIT_DIR/sauce-clamav-scan.service" >/dev/null <<-EOF
+	[Unit]
+	Description=ClamAV scan (managed by sauce)
+	Documentation=man:clamscan(1)
+	After=clamav-freshclam.service
+
+	[Service]
+	Type=oneshot
+	ExecStart=$CLAMAV_SCAN_BIN
+	Nice=19
+	IOSchedulingClass=idle
+	CPUSchedulingPolicy=idle
+	EOF
+    sudo tee "$CLAMAV_UNIT_DIR/sauce-clamav-scan.timer" >/dev/null <<-EOF
+	[Unit]
+	Description=Scheduled ClamAV scan (managed by sauce)
+
+	[Timer]
+	OnCalendar=$schedule
+	RandomizedDelaySec=1h
+	Persistent=true
+
+	[Install]
+	WantedBy=timers.target
+	EOF
+}
+
+setup_clamav() {
+    local family
+    family="${FAMILY:-$(detect_family)}"
+    local -a pkgs=()
+    local pkglist
+    if ! pkglist="$(clamav_pkgs "$family")"; then
+        log_info "ClamAV setup is Linux-only — skipping on $family."
+        return 0
+    fi
+    if [ "${CLAMAV:-1}" = 0 ]; then
+        log_info "CLAMAV=0 — skipping ClamAV setup."
+        return 0
+    fi
+    read -ra pkgs <<<"$pkglist"
+
+    log_install "Installing ClamAV (${pkgs[*]})..."
+    install_pkgs "${pkgs[@]}" || { log_error "ClamAV install failed."; return 1; }
+
+    if ! command -v systemctl >/dev/null 2>&1; then
+        log_warn "no systemd here; ClamAV is installed but nothing was scheduled."
+        return 0
+    fi
+
+    log_install "Enabling signature updates (clamav-freshclam.service)..."
+    sudo systemctl enable clamav-freshclam.service \
+        || log_warn "could not enable clamav-freshclam.service."
+    sudo systemctl start clamav-freshclam.service \
+        || log_warn "clamav-freshclam did not start; run 'sudo freshclam' once by hand."
+
+    write_clamav_scanner "${CLAMAV_SCAN_PATHS:-/home}"
+    write_clamav_units "${CLAMAV_SCAN_SCHEDULE:-Sun *-*-* 03:00:00}"
+    sudo systemctl daemon-reload || true
+    sudo systemctl enable sauce-clamav-scan.timer \
+        || log_warn "could not enable sauce-clamav-scan.timer."
+    sudo systemctl start sauce-clamav-scan.timer \
+        || log_warn "could not start sauce-clamav-scan.timer."
+
+    if [ "${CLAMAV_DAEMON:-0}" = 1 ]; then
+        local unit
+        unit="$(clamav_daemon_unit "$family")"
+        log_install "Enabling the resident scanner ($unit)..."
+        sudo systemctl enable --now "$unit" || log_warn "could not enable $unit."
+    else
+        log_hint "The resident clamd daemon stays off (it holds the signature set in RAM); set CLAMAV_DAEMON=1 to enable it."
+    fi
+
+    log_done "ClamAV ready: freshclam updates on, scan timer ${CLAMAV_SCAN_SCHEDULE:-Sun *-*-* 03:00:00} over ${CLAMAV_SCAN_PATHS:-/home}."
+    log_hint "Scans report only — nothing is deleted or quarantined. Results: journalctl -u sauce-clamav-scan.service"
+}
+
 setup_github_auth() {
     command -v gh >/dev/null 2>&1 || { log_warn "gh not installed; skipping GitHub auth."; return 0; }
 
@@ -66,6 +301,40 @@ setup_github_auth() {
         gh auth login -p ssh || { log_warn "gh auth login failed or was skipped."; return 0; }
     fi
     gh auth setup-git || log_warn "gh auth setup-git failed."
+}
+
+setup_paru() {
+    local family
+    family="${FAMILY:-$(detect_family)}"
+    if [ "$family" != arch ]; then
+        log_info "paru is an Arch AUR helper — skipping on $family."
+        return 0
+    fi
+    if command -v paru >/dev/null 2>&1; then
+        log_info "paru already installed."
+        return 0
+    fi
+    if [ "$(id -u)" -eq 0 ]; then
+        log_warn "makepkg refuses to run as root; install paru from a normal user account."
+        return 0
+    fi
+
+    install_pkgs git base-devel || { log_error "Could not install the paru build dependencies."; return 1; }
+
+    local tmp
+    tmp="$(mktemp -d)"
+    trap 'rm -rf "$tmp"; trap - RETURN' RETURN
+
+    log_download "Cloning paru from the AUR..."
+    git clone --quiet --depth 1 https://aur.archlinux.org/paru.git "$tmp/paru" \
+        || { log_error "Could not clone paru from the AUR."; return 1; }
+
+    log_install "Building paru from source — it links against the local libalpm, unlike paru-bin."
+    log_hint "This pulls the rust toolchain and takes a few minutes; makepkg may ask for your sudo password."
+    ( cd "$tmp/paru" && makepkg -si --noconfirm --needed ) \
+        || { log_error "makepkg failed; build paru manually from https://aur.archlinux.org/paru.git"; return 1; }
+
+    log_done "paru installed -> $(command -v paru)"
 }
 
 setup_oh_my_posh() {
@@ -251,14 +520,12 @@ write_uwsm_session() {
 
 retire_session_entry() {
     local entry="$1"
+    [ -e "$entry" ] || return 0
     if ! command -v dpkg-divert >/dev/null 2>&1; then
-        [ -e "$entry" ] || return 0
-        sudo rm -f "$entry"
-        log_clean "Removed $entry."
+        log_info "Left the package-owned $entry alone; ly only lists $LY_SESSIONS."
         return 0
     fi
     [ -n "$(dpkg-divert --list "$entry")" ] && return 0
-    [ -e "$entry" ] || return 0
     sudo dpkg-divert --add --rename --divert "$entry.sauce-disabled" "$entry" >/dev/null
     log_clean "Diverted $entry (restore with: sudo dpkg-divert --remove $entry)."
 }
@@ -403,9 +670,14 @@ setup_portals() {
     fi
 
     local -a pkgs=() dpkgs=()
-    local d
+    local d var
     for d in "${desktops[@]}"; do
-        mapfile -t dpkgs < <(_data --arg d "$d" '.portals[$d][]?')
+        var="PORTAL_PKGS_${d^^}"
+        if [ -n "${!var:-}" ]; then
+            read -ra dpkgs <<<"${!var}"
+        else
+            mapfile -t dpkgs < <(_data --arg d "$d" '.portals[$d][]?')
+        fi
         pkgs+=("${dpkgs[@]}")
     done
     mapfile -t pkgs < <(printf '%s\n' "${pkgs[@]}" | awk 'NF && !seen[$0]++')
@@ -446,6 +718,9 @@ setup_tailscale() {
 
 case "${1:-all}" in
     base-packages) setup_base_packages ;;
+    paru)          setup_paru ;;
+    nvidia)        setup_nvidia ;;
+    clamav)        setup_clamav ;;
     github-auth)   setup_github_auth ;;
     oh-my-posh)    setup_oh_my_posh ;;
     run-updaters)  setup_run_updaters ;;
@@ -455,6 +730,9 @@ case "${1:-all}" in
     tailscale)     setup_tailscale ;;
     all)
         setup_base_packages
+        setup_paru
+        setup_nvidia
+        setup_clamav
         setup_github_auth
         setup_oh_my_posh
         setup_run_updaters

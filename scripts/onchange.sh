@@ -159,7 +159,8 @@ onchange_emulators() {
             if command -v systemctl >/dev/null 2>&1; then
                 sudo systemctl enable --now libvirtd || log_warn "could not enable libvirtd."
             fi
-            sudo usermod -aG libvirt "$USER" || log_warn "could not add $USER to libvirt group."
+            local user="${USER:-$(id -un)}"
+            sudo usermod -aG libvirt "$user" || log_warn "could not add $user to libvirt group."
             log_hint "Log out and back in for libvirt group membership to take effect."
         fi
     fi

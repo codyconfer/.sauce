@@ -26,6 +26,8 @@ export SAUCE_EMULATORS="steam wine qemu"
 export SAUCE_GUI_APPS="firefox sway alacritty gnuradio qdmr vscode zed claude codex cursor docker ghidra jetbrains-toolbox lmstudio obsidian bitwarden 1password"
 export SAUCE_FLATPAKS="slack discord signal easyeffects obs-studio zen lutris retroarch zoom chirp sonic-pi"
 export SAUCE_TOOLS="1password-cli aws azure-cli bitwarden-cli cloudflared gcloud gcx wrangler adb claude-code dotnet go k9s kubectl loglit nvim nvm ollama opencode pi poetry pyenv rustup tmux yarn"
+export FLEET_URL="https://fleet.example.com"
+export FLEET_ENROLL_SECRET="test-secret"
 export SAUCE_NET_TOOLS=true
 export SAUCE_TAILSCALE=true
 
@@ -63,12 +65,29 @@ grep -Fq 'ly_set waylandsessions "$LY_SESSIONS"' "$SAUCE_DIR/scripts/setup.sh"
 ! grep -Fq 'greetd/config.toml >/dev/null' "$SAUCE_DIR/scripts/setup.sh"
 
 grep -Fq 'setup.sh" portals' "$SAUCE_DIR/home/.chezmoiscripts/run_once_after_76-portals.sh.tmpl"
+grep -Fq 'PORTAL_PKGS_SWAY=' "$SAUCE_DIR/home/.chezmoiscripts/run_once_after_76-portals.sh.tmpl"
+grep -Fq 'PORTAL_PKGS_KDE=' "$SAUCE_DIR/home/.chezmoiscripts/run_once_after_76-portals.sh.tmpl"
 grep -Fq 'portals)       setup_portals ;;' "$SAUCE_DIR/scripts/setup.sh"
-grep -Fxq 'default=wlr' "$SAUCE_DIR/home/dot_config/xdg-desktop-portal/sway-portals.conf"
-! grep -Fq 'gtk' "$SAUCE_DIR/home/dot_config/xdg-desktop-portal/sway-portals.conf"
+grep -Fxq 'default=gtk;' "$SAUCE_DIR/home/dot_config/xdg-desktop-portal/sway-portals.conf"
+grep -Fxq 'org.freedesktop.impl.portal.Screenshot=wlr' \
+    "$SAUCE_DIR/home/dot_config/xdg-desktop-portal/sway-portals.conf"
+grep -Fxq 'org.freedesktop.impl.portal.ScreenCast=wlr' \
+    "$SAUCE_DIR/home/dot_config/xdg-desktop-portal/sway-portals.conf"
 grep -Fq 'default=gtk;kde' "$SAUCE_DIR/home/dot_config/xdg-desktop-portal/kde-portals.conf"
-jq -e '.portals.sway == ["xdg-desktop-portal", "xdg-desktop-portal-wlr"]' \
+jq -e '.portals.sway == ["xdg-desktop-portal", "xdg-desktop-portal-wlr", "xdg-desktop-portal-gtk"]' \
     <<<"$DATA" >/dev/null
+jq -e '.portals.kde == ["xdg-desktop-portal", "xdg-desktop-portal-gtk", "xdg-desktop-portal-kde"]' \
+    <<<"$DATA" >/dev/null
+
+RENDERED_UPDATERS="$("$CHEZMOI" execute-template --source="$SAUCE_DIR" \
+    <"$SAUCE_DIR/home/.chezmoiscripts/run_once_after_70-run-updaters.sh.tmpl")"
+grep -Fq 'fleet' <<<"$RENDERED_UPDATERS"
+! grep -Fq 'fleetManagement' <<<"$DATA"
+
+UNSET_UPDATERS="$(env -u FLEET_URL -u FLEET_ENROLL_SECRET \
+    "$CHEZMOI" execute-template --source="$SAUCE_DIR" \
+    <"$SAUCE_DIR/home/.chezmoiscripts/run_once_after_70-run-updaters.sh.tmpl")"
+! grep -Fq 'fleet' <<<"$UNSET_UPDATERS"
 
 ALL_SELECTIONS="$SAUCE_EMULATORS $SAUCE_GUI_APPS $SAUCE_FLATPAKS $SAUCE_TOOLS"
 for selection in $ALL_SELECTIONS; do

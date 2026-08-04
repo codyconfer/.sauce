@@ -93,6 +93,13 @@ if test (uname) = Darwin
     end
     set -e _brew
 end
+if not command -q prime-run
+    function prime-run --description 'run a command on the NVIDIA GPU via PRIME offload'
+        __NV_PRIME_RENDER_OFFLOAD=1 __VK_LAYER_NV_optimus=NVIDIA_only \
+            __GLX_VENDOR_LIBRARY_NAME=nvidia $argv
+    end
+end
+
 # .sauce script handlers -----------------------------------------------------------
 function _sauce_tool_registered
     if not command -q chezmoi; or not command -q jq

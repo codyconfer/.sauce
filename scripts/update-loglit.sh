@@ -5,6 +5,8 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/lib/common.sh"
 
+command -v go >/dev/null 2>&1 || export PATH="$PATH:/usr/local/go/bin"
+
 cleanup() {
     log_clean "Removing loglit..."
     local gobin

@@ -16,8 +16,8 @@ cleanup() {
 dispatch_remove "$@"
 
 log_search "Fetching the latest nvm version..."
-TAG=$(gh release view --repo "$REPO" --json tagName --jq '.tagName')
-if [ -z "$TAG" ]; then
+TAG=$(fetch "https://api.github.com/repos/$REPO/releases/latest" | jq -r '.tag_name')
+if [ -z "$TAG" ] || [ "$TAG" = "null" ]; then
     log_error "Could not resolve the latest nvm tag."
     exit 1
 fi

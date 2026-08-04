@@ -6,7 +6,16 @@ set -uo pipefail
 {{- $desktopTools := list "vscode" "zed" "qdmr" "claude" "codex" "cursor" "docker" "ghidra" "jetbrains-toolbox" "lmstudio" "obsidian" "bitwarden" "1password" -}}
 {{- $guiTools := list -}}
 {{- range $guiApps -}}{{- if has . $desktopTools -}}{{- $guiTools = append $guiTools . -}}{{- end -}}{{- end -}}
-{{- $updateTools := concat (list "fonts" "zsh-plugins") $tools $guiTools | uniq -}}
+{{- $dotenv := "" -}}
+{{- if stat (joinPath .chezmoi.sourceDir ".." ".env") -}}{{- $dotenv = include "../.env" -}}{{- end -}}
+{{- $isSet := dict -}}
+{{- range list "FLEET_URL" "FLEET_ENROLL_SECRET" -}}
+{{-   $pattern := printf "(?m)^[ \\t]*(export[ \\t]+)?%s=[\"']?[^\"'[:space:]]" . -}}
+{{-   $_ := set $isSet . (or (ne (env .) "") (regexMatch $pattern $dotenv)) -}}
+{{- end -}}
+{{- $fleetTools := list -}}
+{{- if and (get $isSet "FLEET_URL") (get $isSet "FLEET_ENROLL_SECRET") -}}{{- $fleetTools = append $fleetTools "fleet" -}}{{- end -}}
+{{- $updateTools := concat (list "fonts" "zsh-plugins") $tools $guiTools $fleetTools | uniq -}}
 {{- if has "sway" $guiApps -}}{{- $updateTools = append $updateTools "sway-tools" -}}{{- end -}}
 UPDATE_TOOLS="{{ $updateTools | join " " }}" \
     bash "$HOME/.sauce/scripts/setup.sh" run-updaters

@@ -57,6 +57,7 @@ ensure_go() {
     log_install "go not found — installing the distro Go toolchain..."
     case "$(detect_family)" in
         debian) install_pkgs golang-go ;;
+        arch)   install_pkgs go ;;
         *)      install_pkgs golang ;;
     esac
     command -v go >/dev/null 2>&1 && return 0

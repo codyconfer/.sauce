@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+
+set -uo pipefail
+{{- if eq .family "arch" }}
+FAMILY="{{ .family }}" bash "$HOME/.sauce/scripts/setup.sh" paru
+{{- end }}

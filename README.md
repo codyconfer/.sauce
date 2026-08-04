@@ -24,6 +24,14 @@ One command bootstraps a fresh machine — installs chezmoi, clones this repo to
 bash <(curl -fsSL https://raw.githubusercontent.com/codyconfer/.sauce/main/bootstrap.sh)
 ```
 
+If `OP_ACCOUNT` or any `BW_*` variable is set (typically from `.env`), bootstrap also
+installs the matching secret-manager CLI, walks you through sign-in, and then re-reads
+`.env` so `$(op read ...)` style values resolve before chezmoi runs. See `.env.example`.
+
+It needs `curl`, `git`, and `sudo`. On a minimal image (e.g. a `pacstrap base` Arch
+install) `git` and `sudo` are missing — bootstrap installs them for you when it can,
+and otherwise tells you to install them as root first.
+
 Already have the repo cloned? Just run `bash ~/.sauce/bootstrap.sh`, or if chezmoi
 is installed, `chezmoi init --source=~/.sauce --apply`.
 
@@ -120,9 +128,7 @@ own directories aren't mistaken for things to deploy.
       way-displays/ waylogout/ zskins/ #   "
       xdg-desktop-portal/             #    "  (per-desktop portal backend preferences)
       alacritty/alacritty.toml        # → ~/.config/alacritty (Linux + macOS; ignored on Windows/WSL)
-    create_dot_zshrc.local            # → ~/.zshrc.local (created once, never overwritten)
-    create_dot_bashrc.local           #    "  ~/.bashrc.local
-    create_dot_config/fish/user.fish  #    "  ~/.config/fish/user.fish
+    create_dot_bashrc.local           # → ~/.bashrc.local (created once, never overwritten)
     dot_local/share/applications/     # AppImage .desktop launchers (obsidian; Linux only, ignored on macOS)
     .chezmoiscripts/                  # ordered run scripts (see below)
   scripts/
@@ -140,13 +146,18 @@ written, `after_` scripts once everything is in place:
 | script | replaces | when |
 |---|---|---|
 | `run_once_before_10-base-packages` | `install-base.sh` | once |
+| `run_once_before_15-paru` | `setup.sh` paru step — builds the `paru` AUR helper from source (Arch only) | once |
 | `run_once_before_20-github-auth` | `setup.sh` github step | once |
 | `run_once_before_30-oh-my-posh` | `setup.sh` oh-my-posh step | once |
 | `run_onchange_before_38-emulators` | steam/wine/qemu installers (skipped if headless) | on change |
+| `run_once_before_36-clamav` | `setup.sh` clamav step — clamav + freshclam, `clamav-freshclam.service` for updates, and a weekly report-only scan timer (Linux, non-WSL; `CLAMAV=0` to skip) | once |
+| `run_once_before_39-nvidia` | `setup.sh` nvidia step — installs the NVIDIA open kernel modules + userspace when an NVIDIA GPU is on the PCI bus (Linux, non-WSL; set `NVIDIA=0` to skip) | once |
 | `run_onchange_before_40-gui-apps` | firefox/sway/alacritty/gnuradio installers (skipped if headless) | on change |
 | `run_onchange_before_45-net-tools` | network/security CLI tools (opt-in via `netTools`) | on change |
 | `run_onchange_before_50-flatpaks` | flatpak `install-*.sh` (skipped if headless) | on change |
-| `run_once_after_70-run-updaters` | `setup.sh` update loop (always runs fonts + zsh-plugins; installs the `update-*.sh`-backed GUI apps — vscode/zed/qdmr/claude/cursor/ghidra/jetbrains-toolbox/lmstudio/obsidian/docker/codex — when selected; adds `sway-tools` when sway is selected) | once |
+| `run_after_05-zshrc-local` | scaffolds `~/.zshrc.local` when missing (never overwritten) | every apply, no-op once present |
+| `run_after_06-fish-user` | scaffolds `~/.config/fish/user.fish` when missing (never overwritten) | every apply, no-op once present |
+| `run_once_after_70-run-updaters` | `setup.sh` update loop (always runs fonts + zsh-plugins; installs the `update-*.sh`-backed GUI apps — vscode/zed/qdmr/claude/cursor/ghidra/jetbrains-toolbox/lmstudio/obsidian/docker/codex — when selected; adds `sway-tools` when sway is selected; adds `fleet` when FLEET_URL + FLEET_ENROLL_SECRET are set — there is no prompt for it) | once |
 | `run_once_after_75-sway-session` | ly + uwsm login stack, with ly enabled as the default display manager (sway selected, not headless/WSL) | once |
 | `run_once_after_76-portals` | `setup.sh` portals step — xdg-desktop-portal backends (wlr for sway, gtk for KDE Plasma) | once |
 | `run_onchange_after_80-nvim-bootstrap` | `build-nvim.sh` sync tail | on lockfile/toolchain change |
