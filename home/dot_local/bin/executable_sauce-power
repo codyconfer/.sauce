@@ -1,0 +1,250 @@
+#!/usr/bin/env bash
+
+set -uo pipefail
+
+SELF="${BASH_SOURCE[0]}"
+case "$SELF" in
+    /*) ;;
+    *) SELF="$HOME/.local/bin/sauce-power" ;;
+esac
+
+LOCK="$SELF lock"
+LOW_THRESHOLD=20
+
+PPD_NEW_NAME=org.freedesktop.UPower.PowerProfiles
+PPD_NEW_PATH=/org/freedesktop/UPower/PowerProfiles
+PPD_OLD_NAME=net.hadess.PowerProfiles
+PPD_OLD_PATH=/net/hadess/PowerProfiles
+
+CUR=""
+IDLE_PID=""
+declare -a IDLE_ARGS=()
+
+die() {
+    echo "❌ Error: sauce-power: $1" >&2
+    exit "${2:-1}"
+}
+
+on_ac() {
+    local supply online
+    for supply in /sys/class/power_supply/*; do
+        [ -r "$supply/type" ] || continue
+        [ "$(<"$supply/type")" = Mains ] || continue
+        [ -r "$supply/online" ] || continue
+        read -r online <"$supply/online" || continue
+        [ "$online" = 1 ] && return 0
+    done
+    return 1
+}
+
+battery_capacity() {
+    local supply cap
+    for supply in /sys/class/power_supply/*; do
+        [ -r "$supply/type" ] || continue
+        [ "$(<"$supply/type")" = Battery ] || continue
+        [ -r "$supply/capacity" ] || continue
+        read -r cap <"$supply/capacity" || continue
+        printf '%s\n' "$cap"
+        return 0
+    done
+    printf '100\n'
+}
+
+detect_tier() {
+    if on_ac; then
+        printf 'ac\n'
+    elif [ "$(battery_capacity)" -le "$LOW_THRESHOLD" ]; then
+        printf 'low\n'
+    else
+        printf 'battery\n'
+    fi
+}
+
+tier_profile() {
+    case "$1" in
+        ac) printf 'performance\n' ;;
+        *) printf 'power-saver\n' ;;
+    esac
+}
+
+tier_brightness() {
+    case "$1" in
+        ac) printf '80\n' ;;
+        battery) printf '50\n' ;;
+        *) printf '30\n' ;;
+    esac
+}
+
+tier_dim() {
+    case "$1" in
+        ac) printf '24\n' ;;
+        battery) printf '15\n' ;;
+        *) printf '9\n' ;;
+    esac
+}
+
+set_profile() {
+    command -v busctl >/dev/null 2>&1 || return 0
+    busctl set-property "$PPD_NEW_NAME" "$PPD_NEW_PATH" "$PPD_NEW_NAME" \
+        ActiveProfile s "$1" >/dev/null 2>&1 && return 0
+    busctl set-property "$PPD_OLD_NAME" "$PPD_OLD_PATH" "$PPD_OLD_NAME" \
+        ActiveProfile s "$1" >/dev/null 2>&1 && return 0
+    if command -v powerprofilesctl >/dev/null 2>&1; then
+        powerprofilesctl set "$1" >/dev/null 2>&1
+    fi
+    return 0
+}
+
+set_brightness() {
+    command -v brightnessctl >/dev/null 2>&1 || return 0
+    brightnessctl set "$1%" >/dev/null 2>&1
+    return 0
+}
+
+restore_brightness() {
+    command -v brightnessctl >/dev/null 2>&1 || return 0
+    brightnessctl -r >/dev/null 2>&1
+    return 0
+}
+
+build_idle_args() {
+    local tier="$1" dim
+    dim="$(tier_dim "$tier")"
+    IDLE_ARGS=(-w)
+    case "$tier" in
+        ac)
+            IDLE_ARGS+=(
+                timeout 300 "$LOCK"
+                timeout 600 "brightnessctl -s set ${dim}%" resume 'brightnessctl -r'
+                timeout 900 'swaymsg "output * power off"' resume 'swaymsg "output * power on"'
+                timeout 1800 'systemctl suspend'
+            )
+            ;;
+        battery)
+            IDLE_ARGS+=(
+                timeout 120 "brightnessctl -s set ${dim}%" resume 'brightnessctl -r'
+                timeout 300 "$LOCK; swaymsg \"output * power off\"" resume 'swaymsg "output * power on"'
+                timeout 600 'systemctl suspend'
+            )
+            ;;
+        low)
+            IDLE_ARGS+=(
+                timeout 120 "brightnessctl -s set ${dim}%" resume 'brightnessctl -r'
+                timeout 300 "$LOCK; systemctl suspend"
+            )
+            ;;
+    esac
+    IDLE_ARGS+=(before-sleep "$LOCK")
+}
+
+stop_idle() {
+    [ -n "$IDLE_PID" ] || return 0
+    kill "$IDLE_PID" 2>/dev/null
+    wait "$IDLE_PID" 2>/dev/null
+    IDLE_PID=""
+}
+
+start_idle() {
+    build_idle_args "$1"
+    swayidle "${IDLE_ARGS[@]}" &
+    IDLE_PID=$!
+}
+
+apply_tier() {
+    local tier="$1"
+    set_profile "$(tier_profile "$tier")"
+    restore_brightness
+    set_brightness "$(tier_brightness "$tier")"
+    stop_idle
+    start_idle "$tier"
+}
+
+reconcile() {
+    local want
+    want="$(detect_tier)"
+    [ "$want" = "$CUR" ] && return 0
+    apply_tier "$want"
+    CUR="$want"
+}
+
+events() {
+    udevadm monitor --udev --subsystem-match=power_supply 2>/dev/null &
+    while :; do
+        printf 'tick\n'
+        sleep 60
+    done
+}
+
+cleanup() {
+    trap - EXIT INT TERM
+    stop_idle
+    if [ -n "${EVENTS_PID:-}" ]; then
+        pkill -P "$EVENTS_PID" 2>/dev/null
+        kill "$EVENTS_PID" 2>/dev/null
+    fi
+}
+
+cmd_daemon() {
+    command -v swayidle >/dev/null 2>&1 || die "swayidle is not installed."
+    [ -n "${WAYLAND_DISPLAY:-}" ] || die "no WAYLAND_DISPLAY — sauce-power daemon must run inside a Wayland session."
+    if [ -z "${SWAYSOCK:-}" ]; then
+        echo "⚠️  sauce-power: no SWAYSOCK — idle dim, lock and suspend still work, but the screen will not be powered off." >&2
+    fi
+
+    pkill -x -u "$(id -u)" swayidle 2>/dev/null
+
+    trap cleanup EXIT INT TERM
+    reconcile
+
+    coproc EVENTS { events; }
+    while read -r _ <&"${EVENTS[0]}"; do
+        reconcile
+    done
+}
+
+cmd_button() {
+    if on_ac; then
+        exec systemctl suspend
+    fi
+    if [ -x "$HOME/.local/bin/waylogout" ]; then
+        exec "$HOME/.local/bin/waylogout"
+    fi
+    if command -v waylogout >/dev/null 2>&1; then
+        exec waylogout
+    fi
+    exec systemctl suspend
+}
+
+cmd_lock() {
+    pgrep -x -u "$(id -u)" swaylock >/dev/null 2>&1 && return 0
+    exec swaylock -f
+}
+
+cmd_profile() {
+    local tier
+    tier="$(detect_tier)"
+    set_profile "$(tier_profile "$tier")"
+    restore_brightness
+    set_brightness "$(tier_brightness "$tier")"
+    printf '%s\n' "$tier"
+}
+
+cmd_idle_args() {
+    local tier="${1:-$(detect_tier)}"
+    case "$tier" in
+        ac | battery | low) ;;
+        *) die "unknown tier: $tier. Expected one of: ac, battery, low." 2 ;;
+    esac
+    build_idle_args "$tier"
+    printf '%s\n' "${IDLE_ARGS[@]}"
+}
+
+case "${1:-daemon}" in
+    daemon) cmd_daemon ;;
+    button) cmd_button ;;
+    lock) cmd_lock ;;
+    profile) cmd_profile ;;
+    tier) detect_tier ;;
+    idle-args) cmd_idle_args "${2:-}" ;;
+    *) die "unknown command: ${1:-}. Expected one of: daemon, button, lock, profile, tier, idle-args." 2 ;;
+esac

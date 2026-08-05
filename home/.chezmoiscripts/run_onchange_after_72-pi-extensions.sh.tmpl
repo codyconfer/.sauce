@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+
+set -uo pipefail
+{{ $tools := (index . "tools") | default (list) -}}
+{{- $guiApps := (index . "guiApps") | default (list) -}}
+{{- $exts := list -}}
+{{- if has "pi" $tools -}}
+{{-   $exts = concat $exts .pi.extensions.common -}}
+{{-   if or (has "lmstudio" $guiApps) (has "lmstudio" $tools) -}}
+{{-     $exts = append $exts .pi.extensions.lmstudio -}}
+{{-   end -}}
+{{-   if has "ollama" $tools -}}
+{{-     $exts = append $exts .pi.extensions.ollama -}}
+{{-   end -}}
+{{- end -}}
+PI_EXTENSIONS="{{ $exts | join " " }}" \
+    bash "$HOME/.sauce/scripts/onchange.sh" pi-extensions

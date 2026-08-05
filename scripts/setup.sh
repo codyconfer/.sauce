@@ -1128,6 +1128,74 @@ setup_plymouth() {
     log_hint "The theme comes from the plymouthTheme prompt (SAUCE_PLYMOUTH_THEME seeds it); PLYMOUTH_THEME overrides it for one run and PLYMOUTH=0 skips the step. $MKINITCPIO_CONF.sauce-bak holds the pre-change HOOKS."
 }
 
+LOGIND_POWER_CONF=/etc/systemd/logind.conf.d/00-sauce-power.conf
+UPOWER_CONF=/etc/UPower/UPower.conf
+
+setup_power_management() {
+    local family
+    family="${FAMILY:-$(detect_family)}"
+    if [ "$family" = macos ]; then
+        log_info "logind and UPower are Linux-only — skipping power management."
+        return 0
+    fi
+    if [ "${POWER_MANAGEMENT:-1}" = 0 ]; then
+        log_info "POWER_MANAGEMENT=0 — leaving logind and UPower alone."
+        return 0
+    fi
+    if ! compgen -G '/sys/class/power_supply/BAT*' >/dev/null; then
+        log_info "No battery present — skipping the laptop lid/power-button and critical-battery setup."
+        return 0
+    fi
+
+    local logind_ok=0 upower_ok=0
+    if [ -f "$LOGIND_POWER_CONF" ] && grep -q 'managed by sauce' "$LOGIND_POWER_CONF" 2>/dev/null; then
+        logind_ok=1
+    fi
+    if [ -f "$UPOWER_CONF" ] && grep -q '^CriticalPowerAction=PowerOff' "$UPOWER_CONF" 2>/dev/null; then
+        upower_ok=1
+    fi
+    if [ "$logind_ok" = 1 ] && [ "$upower_ok" = 1 ]; then
+        log_info "logind lid/power-button handling and the critical-battery action are already set by sauce."
+        return 0
+    fi
+
+    require_sudo || return 1
+
+    if [ "$logind_ok" = 0 ]; then
+        log_install "Handing the lid switch and power button to the compositor (matching the KDE power profiles)..."
+        sudo install -d -m 0755 /etc/systemd/logind.conf.d \
+            || { log_error "could not create /etc/systemd/logind.conf.d."; return 1; }
+        printf '%s\n' \
+            '# managed by sauce' \
+            '[Login]' \
+            'HandleLidSwitch=suspend' \
+            'HandleLidSwitchExternalPower=ignore' \
+            'HandlePowerKey=ignore' \
+            'HandlePowerKeyLongPress=poweroff' \
+            | sudo tee "$LOGIND_POWER_CONF" >/dev/null \
+            || { log_error "could not write $LOGIND_POWER_CONF."; return 1; }
+        sudo systemctl reload systemd-logind >/dev/null 2>&1 \
+            || log_warn "could not reload systemd-logind; the drop-in applies after the next boot."
+    fi
+
+    if [ "$upower_ok" = 0 ]; then
+        if [ ! -f "$UPOWER_CONF" ]; then
+            log_warn "$UPOWER_CONF is missing — leaving the critical-battery action at the UPower default."
+        elif ! grep -q '^CriticalPowerAction=' "$UPOWER_CONF"; then
+            log_warn "$UPOWER_CONF has no CriticalPowerAction key — leaving it alone."
+        else
+            log_install "Setting the critical-battery action to PowerOff to match KDE's BatteryCriticalAction..."
+            sudo sed -i 's/^CriticalPowerAction=.*/CriticalPowerAction=PowerOff/' "$UPOWER_CONF" \
+                || { log_error "could not edit $UPOWER_CONF."; return 1; }
+            sudo systemctl try-restart upower >/dev/null 2>&1 || true
+        fi
+    fi
+
+    log_done "Lid close does nothing on AC and suspends on battery; the power button goes to the compositor."
+    log_hint "A long power-button press still forces a poweroff, which is the escape hatch when no session is running."
+    log_hint "$UPOWER_CONF is distro-owned, so expect a .pacnew on upgrade; this step is not run-once and re-applies the edit. Set POWER_MANAGEMENT=0 and delete $LOGIND_POWER_CONF to revert."
+}
+
 setup_wifi_powersave() {
     if [ "${WIFI_POWERSAVE:-1}" = 0 ]; then
         log_info "WIFI_POWERSAVE=0 — leaving Wi-Fi power management alone."
@@ -1243,6 +1311,7 @@ case "${1:-all}" in
     plymouth)      setup_plymouth ;;
     console-font)  setup_console_font ;;
     wifi-powersave) setup_wifi_powersave ;;
+    power-management) setup_power_management ;;
     nvidia)        setup_nvidia ;;
     fingerprint)   setup_fingerprint ;;
     clamav)        setup_clamav ;;
@@ -1260,6 +1329,7 @@ case "${1:-all}" in
         setup_default_kernel
         setup_plymouth
         setup_wifi_powersave
+        setup_power_management
         setup_nvidia
         setup_fingerprint
         setup_clamav

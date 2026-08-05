@@ -29,5 +29,10 @@ else
     sh "$tmp" </dev/null
 fi
 
+if command -v pi >/dev/null 2>&1 && pi list 2>/dev/null | grep -q 'npm:'; then
+    log_install "Updating installed pi extensions..."
+    pi update --extensions || log_warn "pi update --extensions reported failures."
+fi
+
 log_done
 command -v pi >/dev/null && pi --version || true

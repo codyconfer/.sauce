@@ -356,6 +356,54 @@ onchange_net_tools() {
     log_done "Network tools installed."
 }
 
+onchange_pi_extensions() {
+    local -a exts=()
+    if [ -n "${PI_EXTENSIONS+x}" ]; then
+        read -ra exts <<<"${PI_EXTENSIONS:-}"
+    else
+        local -a tools apps
+        mapfile -t tools < <(_data '.tools[]?')
+        mapfile -t apps < <(_data '.guiApps[]?')
+        _sel() { local x; for x in "${tools[@]:-}" "${apps[@]:-}"; do [ "$x" = "$1" ] && return 0; done; return 1; }
+        if _sel pi; then
+            mapfile -t exts < <(_data '.pi.extensions.common[]?')
+            _sel lmstudio && exts+=("$(_data '.pi.extensions.lmstudio')")
+            _sel ollama && exts+=("$(_data '.pi.extensions.ollama')")
+        fi
+    fi
+
+    if [ "${#exts[@]}" -eq 0 ]; then
+        log_info "no pi extensions selected — skipping."
+        return 0
+    fi
+    if ! command -v pi >/dev/null 2>&1; then
+        log_warn "pi is not installed; skipping its extensions."
+        log_hint "Select 'pi' in the tools prompt (or run 'update-pi'), then re-apply."
+        return 0
+    fi
+    if ! ensure_node; then
+        log_warn "npm not found; 'pi install' needs node. Skipping pi extensions."
+        return 0
+    fi
+
+    local installed e
+    installed="$(pi list 2>/dev/null)"
+    for e in "${exts[@]}"; do
+        [ -n "$e" ] || continue
+        if grep -qF "$e" <<<"$installed"; then
+            log_install "Updating pi extension $e..."
+            pi update "$e" || log_warn "pi update $e failed."
+        else
+            log_install "Installing pi extension $e..."
+            pi install "$e" || log_warn "pi install $e failed."
+        fi
+    done
+
+    log_done "pi extensions ready: ${exts[*]}"
+    log_hint "pi-lmstudio reads ~/.pi/agent/lmstudio.json (chezmoi-managed from the pi.lmstudio block in .chezmoidata.yaml); pi-ollama reads OLLAMA_HOST / OLLAMA_CONTEXT_LENGTH, or set the context in pi with /ollama-context."
+    log_hint "~/.pi/web-search.json (pi-web-access) and ~/.pi/agent/mcp.json (pi-mcp-adapter) are seeded once from .chezmoidata.yaml and then owned by the extensions; pi-subagents is configured under 'subagents' in ~/.pi/agent/settings.json."
+}
+
 onchange_nvim_bootstrap() {
     if [ "${SKIP_NVIM_BOOTSTRAP:-0}" = "1" ]; then
         log_info "SKIP_NVIM_BOOTSTRAP=1 — skipping nvim plugin/server sync."
@@ -385,6 +433,7 @@ case "${1:-all}" in
     flatpaks)       onchange_flatpaks ;;
     media)          onchange_media ;;
     net-tools)      onchange_net_tools ;;
+    pi-extensions)  onchange_pi_extensions ;;
     nvim-bootstrap) onchange_nvim_bootstrap ;;
     all)
         onchange_emulators
@@ -392,6 +441,7 @@ case "${1:-all}" in
         onchange_flatpaks
         onchange_media
         onchange_net_tools
+        onchange_pi_extensions
         onchange_nvim_bootstrap
         ;;
     *) log_error "unknown onchange step: ${1:-}"; exit 2 ;;

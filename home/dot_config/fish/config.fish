@@ -2,6 +2,7 @@
 set -gx DOTNET_ROOT "$HOME/.dotnet"
 set -gx PYENV_ROOT "$HOME/.pyenv"
 set -gx NVM_DIR "$HOME/.nvm"
+set -q OLLAMA_HOST; or set -gx OLLAMA_HOST 127.0.0.1:11434
 set -g USR /usr/local
 set -g OPT /opt
 set -g PATH_DIRS \

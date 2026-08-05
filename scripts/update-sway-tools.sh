@@ -23,12 +23,12 @@ _step_failed() { _FAILED+=("$1"); log_warn "$1 failed — continuing."; }
 
 cleanup() {
     log_clean "Removing sway companion tools..."
-    remove_cmd wayshot sway-overfocus wl-clip-persist lumactl zofi \
+    remove_cmd wayshot sway-overfocus wl-clip-persist wmctl lumactl zofi \
         waylogout havoc exposway exposwayd way-displays swaycycle \
         sway-screenshot swaydim wttrbar
     remove_paths "$SRC_CACHE" \
         "$FONT_DIR/FontAwesome6" "$FONT_DIR/NerdFontsSymbolsOnly"
-    remove_stamp sway-overfocus wl-clip-persist lumactl zofi waylogout \
+    remove_stamp sway-overfocus wl-clip-persist wmctl lumactl zofi waylogout \
         havoc exposway way-displays swaycycle sway-screenshot swaydim \
         wttrbar fontawesome6 nerd-symbols
     remove_flatpak io.github.seadve.Kooha || true
@@ -157,6 +157,7 @@ build_deps() {
 install_wayshot()         { cargo_tool wayshot wayshot; }
 install_sway_overfocus()  { cargo_tool sway-overfocus https://github.com/korreman/sway-overfocus; }
 install_wl_clip_persist() { cargo_tool wl-clip-persist https://github.com/Linus789/wl-clip-persist; }
+install_wmctl()           { cargo_tool wmctl https://github.com/danyspin97/wmctl; }
 install_lumactl()         { cargo_tool lumactl https://github.com/danyspin97/lumactl; }
 install_zofi()            { cargo_tool zofi https://github.com/emskin/zskins zofi; }
 install_wttrbar()         { cargo_tool wttrbar https://github.com/bjesus/wttrbar; }
@@ -310,11 +311,43 @@ setup_i2c() {
     log_hint "If lumactl can't reach external displays, check 'ddcutil detect' and i2c permissions."
 }
 
+BACKLIGHT_RULES=/etc/udev/rules.d/90-sauce-backlight.rules
+
+setup_backlight() {
+    [ -d /sys/class/backlight ] || return 0
+    local have_rules=0 in_video=0
+    [ -e "$BACKLIGHT_RULES" ] && have_rules=1
+    id -nG 2>/dev/null | tr ' ' '\n' | grep -qx video && in_video=1
+    [ "$have_rules" = 1 ] && [ "$in_video" = 1 ] && return 0
+
+    if [ "$have_rules" = 0 ]; then
+        log_install "Making the backlight writable by group 'video' so lumactl can set the internal panel..."
+        printf '%s\n' \
+            '# managed by sauce' \
+            'ACTION=="add", SUBSYSTEM=="backlight", RUN+="/usr/bin/chgrp video /sys/class/backlight/%k/brightness"' \
+            'ACTION=="add", SUBSYSTEM=="backlight", RUN+="/usr/bin/chmod g+w /sys/class/backlight/%k/brightness"' \
+            | sudo tee "$BACKLIGHT_RULES" >/dev/null \
+            || { log_warn "could not write $BACKLIGHT_RULES; lumactl will not reach the internal panel."; return 1; }
+        sudo udevadm control --reload >/dev/null 2>&1
+        sudo udevadm trigger --subsystem-match=backlight --action=add >/dev/null 2>&1
+    fi
+
+    if [ "$in_video" = 0 ]; then
+        sudo usermod -aG video "$USER" \
+            || { log_warn "could not add $USER to the 'video' group."; return 1; }
+        log_hint "Added $USER to the 'video' group — log out and back in before lumactl can set the internal panel."
+    fi
+
+    log_done "Backlight write access is set up for lumactl."
+    log_hint "brightnessctl does not need this (it goes through logind); it is lumactl that writes sysfs directly. Delete $BACKLIGHT_RULES and 'gpasswd -d $USER video' to revert."
+}
+
 build_deps || log_warn "build-dep install had failures; some builds may not compile."
 
 install_wayshot          || _step_failed wayshot
 install_sway_overfocus   || _step_failed sway-overfocus
 install_wl_clip_persist  || _step_failed wl-clip-persist
+install_wmctl            || _step_failed wmctl
 install_lumactl          || _step_failed lumactl
 install_zofi             || _step_failed zofi
 install_wttrbar          || _step_failed wttrbar
@@ -329,6 +362,7 @@ install_fonts
 install_kooha            || _step_failed kooha
 set_mime_defaults        || true
 setup_i2c                || true
+setup_backlight          || true
 
 if [ "${#_FAILED[@]}" -gt 0 ]; then
     log_error "sway tools with failures: ${_FAILED[*]}"

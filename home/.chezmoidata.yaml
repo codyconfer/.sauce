@@ -137,3 +137,23 @@ winget:
     1password-cli: AgileBits.1Password.CLI
     bitwarden-cli: Bitwarden.CLI
     ffmpeg: Gyan.FFmpeg
+
+pi:
+  extensions:
+    common: [npm:pi-subagents, npm:pi-web-access, npm:pi-mcp-adapter]
+    lmstudio: npm:pi-lmstudio
+    ollama: npm:pi-ollama
+  lmstudio:
+    url: http://127.0.0.1:1234
+    servers: []
+  webAccess:
+    workflow: summary-review
+    githubClone:
+      enabled: true
+      maxRepoSizeMB: 350
+  mcp:
+    mcpServers: {}
+    settings:
+      toolPrefix: server
+      idleTimeout: 10
+      showStatusIcon: true

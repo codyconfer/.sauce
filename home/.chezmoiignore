@@ -15,6 +15,9 @@
 .config/waylogout
 .config/zskins
 .config/xdg-desktop-portal
+.config/powerdevilrc
+.config/kscreenlockerrc
+.local/bin/sauce-power
 .local/share/applications
 {{- end }}
 {{- if eq .chezmoi.os "windows" }}
@@ -46,9 +49,16 @@ Documents/PowerShell
 .config/zskins
 .config/xdg-desktop-portal
 .config/alacritty
+.config/powerdevilrc
+.config/kscreenlockerrc
+.local/bin/sauce-power
 .local/share/applications
 {{- end }}
 {{- $guiApps := (index . "guiApps") | default (list) }}
+{{- $tools := (index . "tools") | default (list) }}
+{{- if not (has "pi" $tools) }}
+.pi
+{{- end }}
 {{- if not (has "obsidian" $guiApps) }}
 .local/share/applications/obsidian.desktop
 {{- end }}

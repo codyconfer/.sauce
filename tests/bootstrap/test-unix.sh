@@ -69,6 +69,38 @@ grep -Fq '${CONSOLE_FONT:-ter-124n}' "$SAUCE_DIR/scripts/setup.sh"
 ! grep -Fq 'lemurs' "$SAUCE_DIR/home/dot_config/sway/config"
 ! grep -Fq 'greetd/config.toml >/dev/null' "$SAUCE_DIR/scripts/setup.sh"
 
+grep -Fq 'install_wmctl()           { cargo_tool wmctl https://github.com/danyspin97/wmctl; }' \
+    "$SAUCE_DIR/scripts/update-sway-tools.sh"
+grep -Fq 'install_wmctl            || _step_failed wmctl' "$SAUCE_DIR/scripts/update-sway-tools.sh"
+grep -Fq 'setup_backlight          || true' "$SAUCE_DIR/scripts/update-sway-tools.sh"
+grep -Fq 'SUBSYSTEM=="backlight"' "$SAUCE_DIR/scripts/update-sway-tools.sh"
+for tool in wmctl lumactl; do
+    grep -Fq "$tool" <<<"$(sed -n '/^cleanup()/,/^}/p' "$SAUCE_DIR/scripts/update-sway-tools.sh")"
+done
+
+grep -Fq 'power-management) setup_power_management ;;' "$SAUCE_DIR/scripts/setup.sh"
+grep -Fq 'setup.sh" power-management' "$SAUCE_DIR/home/.chezmoiscripts/run_after_60-power-management.sh.tmpl"
+grep -Fq 'HandleLidSwitchExternalPower=ignore' "$SAUCE_DIR/scripts/setup.sh"
+grep -Fq 'HandlePowerKeyLongPress=poweroff' "$SAUCE_DIR/scripts/setup.sh"
+grep -Fq 'CriticalPowerAction=PowerOff' "$SAUCE_DIR/scripts/setup.sh"
+grep -Fq 'PowerProfile=performance' "$SAUCE_DIR/home/dot_config/private_powerdevilrc"
+grep -Fq 'AutoSuspendIdleTimeoutSec=1800' "$SAUCE_DIR/home/dot_config/private_powerdevilrc"
+grep -Fq 'BatteryCriticalAction=8' "$SAUCE_DIR/home/dot_config/private_powerdevilrc"
+grep -Fq 'exec $app $bin/sauce-power daemon' "$SAUCE_DIR/home/dot_config/sway/config"
+grep -Fq 'bindsym --locked XF86PowerOff exec $bin/sauce-power button' "$SAUCE_DIR/home/dot_config/sway/config"
+! grep -Fq 'exec $app swayidle' "$SAUCE_DIR/home/dot_config/sway/config"
+[ -x "$SAUCE_DIR/home/dot_local/bin/executable_sauce-power" ]
+SAUCE_POWER="$SAUCE_DIR/home/dot_local/bin/executable_sauce-power"
+bash -n "$SAUCE_POWER"
+IDLE_AC="$(bash "$SAUCE_POWER" idle-args ac)"
+grep -Fqx '1800' <<<"$IDLE_AC"
+grep -Fqx 'systemctl suspend' <<<"$IDLE_AC"
+IDLE_BATTERY="$(bash "$SAUCE_POWER" idle-args battery)"
+grep -Fqx '600' <<<"$IDLE_BATTERY"
+grep -Fqx '120' <<<"$IDLE_BATTERY"
+grep -Fqx '300' <<<"$(bash "$SAUCE_POWER" idle-args low)"
+! bash "$SAUCE_POWER" idle-args nonsense 2>/dev/null
+
 grep -Fq 'setup.sh" plymouth' "$SAUCE_DIR/home/.chezmoiscripts/run_once_before_19-plymouth.sh.tmpl"
 grep -Fq 'plymouth)      setup_plymouth ;;' "$SAUCE_DIR/scripts/setup.sh"
 ! grep -Fq 'plymouth-encrypt' "$SAUCE_DIR/scripts/setup.sh"
@@ -123,6 +155,25 @@ UNSET_UPDATERS="$(env -u FLEET_URL -u FLEET_ENROLL_SECRET \
     "$CHEZMOI" execute-template --source="$SAUCE_DIR" \
     <"$SAUCE_DIR/home/.chezmoiscripts/run_once_after_70-run-updaters.sh.tmpl")"
 ! grep -Fq 'fleet' <<<"$UNSET_UPDATERS"
+
+RENDERED_PI_EXTENSIONS="$("$CHEZMOI" execute-template --source="$SAUCE_DIR" \
+    <"$SAUCE_DIR/home/.chezmoiscripts/run_onchange_after_72-pi-extensions.sh.tmpl")"
+grep -Fq 'PI_EXTENSIONS="npm:pi-subagents npm:pi-web-access npm:pi-mcp-adapter npm:pi-lmstudio npm:pi-ollama"' \
+    <<<"$RENDERED_PI_EXTENSIONS"
+grep -Fq 'pi-extensions)  onchange_pi_extensions ;;' "$SAUCE_DIR/scripts/onchange.sh"
+jq -e '.pi.extensions.common == ["npm:pi-subagents", "npm:pi-web-access", "npm:pi-mcp-adapter"]' \
+    <<<"$DATA" >/dev/null
+jq -e '.pi.extensions.lmstudio == "npm:pi-lmstudio" and .pi.extensions.ollama == "npm:pi-ollama"' \
+    <<<"$DATA" >/dev/null
+jq -e '.pi.lmstudio.url == "http://127.0.0.1:1234"' <<<"$DATA" >/dev/null
+"$CHEZMOI" execute-template --source="$SAUCE_DIR" \
+    <"$SAUCE_DIR/home/private_dot_pi/create_web-search.json.tmpl" | jq -e '.workflow' >/dev/null
+"$CHEZMOI" execute-template --source="$SAUCE_DIR" \
+    <"$SAUCE_DIR/home/private_dot_pi/private_agent/create_mcp.json.tmpl" \
+    | jq -e 'has("mcpServers") and .settings.toolPrefix == "server"' >/dev/null
+"$CHEZMOI" execute-template --source="$SAUCE_DIR" \
+    <"$SAUCE_DIR/home/private_dot_pi/private_agent/lmstudio.json.tmpl" \
+    | jq -e '.url == "http://127.0.0.1:1234"' >/dev/null
 
 ALL_SELECTIONS="$SAUCE_EMULATORS $SAUCE_GUI_APPS $SAUCE_FLATPAKS $SAUCE_TOOLS"
 for selection in $ALL_SELECTIONS; do

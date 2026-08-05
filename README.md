@@ -216,7 +216,9 @@ written, `after_` scripts once everything is in place:
 | `run_onchange_before_50-flatpaks` | flatpak `install-*.sh` (skipped if headless) | on change |
 | `run_after_05-zshrc-local` | scaffolds `~/.zshrc.local` when missing (never overwritten) | every apply, no-op once present |
 | `run_after_06-fish-user` | scaffolds `~/.config/fish/user.fish` when missing (never overwritten) | every apply, no-op once present |
+| `run_after_60-power-management` | `setup.sh` power-management step — drops `/etc/systemd/logind.conf.d/00-sauce-power.conf` so lid-close does nothing on AC and suspends on battery, and hands the power button to the compositor (long press still forces a poweroff); also sets `CriticalPowerAction=PowerOff` in `/etc/UPower/UPower.conf` to match KDE's critical-battery shutdown. Laptops only — skipped when there is no `/sys/class/power_supply/BAT*` (Linux, non-WSL, non-headless; `POWER_MANAGEMENT=0` to skip). Re-checked on every apply so a UPower `.pacnew` merge that resets the action gets repaired | every apply, no-op once present |
 | `run_once_after_70-run-updaters` | `setup.sh` update loop (always runs fonts + zsh-plugins; installs the `update-*.sh`-backed GUI apps — vscode/zed/qdmr/claude/cursor/ghidra/jetbrains-toolbox/lmstudio/obsidian/docker/codex — when selected; adds `sway-tools` when sway is selected; adds `fleet` when FLEET_URL + FLEET_ENROLL_SECRET are set — there is no prompt for it) | once |
+| `run_onchange_after_72-pi-extensions` | `onchange.sh` pi-extensions step — installs/updates the `pi` agent's extensions when `pi` is in the tools selection: `pi-subagents`, `pi-web-access`, and `pi-mcp-adapter` always, plus `pi-lmstudio` when LM Studio is selected and `pi-ollama` when `ollama` is selected (package names live in the `pi.extensions` block of `.chezmoidata.yaml`) | on change |
 | `run_once_after_75-sway-session` | ly + uwsm login stack, with ly enabled as the default display manager (sway selected, not headless/WSL) | once |
 | `run_once_after_76-portals` | `setup.sh` portals step — xdg-desktop-portal backends (wlr for sway, kde for KDE Plasma) | once |
 | `run_onchange_after_80-nvim-bootstrap` | `build-nvim.sh` sync tail | on lockfile/toolchain change |
@@ -286,6 +288,77 @@ Distro packages and flatpaks are kept current by the system: the `update` alias
 runs `apt upgrade` / `pacman -Syu` / `dnf upgrade` plus `flatpak update` (on macOS it
 runs `brew update && brew upgrade && brew upgrade --cask`).
 
+### The pi extension stack
+
+Selecting **pi** in the tools prompt also installs its extensions, via
+`run_onchange_after_72-pi-extensions`. Three go on every host
+(`pi.extensions.common` in `.chezmoidata.yaml`):
+
+- [**pi-subagents**](https://pi.dev/packages/pi-subagents) — delegation to child agents
+  (sequential chains, parallel fan-out, interactive clarification), shipping the
+  `scout`, `researcher`, `planner`, `worker`, `reviewer`, `context-builder`, `oracle`,
+  and `delegate` agents. It needs no config to work; its knobs live under a `subagents`
+  key in `~/.pi/agent/settings.json`, which pi owns and writes itself (`/subagents-*`
+  commands, `model recommended`), so nothing here manages that file. Your own agents go
+  in `~/.pi/agent/agents/**/*.md`, saved profiles in
+  `~/.pi/agent/profiles/pi-subagents/`.
+- [**pi-web-access**](https://pi.dev/packages/pi-web-access) — web search, page/PDF
+  extraction, GitHub repo cloning, and YouTube/local-video understanding. It works with
+  no API keys (Exa's zero-config MCP path), and every provider key it supports is also
+  read straight from the environment (`OPENAI_API_KEY`, `BRAVE_API_KEY`, `EXA_API_KEY`,
+  `GEMINI_API_KEY`, `PERPLEXITY_API_KEY`, …), so no secret has to land in a config file.
+  `~/.pi/web-search.json` is **seeded once** from `pi.webAccess` — the curator UI
+  rewrites that file at runtime (provider, workflow), so chezmoi creates it if missing
+  and never touches it again. In-file credentials can also use `$VAR` / `${VAR}`
+  indirection or a `!command` source (handy with `get_secret`).
+- [**pi-mcp-adapter**](https://pi.dev/packages/pi-mcp-adapter) — MCP servers behind a
+  single proxy tool (~200 tokens) with on-demand discovery, instead of loading every
+  tool definition up front. `~/.pi/agent/mcp.json` is **seeded once** from `pi.mcp`
+  (`mcpServers` plus the adapter `settings` block) — it is a write target for the
+  adapter's own `directTools` / import bookkeeping, so it is created if missing and then
+  left alone. Add servers there or in the shared `~/.config/mcp/mcp.json`; `/mcp setup`
+  walks through it.
+
+Then, matching whichever local model runner you picked:
+
+- [**pi-lmstudio**](https://pi.dev/packages/pi-lmstudio) — installed when **LM Studio**
+  is in the GUI apps selection. Its config is `~/.pi/agent/lmstudio.json`, rendered from
+  the `pi.lmstudio` block in `home/.chezmoidata.yaml`. Out of the box that is
+  `{ "url": "http://127.0.0.1:1234" }`. Fill in `pi.lmstudio.servers` instead to expose
+  several instances at once (each entry takes `name`, `url`, and an optional `token`,
+  and shows up in pi's picker as `lmstudio/<name>`) — the template switches to the
+  `urls` list form as soon as that list is non-empty:
+
+  ```yaml
+  pi:
+    lmstudio:
+      url: http://127.0.0.1:1234
+      servers:
+        - name: desktop
+          url: http://127.0.0.1:1234
+        - name: gpu-box
+          url: $GPU_BOX_URL
+          token: $LM_STUDIO_TOKEN
+  ```
+
+  A `$NAME` value is dereferenced by the extension at runtime, so remote hosts and
+  tokens can stay out of the repo. LM Studio itself needs its **Local Server** switched
+  on before pi can see any models.
+- [**pi-ollama**](https://pi.dev/packages/pi-ollama) — installed when **ollama** is in
+  the tools selection. It talks to Ollama's native `/api/chat` (the OpenAI-compat shim
+  drops `tool_calls` from streamed responses), and it is configured by environment
+  rather than a config file. The rc files export
+  `OLLAMA_HOST="${OLLAMA_HOST:-127.0.0.1:11434}"`, so pointing pi at another box is one
+  line in `~/.zshrc.local`. `OLLAMA_CONTEXT_LENGTH` raises the default 32k `num_ctx`
+  cap; in-session, `/ollama-status`, `/ollama-refresh`, and `/ollama-context` cover
+  status, re-discovery, and a persisted context length.
+
+Every extension is registered in `~/.pi/agent/settings.json` by `pi install`, and
+`update-pi` refreshes them all (`pi update --extensions`) whenever it runs. Only
+`lmstudio.json` is fully chezmoi-managed — it is read-only to its extension, so the
+`pi.lmstudio` data block stays the source of truth. The two self-writing configs use
+chezmoi's `create_` attribute instead: seeded on first apply, never overwritten after.
+
 ### The sway desktop stack
 
 Selecting **sway** in the GUI apps prompt installs and configures the whole
@@ -314,10 +387,20 @@ Wayland desktop, three ways:
   it to `GDK_BACKEND=wayland` so it cannot fall back to X11.
 - **`update-sway-tools.sh`** — companions with no Ubuntu/Debian package, built
   from source into `~/.local/bin` and re-run like any updater
-  (`update-sway-tools`): wayshot, sway-overfocus, wl-clip-persist, lumactl,
-  zofi, waylogout, havoc, exposway, way-displays, swaycycle, sway-screenshot,
-  swaydim, plus Font Awesome 6 / Nerd Fonts Symbols and the Kooha screen
-  recorder (flatpak). Also sets swayimg/mpv as xdg-mime defaults.
+  (`update-sway-tools`): wayshot, sway-overfocus, wl-clip-persist, wmctl,
+  lumactl, zofi, waylogout, havoc, exposway, way-displays, swaycycle,
+  sway-screenshot, swaydim, plus Font Awesome 6 / Nerd Fonts Symbols and the
+  Kooha screen recorder (flatpak). Also sets swayimg/mpv as xdg-mime defaults.
+
+  **lumactl needs two things that are easy to miss.** It shells out to `wmctl
+  list-outputs --json` to enumerate displays, so without `wmctl` on PATH every
+  invocation dies with `No such file or directory (os error 2)` and the
+  brightness keys silently do nothing. It also writes
+  `/sys/class/backlight/*/brightness` directly rather than going through logind
+  the way `brightnessctl` does, so `setup_backlight` drops a udev rule making
+  that node group-writable and adds you to `video` (needs a re-login). External
+  monitors need neither — ddcutil's own udev rules already ACL `/dev/i2c-*` to
+  the active seat user, and `setup_i2c` loads `i2c-dev`.
 - **Login stack** — `run_once_after_75-sway-session` installs
   [ly](https://github.com/fairyglade/ly) (the distro package on Arch/Fedora,
   otherwise the latest tag built with a checksummed zig toolchain fetched from
@@ -368,7 +451,47 @@ Key sway bindings added: `$mod+h/j/k/l` → sway-overfocus, `$mod+Tab` /
 `Mod1+Tab` → group cycle / swaycycle Alt-Tab, `$mod+Shift+e` → waylogout,
 `Print` family → wayshot + sway-screenshot, brightness keys → lumactl,
 `$mod+x` → zofi launcher, `$mod+Shift+x` → zofi clipboard history,
-`$mod+Shift+Return` → havoc, `$mod+z` → exposway, `$mod+Shift+r` → Kooha.
+`$mod+Shift+Return` → havoc, `$mod+z` → exposway, `$mod+Shift+r` → Kooha,
+`XF86PowerOff` → `sauce-power button`.
+
+### Power management
+
+Both sessions are configured to behave the same way, from one set of numbers.
+
+Under Plasma, `~/.config/powerdevilrc` and `~/.config/kscreenlockerrc` are
+managed dotfiles (`private_`, since kconfig writes them `0600`) covering all
+three PowerDevil profiles — every battery and low-battery value is written out
+rather than left at an implicit default, so the file is the whole story.
+
+Under sway, `~/.local/bin/sauce-power daemon` is the single `exec` that replaces
+the old hardcoded `swayidle` block. It reads the AC state and battery capacity,
+picks a tier (`ac`, `battery`, or `low` at ≤20%, matching UPower's
+`PercentageLow`), and on every transition switches the power-profiles-daemon
+profile, sets the base backlight, and restarts `swayidle` with that tier's
+timeouts:
+
+| | AC | battery | low |
+|---|---|---|---|
+| lock | 300s | 300s | 300s |
+| dim | 600s → 24% | 120s → 15% | 120s → 9% |
+| screen off | 900s | 300s (with the lock) | — (suspends instead) |
+| suspend | 1800s | 600s | 300s (with the lock) |
+| brightness | 80% | 50% | 30% |
+| profile | `performance` | `power-saver` | `power-saver` |
+
+Transitions are driven by `udevadm monitor --subsystem-match=power_supply` with a
+60s ticker merged in, so a capacity crossing that emits no uevent is still caught
+within a minute. Profiles are switched over `busctl` rather than
+`powerprofilesctl`, which needs `python-gobject` and is broken on a stock Arch
+install; polkit already allows `switch-profile` for the active session, so no
+sudo is involved. Lid and power-button handling is the one part that needs root
+and lives in `run_after_60-power-management` instead.
+
+Other subcommands: `sauce-power tier` prints the current tier, `sauce-power
+idle-args [tier]` prints the `swayidle` arguments for a tier without waiting on
+real timeouts, `sauce-power profile` applies the current tier's profile and
+brightness once, and `sauce-power lock` is a no-op when swaylock is already up
+(so `before-sleep` cannot stack a second instance).
 
 ### macOS notes
 

@@ -1,0 +1,6 @@
+{{- $servers := .pi.lmstudio.servers | default (list) -}}
+{{- if gt (len $servers) 0 -}}
+{{ dict "urls" $servers | toPrettyJson }}
+{{- else -}}
+{{ dict "url" .pi.lmstudio.url | toPrettyJson }}
+{{- end }}
