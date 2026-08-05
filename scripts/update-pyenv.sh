@@ -55,7 +55,7 @@ if [ -z "$LATEST" ]; then
 fi
 log_found "Latest CPython: $LATEST"
 
-if pyenv versions --bare | grep -qx "$LATEST"; then
+if grep -qx "$LATEST" <<<"$(pyenv versions --bare)"; then
     log_info "Python $LATEST is already installed."
 else
     log_install "Building Python $LATEST (this takes a few minutes)..."

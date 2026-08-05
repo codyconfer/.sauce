@@ -42,7 +42,7 @@ fi
 log_found "Latest version found: $LATEST"
 
 font_installed() {
-    find "$FONT_DIR/$1" -maxdepth 1 -type f \( -name '*.ttf' -o -name '*.otf' \) 2>/dev/null | grep -q .
+    [ -n "$(find "$FONT_DIR/$1" -maxdepth 1 -type f \( -name '*.ttf' -o -name '*.otf' \) -print -quit 2>/dev/null)" ]
 }
 
 INSTALLED=$(read_stamp "nerd-fonts")

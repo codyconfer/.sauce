@@ -29,7 +29,7 @@ if ! command -v dotnet >/dev/null 2>&1; then
     exit 1
 fi
 
-if dotnet tool list --global 2>/dev/null | awk '{print tolower($1)}' | grep -qx powershell; then
+if grep -qx powershell <<<"$(dotnet tool list --global 2>/dev/null | awk '{print tolower($1)}')"; then
     log_install "Updating PowerShell (dotnet global tool)..."
     dotnet tool update --global PowerShell || log_warn "PowerShell tool update failed."
 else

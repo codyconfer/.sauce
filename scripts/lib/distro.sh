@@ -56,7 +56,7 @@ remove_pkgs() {
 }
 
 ensure_libfuse2() {
-    ldconfig -p 2>/dev/null | grep -q 'libfuse\.so\.2' && return 0
+    grep -q 'libfuse\.so\.2' <<<"$(ldconfig -p 2>/dev/null)" && return 0
     local -a candidates
     case "$(detect_family)" in
         debian) candidates=(libfuse2t64 libfuse2) ;;

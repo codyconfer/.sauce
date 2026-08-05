@@ -113,7 +113,7 @@ nvidia_debian() {
         sudo ubuntu-drivers install && return 0
         log_warn "ubuntu-drivers install failed; looking for the Debian driver packages."
     fi
-    if apt-cache policy nvidia-open-kernel-dkms 2>/dev/null | grep -q 'Candidate: [0-9]'; then
+    if grep -q 'Candidate: [0-9]' <<<"$(apt-cache policy nvidia-open-kernel-dkms 2>/dev/null)"; then
         install_pkgs nvidia-open-kernel-dkms nvidia-driver firmware-misc-nonfree && return 0
         log_error "Driver install failed; check that non-free and non-free-firmware are enabled."
         return 1
@@ -343,7 +343,7 @@ setup_rslsync() {
 
     local u="${SUDO_USER:-${USER:-$(id -un)}}"
     if [ -n "$u" ] && [ "$u" != root ]; then
-        if id -nG "$u" 2>/dev/null | tr ' ' '\n' | grep -qx rslsync; then
+        if grep -qx rslsync <<<"$(id -nG "$u" 2>/dev/null | tr ' ' '\n')"; then
             log_info "$u is already in the rslsync group."
         else
             log_install "Adding $u to the rslsync group..."
@@ -889,7 +889,7 @@ setup_default_kernel() {
 
     local entry
     for entry in arch-linux.efi arch.conf linux.conf; do
-        if sudo bootctl list 2>/dev/null | grep -qF "$entry"; then
+        if grep -qF "$entry" <<<"$(sudo bootctl list 2>/dev/null)"; then
             log_info "Making $entry the default boot entry (mainline kernel)..."
             sudo bootctl set-default "$entry" \
                 || { log_warn "could not set $entry as the default boot entry."; return 0; }
@@ -907,6 +907,10 @@ PLYMOUTH_ASSETS="$SCRIPT_DIR/../assets/plymouth"
 
 plymouth_theme_is_sauce() {
     [ -f "$PLYMOUTH_ASSETS/$1/$1.plymouth" ]
+}
+
+plymouth_theme_available() {
+    grep -qx "$1" <<<"$(plymouth-set-default-theme -l 2>/dev/null)"
 }
 
 plymouth_theme_is_current() {
@@ -1070,9 +1074,9 @@ setup_plymouth() {
     if plymouth_theme_is_sauce "$theme" && ! plymouth_theme_is_current "$theme"; then
         plymouth_theme_install "$theme" && changed=1
     fi
-    if ! plymouth-set-default-theme -l 2>/dev/null | grep -qx "$theme"; then
+    if ! plymouth_theme_available "$theme"; then
         install_pkgs "plymouth-theme-$theme" >/dev/null 2>&1 || true
-        if ! plymouth-set-default-theme -l 2>/dev/null | grep -qx "$theme"; then
+        if ! plymouth_theme_available "$theme"; then
             log_warn "Plymouth theme '$theme' is not installed — falling back to spinner."
             theme=spinner
         fi
@@ -1121,7 +1125,7 @@ setup_wifi_powersave() {
         log_info "NetworkManager is not in use here — skipping the Wi-Fi power-save fix."
         return 0
     fi
-    if ! lsmod 2>/dev/null | grep -q '^iwlwifi'; then
+    if ! grep -q '^iwlwifi' <<<"$(lsmod 2>/dev/null)"; then
         log_info "No Intel iwlwifi adapter loaded — skipping the Wi-Fi power-save fix."
         return 0
     fi

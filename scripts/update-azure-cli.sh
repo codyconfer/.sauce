@@ -21,7 +21,7 @@ if ! command -v pipx >/dev/null 2>&1; then
     exit 1
 fi
 
-if pipx list --short 2>/dev/null | grep -q '^azure-cli\b'; then
+if grep -q '^azure-cli\b' <<<"$(pipx list --short 2>/dev/null)"; then
     log_install "Updating Azure CLI via pipx..."
     pipx upgrade azure-cli
 else

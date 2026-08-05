@@ -36,7 +36,7 @@ log_install "Configuring Anthropic's APT repository..."
 sudo curl -fsSLo "$KEYRING" "$KEY_URL"
 if command -v gpg >/dev/null 2>&1; then
     log_verify "Verifying the signing key fingerprint..."
-    if ! gpg --show-keys --with-colons "$KEYRING" 2>/dev/null | grep -q "^fpr:::::::::$FINGERPRINT:"; then
+    if ! grep -q "^fpr:::::::::$FINGERPRINT:" <<<"$(gpg --show-keys --with-colons "$KEYRING" 2>/dev/null)"; then
         log_error "Signing key does not match Anthropic's published fingerprint."
         sudo rm -f "$KEYRING"
         exit 1

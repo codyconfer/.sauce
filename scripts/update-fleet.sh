@@ -19,7 +19,7 @@ sauce_env() {
 
 fleetd_installed() {
     case "$(detect_family)" in
-        debian) dpkg-query -W -f='${Status}' "$FLEETD_PKG" 2>/dev/null | grep -q "ok installed" ;;
+        debian) grep -q "ok installed" <<<"$(dpkg-query -W -f='${Status}' "$FLEETD_PKG" 2>/dev/null)" ;;
         fedora) rpm -q "$FLEETD_PKG" >/dev/null 2>&1 ;;
         arch)   pacman -Qq "$FLEETD_PKG" >/dev/null 2>&1 ;;
         *)      [ -x /opt/orbit/bin/orbit/orbit ] ;;
