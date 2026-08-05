@@ -19,6 +19,8 @@ cleanup() {
 }
 dispatch_remove "$@"
 
+ensure_libfuse2 || true
+
 log_search "Fetching the latest Cursor version..."
 META=$(fetch "$API")
 VERSION=$(echo "$META" | jq -r '.version')

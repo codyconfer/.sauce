@@ -21,6 +21,40 @@ cleanup() {
 }
 dispatch_remove "$@"
 
+ensure_docker_cli() {
+    local -a cli buildx
+    local p ok=""
+    case "$(detect_family)" in
+        debian) cli=(docker-ce-cli docker.io);   buildx=(docker-buildx-plugin) ;;
+        fedora) cli=(docker-ce-cli moby-engine); buildx=(docker-buildx-plugin) ;;
+        arch)   cli=(docker);                    buildx=(docker-buildx) ;;
+        *)      return 0 ;;
+    esac
+
+    if command -v docker >/dev/null 2>&1; then
+        log_done "docker CLI already present ($(command -v docker))."
+    else
+        log_install "Installing the docker CLI..."
+        for p in "${cli[@]}"; do
+            if install_pkgs "$p" >/dev/null 2>&1; then ok="$p"; break; fi
+        done
+        if [ -z "$ok" ]; then
+            log_warn "Could not install a docker CLI; Kubernetes (kind mode) will fail to start."
+            return 1
+        fi
+        log_done "docker CLI ready ($ok)."
+    fi
+
+    docker buildx version >/dev/null 2>&1 && return 0
+    log_install "Installing docker buildx..."
+    for p in "${buildx[@]}"; do
+        install_pkgs "$p" >/dev/null 2>&1 && { log_done "buildx ready ($p)."; return 0; }
+    done
+    log_warn "Could not install docker buildx; builds fall back to the legacy builder."
+}
+
+ensure_docker_cli || true
+
 BASE=https://desktop.docker.com/linux/main/amd64
 PKGPATH="$CACHE/$PKG"
 HDRS=$(mktemp)
@@ -38,4 +72,9 @@ install_local_pkg "$PKGPATH"
 log_clean "Cleaning up downloaded package..."
 rm "$PKGPATH"
 
+if ! command -v docker >/dev/null 2>&1; then
+    log_warn "No working 'docker' on PATH — Docker Desktop's Kubernetes will not start."
+fi
+
 log_done
+command -v docker >/dev/null && docker --version || true

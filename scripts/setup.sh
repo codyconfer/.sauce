@@ -51,6 +51,12 @@ setup_base_packages() {
         install_pkgs "$p" || log_warn "skipped (unavailable): $p"
     done
 
+    local appimages
+    appimages="$(_data '[.guiApps // [] | .[] | select(. == "cursor" or . == "obsidian" or . == "lmstudio")] | length')"
+    if [ -n "$appimages" ] && [ "$appimages" != 0 ]; then
+        ensure_libfuse2 || true
+    fi
+
     command -v pipx   >/dev/null 2>&1 && pipx ensurepath || true
 
     log_done "Base packages installed."
@@ -291,6 +297,83 @@ setup_clamav() {
     log_hint "Scans report only — nothing is deleted or quarantined. Results: journalctl -u sauce-clamav-scan.service"
 }
 
+setup_rslsync() {
+    local family on
+    family="${FAMILY:-$(detect_family)}"
+    on="${RSLSYNC:-$(_data '.rslsync')}"
+    if [ "$on" != true ]; then
+        log_info "rslsync=false — skipping Resilio Sync setup."
+        return 0
+    fi
+    if [ "$family" != arch ]; then
+        log_info "rslsync setup is implemented for Arch only — skipping on $family."
+        log_hint "On $family, install Resilio Sync from https://help.resilio.com/ and re-run to provision the share."
+        return 0
+    fi
+
+    if ! pacman -Qq rslsync >/dev/null 2>&1; then
+        local helper="" h
+        for h in paru yay; do
+            command -v "$h" >/dev/null 2>&1 && { helper="$h"; break; }
+        done
+        if [ -z "$helper" ]; then
+            log_error "rslsync ships as an AUR package — install paru or yay first."
+            return 1
+        fi
+        log_install "Installing Resilio Sync from the AUR via $helper..."
+        "$helper" -S --needed --noconfirm rslsync \
+            || { log_error "rslsync install failed."; return 1; }
+    else
+        log_info "rslsync is already installed."
+    fi
+
+    command -v systemd-sysusers >/dev/null 2>&1 && sudo systemd-sysusers >/dev/null 2>&1
+
+    local rs_home
+    rs_home=$(getent passwd rslsync | cut -d: -f6)
+    if [ -z "$rs_home" ]; then
+        log_error "the rslsync user does not exist; cannot place the sync folder."
+        return 1
+    fi
+    local share="$rs_home/sync"
+
+    log_install "Creating the shared sync folder at $share..."
+    sudo install -d -o rslsync -g rslsync -m 2775 "$share" \
+        || { log_error "could not create $share."; return 1; }
+
+    local u="${SUDO_USER:-${USER:-$(id -un)}}"
+    if [ -n "$u" ] && [ "$u" != root ]; then
+        if id -nG "$u" 2>/dev/null | tr ' ' '\n' | grep -qx rslsync; then
+            log_info "$u is already in the rslsync group."
+        else
+            log_install "Adding $u to the rslsync group..."
+            sudo usermod -aG rslsync "$u" || log_warn "could not add $u to the rslsync group."
+            log_hint "Log out and back in (or run 'newgrp rslsync') for the group change to take effect."
+        fi
+    fi
+
+    if ! command -v setfacl >/dev/null 2>&1; then
+        install_pkgs acl || log_warn "could not install acl; falling back to group permissions only."
+    fi
+    if command -v setfacl >/dev/null 2>&1; then
+        log_install "Granting rslsync and $u full access to $share via ACLs..."
+        sudo setfacl -R -m "u:rslsync:rwX,u:$u:rwX" "$share" \
+            || log_warn "could not set access ACLs on $share."
+        sudo setfacl -R -m "d:u:rslsync:rwX,d:u:$u:rwX" "$share" \
+            || log_warn "could not set default ACLs on $share."
+    fi
+
+    if command -v systemctl >/dev/null 2>&1; then
+        sudo systemctl daemon-reload || true
+        log_install "Enabling the rslsync system service..."
+        sudo systemctl enable --now rslsync.service \
+            || log_warn "could not enable rslsync.service."
+    fi
+
+    log_done "Resilio Sync ready: shared folder $share, writable by rslsync and $u."
+    log_hint "Web UI: http://localhost:8888 — add $share there as a synced folder."
+}
+
 setup_github_auth() {
     command -v gh >/dev/null 2>&1 || { log_warn "gh not installed; skipping GitHub auth."; return 0; }
 
@@ -504,6 +587,70 @@ configure_ly() {
     log_done "ly lists only the uwsm sessions in $LY_SESSIONS."
 }
 
+CONSOLE_FONT_DIR=/usr/share/kbd/consolefonts
+VCONSOLE_CONF=/etc/vconsole.conf
+
+console_font_available() {
+    [ -n "$(find "$CONSOLE_FONT_DIR" -maxdepth 1 -name "$1.psf*" -print -quit 2>/dev/null)" ]
+}
+
+console_font_current() {
+    sed -nE 's/^[[:space:]]*FONT=[[:space:]]*"?([^"[:space:]]+)"?.*/\1/p' "$VCONSOLE_CONF" 2>/dev/null | tail -n1
+}
+
+vconsole_set() {
+    local key="$1" value="$2"
+    if sudo grep -qE "^[[:space:]]*$key=" "$VCONSOLE_CONF" 2>/dev/null; then
+        sudo sed -i -E "s|^[[:space:]]*$key=.*|$key=$value|" "$VCONSOLE_CONF"
+    else
+        printf '%s=%s\n' "$key" "$value" | sudo tee -a "$VCONSOLE_CONF" >/dev/null
+    fi
+}
+
+setup_console_font() {
+    local family font current
+    family="${FAMILY:-$(detect_family)}"
+    if [ "$family" = macos ]; then
+        log_info "The console font is a Linux VT setting — skipping on macOS."
+        return 0
+    fi
+    font="${CONSOLE_FONT:-ter-124n}"
+    if [ "$font" = none ]; then
+        log_info "CONSOLE_FONT=none — leaving the console font alone."
+        return 0
+    fi
+
+    if ! console_font_available "$font"; then
+        case "$font" in
+            ter-*) install_pkgs terminus-font >/dev/null 2>&1 || true ;;
+        esac
+    fi
+    if ! console_font_available "$font"; then
+        log_warn "console font '$font' is not in $CONSOLE_FONT_DIR; leaving the console font alone."
+        return 0
+    fi
+
+    current="$(console_font_current)"
+    if [ "$current" = "$font" ]; then
+        log_info "The console font is already $font (ly renders at that size)."
+        return 0
+    fi
+
+    log_install "Setting the console font to $font so ly and the VTs render larger..."
+    vconsole_set FONT "$font" || { log_error "could not write FONT to $VCONSOLE_CONF."; return 1; }
+    sudo systemctl restart systemd-vconsole-setup.service >/dev/null 2>&1 \
+        || log_warn "systemd-vconsole-setup did not reload; the font applies on the next boot."
+
+    if mkinitcpio_hooks_read && mkinitcpio_has_hook consolefont; then
+        log_install "Rebuilding the initramfs so the consolefont hook picks up $font..."
+        sudo mkinitcpio -P >/dev/null 2>&1 \
+            || log_warn "mkinitcpio -P failed; run it by hand for the early-boot console."
+    fi
+
+    log_done "Console font is $font; ly scales with it."
+    log_hint "CONSOLE_FONT picks another font (ter-128n / ter-132n go bigger, none leaves it alone); '$current' was the previous value."
+}
+
 write_uwsm_session() {
     local id="$1" name="$2" comment="$3" desktop_names="$4" cmd="$5"
     sudo mkdir -p "$LY_SESSIONS"
@@ -624,6 +771,7 @@ setup_sway_session() {
 
     install_ly "$family" "$tmp" || { log_warn "ly install failed."; return 1; }
     configure_ly
+    setup_console_font
 
     write_uwsm_session sway "Sway" \
         "Sway tiling Wayland compositor, managed by uwsm" \
@@ -716,11 +864,308 @@ setup_tailscale() {
     sudo tailscale up
 }
 
+setup_default_kernel() {
+    local family
+    family="${FAMILY:-$(detect_family)}"
+    if [ "$family" != arch ]; then
+        log_info "Default-kernel selection is Arch-only — skipping on $family."
+        return 0
+    fi
+    if [ "${DEFAULT_KERNEL:-1}" = 0 ]; then
+        log_info "DEFAULT_KERNEL=0 — leaving the default boot entry alone."
+        return 0
+    fi
+
+    if ! pacman -Qq linux >/dev/null 2>&1; then
+        log_install "Installing the mainline kernel (linux, linux-headers)..."
+        install_pkgs linux linux-headers \
+            || { log_error "mainline kernel install failed."; return 1; }
+    fi
+
+    if ! command -v bootctl >/dev/null 2>&1 || ! sudo bootctl is-installed >/dev/null 2>&1; then
+        log_info "systemd-boot is not the bootloader here — set the default kernel in your own bootloader."
+        return 0
+    fi
+
+    local entry
+    for entry in arch-linux.efi arch.conf linux.conf; do
+        if sudo bootctl list 2>/dev/null | grep -qF "$entry"; then
+            log_info "Making $entry the default boot entry (mainline kernel)..."
+            sudo bootctl set-default "$entry" \
+                || { log_warn "could not set $entry as the default boot entry."; return 0; }
+            log_done "Default boot entry is now $entry; linux-hardened and linux-lts stay available in the menu."
+            log_hint "Unprivileged user namespaces are enabled on mainline, which is what Flatpak/bwrap needs."
+            return 0
+        fi
+    done
+    log_warn "no mainline 'linux' boot entry found in 'bootctl list'; run 'sudo mkinitcpio -P' and re-run this step."
+}
+
+MKINITCPIO_CONF=/etc/mkinitcpio.conf
+MKINITCPIO_HOOKS=()
+PLYMOUTH_ASSETS="$SCRIPT_DIR/../assets/plymouth"
+
+plymouth_theme_is_sauce() {
+    [ -f "$PLYMOUTH_ASSETS/$1/$1.plymouth" ]
+}
+
+plymouth_theme_is_current() {
+    local dst="/usr/share/plymouth/themes/$1"
+    [ -d "$dst" ] || return 1
+    diff -rq "$PLYMOUTH_ASSETS/$1" "$dst" >/dev/null 2>&1
+}
+
+plymouth_theme_font_pkg() {
+    case "$1" in
+        grafana) echo inter-font ;;
+        arch)    echo noto-fonts ;;
+    esac
+}
+
+plymouth_theme_install() {
+    local theme="$1" src dst font
+    src="$PLYMOUTH_ASSETS/$theme"
+    dst="/usr/share/plymouth/themes/$theme"
+    if ! plymouth_theme_is_sauce "$theme"; then
+        log_warn "no $theme theme at $src; run 'scripts/render-plymouth-theme.sh $theme' first."
+        return 1
+    fi
+
+    log_install "Installing the $theme Plymouth theme into $dst..."
+    font="$(plymouth_theme_font_pkg "$theme")"
+    if [ -n "$font" ]; then
+        install_pkgs "$font" >/dev/null 2>&1 \
+            || log_warn "$font is unavailable; the theme falls back to the default sans font."
+    fi
+    sudo install -d -m 0755 "$dst" || { log_error "could not create $dst."; return 1; }
+    sudo find "$dst" -maxdepth 1 -type f -delete 2>/dev/null || true
+    sudo install -m 0644 "$src"/* "$dst"/ \
+        || { log_error "could not copy the theme into $dst."; return 1; }
+}
+
+mkinitcpio_hooks_read() {
+    local raw
+    raw="$(sed -nE 's/^[[:space:]]*HOOKS=\((.*)\).*/\1/p' "$MKINITCPIO_CONF" | tail -n1)"
+    [ -n "$raw" ] || return 1
+    read -ra MKINITCPIO_HOOKS <<<"$raw"
+}
+
+mkinitcpio_has_hook() {
+    local want="$1" h
+    for h in "${MKINITCPIO_HOOKS[@]}"; do
+        [ "$h" = "$want" ] && return 0
+    done
+    return 1
+}
+
+plymouth_hooks_write() {
+    local -a out=()
+    local h placed=0
+    mkinitcpio_has_hook plymouth && placed=1
+    for h in "${MKINITCPIO_HOOKS[@]}"; do
+        out+=("$h")
+        if [ "$placed" = 0 ] && { [ "$h" = systemd ] || [ "$h" = udev ]; }; then
+            out+=(plymouth)
+            placed=1
+        fi
+    done
+    if [ "$placed" = 0 ]; then
+        out=(plymouth "${out[@]}")
+    fi
+
+    sudo cp -n "$MKINITCPIO_CONF" "$MKINITCPIO_CONF.sauce-bak" 2>/dev/null || true
+    sudo sed -i -E "s|^[[:space:]]*HOOKS=\(.*\)[[:space:]]*$|HOOKS=(${out[*]})|" "$MKINITCPIO_CONF" \
+        || { log_error "could not update HOOKS in $MKINITCPIO_CONF."; return 1; }
+    log_info "HOOKS=(${out[*]})"
+}
+
+plymouth_cmdline_flags() {
+    local out="$1" flag
+    for flag in quiet splash; do
+        case " $out " in
+            *" $flag "*) ;;
+            *) out="${out:+$out }$flag" ;;
+        esac
+    done
+    printf '%s' "$out"
+}
+
+plymouth_cmdline_write() {
+    local touched=0 found=0
+
+    if [ -f /etc/kernel/cmdline ]; then
+        found=1
+        local cur new
+        cur="$(tr '\n' ' ' </etc/kernel/cmdline | sed -E 's/[[:space:]]+/ /g; s/^ //; s/ $//')"
+        new="$(plymouth_cmdline_flags "$cur")"
+        if [ "$new" != "$cur" ]; then
+            printf '%s\n' "$new" | sudo tee /etc/kernel/cmdline >/dev/null \
+                || { log_error "could not write /etc/kernel/cmdline."; return 1; }
+            log_info "added quiet/splash to /etc/kernel/cmdline"
+            touched=1
+        fi
+    fi
+
+    local -a entries=()
+    mapfile -t entries < <(sudo find /boot/loader/entries -maxdepth 1 -name '*.conf' 2>/dev/null)
+    local entry
+    for entry in "${entries[@]}"; do
+        sudo grep -qE '^options ' "$entry" || continue
+        found=1
+        sudo grep -qE '^options .*(^| )splash( |$)' "$entry" && continue
+        sudo grep -qE '^options .*(^| )quiet( |$)' "$entry" \
+            || sudo sed -i -E 's/^(options .*)$/\1 quiet/' "$entry"
+        sudo sed -i -E 's/^(options .*)$/\1 splash/' "$entry" \
+            || { log_error "could not add splash to $entry."; return 1; }
+        log_info "added quiet/splash to $entry"
+        touched=1
+    done
+
+    if [ "$found" = 0 ]; then
+        log_warn "no /etc/kernel/cmdline or systemd-boot entries found; add 'quiet splash' to your kernel command line yourself or the splash stays in text mode."
+    fi
+    [ "$touched" = 1 ]
+}
+
+plymouth_is_wsl() {
+    [ -n "${WSL_DISTRO_NAME:-}" ] && return 0
+    grep -qi microsoft /proc/sys/kernel/osrelease 2>/dev/null
+}
+
+setup_plymouth() {
+    local family
+    family="${FAMILY:-$(detect_family)}"
+    if [ "$family" != arch ]; then
+        log_info "The Plymouth step drives mkinitcpio hooks — skipping on $family."
+        return 0
+    fi
+    if plymouth_is_wsl; then
+        log_info "WSL has no boot splash of its own — skipping Plymouth."
+        return 0
+    fi
+    if [ "${PLYMOUTH:-1}" = 0 ]; then
+        log_info "PLYMOUTH=0 — leaving the boot splash alone."
+        return 0
+    fi
+    if [ ! -f "$MKINITCPIO_CONF" ]; then
+        log_info "No $MKINITCPIO_CONF on this host — skipping the Plymouth boot splash."
+        return 0
+    fi
+    if ! command -v mkinitcpio >/dev/null 2>&1; then
+        log_info "mkinitcpio is not installed here — skipping the Plymouth boot splash."
+        return 0
+    fi
+    if ! mkinitcpio_hooks_read; then
+        log_warn "could not read a HOOKS=(...) line from $MKINITCPIO_CONF; skipping Plymouth."
+        return 0
+    fi
+
+    if ! pacman -Qq plymouth >/dev/null 2>&1; then
+        log_install "Installing Plymouth for a graphical boot splash and LUKS passphrase prompt..."
+        install_pkgs plymouth || { log_error "plymouth install failed."; return 1; }
+    fi
+
+    local changed=0
+    local theme="${PLYMOUTH_THEME:-arch}"
+    if plymouth_theme_is_sauce "$theme" && ! plymouth_theme_is_current "$theme"; then
+        plymouth_theme_install "$theme" && changed=1
+    fi
+    if ! plymouth-set-default-theme -l 2>/dev/null | grep -qx "$theme"; then
+        install_pkgs "plymouth-theme-$theme" >/dev/null 2>&1 || true
+        if ! plymouth-set-default-theme -l 2>/dev/null | grep -qx "$theme"; then
+            log_warn "Plymouth theme '$theme' is not installed — falling back to spinner."
+            theme=spinner
+        fi
+    fi
+
+    mkinitcpio_has_hook kms \
+        || log_warn "the kms hook is missing from HOOKS; without early KMS the splash drops to text mode."
+    if ! mkinitcpio_has_hook encrypt && ! mkinitcpio_has_hook sd-encrypt; then
+        log_info "No encrypt hook in HOOKS — this host gets the splash only, with no passphrase prompt to theme."
+    fi
+
+    if mkinitcpio_has_hook plymouth; then
+        log_info "mkinitcpio already has the plymouth hook."
+    else
+        log_install "Adding the plymouth hook to $MKINITCPIO_CONF ahead of the encrypt hook..."
+        plymouth_hooks_write || return 1
+        changed=1
+    fi
+
+    plymouth_cmdline_write && changed=1
+
+    local current
+    current="$(plymouth-set-default-theme 2>/dev/null || true)"
+    [ "$current" = "$theme" ] || changed=1
+
+    if [ "$changed" = 0 ]; then
+        log_info "Plymouth is already configured with the $theme theme."
+        return 0
+    fi
+
+    log_install "Setting the Plymouth theme to $theme and rebuilding the initramfs..."
+    sudo plymouth-set-default-theme -R "$theme" \
+        || { log_error "plymouth-set-default-theme failed; fix the error and run 'sudo mkinitcpio -P'."; return 1; }
+
+    log_done "Plymouth is set up; the graphical splash and passphrase prompt appear on the next boot."
+    log_hint "Press Esc at the prompt for the text view when you need to read cryptsetup errors."
+    log_hint "The theme comes from the plymouthTheme prompt (SAUCE_PLYMOUTH_THEME seeds it); PLYMOUTH_THEME overrides it for one run and PLYMOUTH=0 skips the step. $MKINITCPIO_CONF.sauce-bak holds the pre-change HOOKS."
+}
+
+setup_wifi_powersave() {
+    if [ "${WIFI_POWERSAVE:-1}" = 0 ]; then
+        log_info "WIFI_POWERSAVE=0 — leaving Wi-Fi power management alone."
+        return 0
+    fi
+    if ! command -v nmcli >/dev/null 2>&1; then
+        log_info "NetworkManager is not in use here — skipping the Wi-Fi power-save fix."
+        return 0
+    fi
+    if ! lsmod 2>/dev/null | grep -q '^iwlwifi'; then
+        log_info "No Intel iwlwifi adapter loaded — skipping the Wi-Fi power-save fix."
+        return 0
+    fi
+
+    local conf=/etc/NetworkManager/conf.d/00-sauce-wifi-powersave.conf
+    if [ -f "$conf" ] && grep -q 'managed by sauce' "$conf" 2>/dev/null; then
+        log_info "Wi-Fi power save is already disabled by sauce."
+        return 0
+    fi
+
+    require_sudo || return 1
+
+    log_install "Disabling Wi-Fi power save to stop iwlwifi beacon-loss disconnects..."
+    sudo install -d -m 0755 /etc/NetworkManager/conf.d \
+        || { log_error "could not create /etc/NetworkManager/conf.d."; return 1; }
+    printf '%s\n' \
+        '# managed by sauce' \
+        '[connection]' \
+        'wifi.powersave = 2' \
+        | sudo tee "$conf" >/dev/null \
+        || { log_error "could not write $conf."; return 1; }
+
+    sudo nmcli general reload conf >/dev/null 2>&1 || sudo systemctl reload NetworkManager >/dev/null 2>&1 || true
+
+    local dev
+    dev="$(nmcli -t -f DEVICE,TYPE device 2>/dev/null | awk -F: '$2=="wifi"{print $1; exit}')"
+    if [ -n "$dev" ] && command -v iw >/dev/null 2>&1; then
+        sudo iw dev "$dev" set power_save off >/dev/null 2>&1 || true
+    fi
+
+    log_done "Wi-Fi power save is off; reconnect (or reboot) for it to take effect on the active link."
+    log_hint "Costs a little idle battery. Set WIFI_POWERSAVE=0 and delete $conf to revert."
+}
+
 case "${1:-all}" in
     base-packages) setup_base_packages ;;
     paru)          setup_paru ;;
+    default-kernel) setup_default_kernel ;;
+    plymouth)      setup_plymouth ;;
+    console-font)  setup_console_font ;;
+    wifi-powersave) setup_wifi_powersave ;;
     nvidia)        setup_nvidia ;;
     clamav)        setup_clamav ;;
+    rslsync)       setup_rslsync ;;
     github-auth)   setup_github_auth ;;
     oh-my-posh)    setup_oh_my_posh ;;
     run-updaters)  setup_run_updaters ;;
@@ -731,8 +1176,12 @@ case "${1:-all}" in
     all)
         setup_base_packages
         setup_paru
+        setup_default_kernel
+        setup_plymouth
+        setup_wifi_powersave
         setup_nvidia
         setup_clamav
+        setup_rslsync
         setup_github_auth
         setup_oh_my_posh
         setup_run_updaters

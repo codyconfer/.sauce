@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+
+set -uo pipefail
+
+prompt="${1:-[sudo] password:}"
+
+if [ -n "${WAYLAND_DISPLAY:-}" ] && command -v fuzzel >/dev/null 2>&1; then
+    exec fuzzel --dmenu --password --lines=0 --layer=overlay --prompt="$prompt " </dev/null
+fi
+
+if command -v systemd-ask-password >/dev/null 2>&1; then
+    exec systemd-ask-password "$prompt"
+fi
+
+echo "❌ Error: sauce-askpass: no way to prompt for a password (no Wayland display, no fuzzel, no systemd-ask-password)." >&2
+exit 1

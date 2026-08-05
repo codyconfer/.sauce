@@ -1,0 +1,61 @@
+[Plymouth Theme]
+Name=Arch Linux
+Description=Arch Linux splash with a graphical LUKS passphrase prompt
+ModuleName=two-step
+
+[two-step]
+Font=Noto Sans 12
+TitleFont=Noto Sans Light 28
+ImageDir=/usr/share/plymouth/themes/arch
+WatermarkHorizontalAlignment=.5
+WatermarkVerticalAlignment=.38
+DialogHorizontalAlignment=.5
+DialogVerticalAlignment=.58
+TitleHorizontalAlignment=.5
+TitleVerticalAlignment=.46
+HorizontalAlignment=.5
+VerticalAlignment=.78
+Transition=none
+TransitionDuration=0.0
+BackgroundStartColor=0x1a1a1a
+BackgroundEndColor=0x0d0d0d
+ProgressBarBackgroundColor=0x242424
+ProgressBarForegroundColor=0x1793d1
+MessageBelowAnimation=true
+
+[boot-up]
+UseEndAnimation=false
+
+[shutdown]
+UseEndAnimation=false
+
+[reboot]
+UseEndAnimation=false
+
+[updates]
+SuppressMessages=true
+ProgressBarShowPercentComplete=true
+UseProgressBar=true
+Title=Installing Updates...
+SubTitle=Do not turn off your computer
+
+[system-upgrade]
+SuppressMessages=true
+ProgressBarShowPercentComplete=true
+UseProgressBar=true
+Title=Upgrading System...
+SubTitle=Do not turn off your computer
+
+[firmware-upgrade]
+SuppressMessages=true
+ProgressBarShowPercentComplete=true
+UseProgressBar=true
+Title=Upgrading Firmware...
+SubTitle=Do not turn off your computer
+
+[system-reset]
+SuppressMessages=true
+ProgressBarShowPercentComplete=true
+UseProgressBar=true
+Title=Resetting System...
+SubTitle=Do not turn off your computer

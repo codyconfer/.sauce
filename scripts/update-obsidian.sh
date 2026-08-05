@@ -19,6 +19,8 @@ cleanup() {
 }
 dispatch_remove "$@"
 
+ensure_libfuse2 || true
+
 log_search "Fetching the latest Obsidian version..."
 META=$(fetch "$API")
 VERSION=$(echo "$META" | jq -r '.tag_name')

@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+
+set -uo pipefail
+{{- $plymouthTheme := "arch" -}}
+{{- if hasKey . "plymouthTheme" -}}{{- $plymouthTheme = .plymouthTheme -}}{{- end -}}
+{{- if and (eq .family "arch") (not .wsl) (ne $plymouthTheme "none") }}
+FAMILY="{{ .family }}" PLYMOUTH_THEME="{{ $plymouthTheme }}" \
+    bash "$HOME/.sauce/scripts/setup.sh" plymouth
+{{- end }}

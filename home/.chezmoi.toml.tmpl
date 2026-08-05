@@ -18,14 +18,14 @@
 {{- end -}}
 
 {{- if eq $family "windows" -}}
-{{-   $winAppChoices := list "vscode" "cursor" "zed" "obsidian" "docker-desktop" "jetbrains-toolbox" "ghidra" "ollama" "lmstudio" "slack" "discord" "signal" "obs-studio" "bitwarden" "zen" "retroarch" "zoom" "1password" -}}
+{{-   $winAppChoices := list "vscode" "cursor" "zed" "obsidian" "docker-desktop" "jetbrains-toolbox" "ghidra" "ollama" "lmstudio" "slack" "discord" "signal" "obs-studio" "bitwarden" "zen" "retroarch" "zoom" "1password" "vlc" "audacious" "quodlibet" -}}
 {{-   $winAppsDefault := $winAppChoices -}}
 {{-   if env "SAUCE_WIN_APPS" -}}
 {{-     if eq (lower (env "SAUCE_WIN_APPS")) "none" -}}{{- $winAppsDefault = list -}}
 {{-     else -}}{{- $winAppsDefault = (splitList " " (env "SAUCE_WIN_APPS") | compact) -}}{{- end -}}
 {{-   end -}}
 {{-   $winApps := promptMultichoiceOnce . "winApps" "GUI apps to install via winget (all selected by default; leave empty for none)" $winAppChoices $winAppsDefault -}}
-{{-   $winToolChoices := list "go" "dotnet" "aws" "gcloud" "azure-cli" "kubectl" "k9s" "node" "nvm" "yarn" "neovim" "gh" "oh-my-posh" "cloudflared" "adb" "1password-cli" "bitwarden-cli" -}}
+{{-   $winToolChoices := list "go" "dotnet" "aws" "gcloud" "azure-cli" "kubectl" "k9s" "node" "nvm" "yarn" "neovim" "gh" "oh-my-posh" "cloudflared" "adb" "1password-cli" "bitwarden-cli" "ffmpeg" -}}
 {{-   $winToolsDefault := $winToolChoices -}}
 {{-   if env "SAUCE_WIN_TOOLS" -}}
 {{-     if eq (lower (env "SAUCE_WIN_TOOLS")) "none" -}}{{- $winToolsDefault = list -}}
@@ -40,6 +40,7 @@ sourceDir = "{{ .chezmoi.homeDir }}/.sauce"
     wsl = false
     winApps = {{ $winApps | toJson }}
     winTools = {{ $winTools | toJson }}
+    plymouthTheme = "none"
 {{- else -}}
 {{-   $headless := false -}}
 {{-   $emulators := list -}}
@@ -57,7 +58,7 @@ sourceDir = "{{ .chezmoi.homeDir }}/.sauce"
 {{-         else -}}{{- $emulatorsDefault = (splitList " " (env "SAUCE_EMULATORS") | compact) -}}{{- end -}}
 {{-       end -}}
 {{-       $emulators = promptMultichoiceOnce . "emulators" "Emulators to install (all selected by default; leave empty for none)" $emulatorChoices $emulatorsDefault -}}
-{{-       $guiAppChoices := list "firefox" "sway" "alacritty" "gnuradio" "qdmr" "vscode" "zed" "claude" "codex" "cursor" "docker" "ghidra" "jetbrains-toolbox" "lmstudio" "obsidian" "bitwarden" "1password" -}}
+{{-       $guiAppChoices := list "firefox" "sway" "alacritty" "gnuradio" "qdmr" "sourcegit" "vscode" "zed" "claude" "codex" "cursor" "docker" "ghidra" "jetbrains-toolbox" "lmstudio" "obsidian" "bitwarden" "1password" -}}
 {{-       $guiAppsDefault := $guiAppChoices -}}
 {{-       if env "SAUCE_GUI_APPS" -}}
 {{-         if eq (lower (env "SAUCE_GUI_APPS")) "none" -}}{{- $guiAppsDefault = list -}}
@@ -73,7 +74,7 @@ sourceDir = "{{ .chezmoi.homeDir }}/.sauce"
 {{-       $flatpaks = promptMultichoiceOnce . "flatpaks" "Flatpak (Flathub) apps to install (all selected by default; leave empty for none)" $flatpakChoices $flatpaksDefault -}}
 {{-     end -}}
 {{-   end -}}
-{{-   $toolChoices := list "1password-cli" "aws" "azure-cli" "bitwarden-cli" "cloudflared" "gcloud" "gcx" "wrangler" "adb" "claude-code" "dotnet" "go" "k9s" "kubectl" "loglit" "nvim" "nvm" "ollama" "opencode" "pi" "poetry" "pyenv" "rustup" "tmux" "yarn" -}}
+{{-   $toolChoices := list "1password-cli" "aws" "azure-cli" "bitwarden-cli" "cloudflared" "gcloud" "gcx" "wrangler" "adb" "claude-code" "dotnet" "go" "herdr" "k9s" "kubectl" "loglit" "nvim" "nvm" "ollama" "opencode" "pi" "poetry" "pyenv" "rustup" "tmux" "yarn" -}}
 {{-   if and $headless (ne $family "macos") -}}{{- $toolChoices = append $toolChoices "k3s" -}}{{- end -}}
 {{-   $toolsDefault := $toolChoices -}}
 {{-   if env "SAUCE_TOOLS" -}}
@@ -81,13 +82,40 @@ sourceDir = "{{ .chezmoi.homeDir }}/.sauce"
 {{-     else -}}{{- $toolsDefault = (splitList " " (env "SAUCE_TOOLS") | compact) -}}{{- end -}}
 {{-   end -}}
 {{-   $tools := promptMultichoiceOnce . "tools" "CLI / dev tools to install and keep updated (all selected by default; leave empty for none)" $toolChoices $toolsDefault -}}
+{{-   $mediaChoices := list -}}
+{{-   if and (not $wsl) (not $headless) -}}{{- $mediaChoices = list "vlc" "audacious" "quodlibet" -}}{{- end -}}
+{{-   $mediaChoices = append $mediaChoices "ffmpeg" -}}
+{{-   $mediaDefault := $mediaChoices -}}
+{{-   if env "SAUCE_MEDIA" -}}
+{{-     if eq (lower (env "SAUCE_MEDIA")) "none" -}}{{- $mediaDefault = list -}}
+{{-     else -}}
+{{-       $mediaDefault = list -}}
+{{-       range (splitList " " (env "SAUCE_MEDIA") | compact) -}}
+{{-         if has . $mediaChoices -}}{{- $mediaDefault = append $mediaDefault . -}}{{- end -}}
+{{-       end -}}
+{{-     end -}}
+{{-   end -}}
+{{-   $media := promptMultichoiceOnce . "media" "Media players / codecs to install (all selected by default; leave empty for none)" $mediaChoices $mediaDefault -}}
 {{-   $desktop :=or (gt (len $emulators) 0) (or (gt (len $guiApps) 0) (gt (len $flatpaks) 0)) -}}
 {{-   $tailscaleDefault := false -}}
 {{-   if env "SAUCE_TAILSCALE" -}}{{- $tailscaleDefault = eq (lower (env "SAUCE_TAILSCALE")) "true" -}}{{- end -}}
 {{-   $tailscale := promptBoolOnce . "tailscale" "Connect this machine to Tailscale now (installs Tailscale and runs `sudo tailscale up`)?" $tailscaleDefault -}}
+{{-   $rslsyncDefault := false -}}
+{{-   if env "SAUCE_RSLSYNC" -}}{{- $rslsyncDefault = eq (lower (env "SAUCE_RSLSYNC")) "true" -}}{{- end -}}
+{{-   $rslsync := promptBoolOnce . "rslsync" "Install Resilio Sync (rslsync) and create a shared sync folder under its home dir?" $rslsyncDefault -}}
 {{-   $netToolsDefault := true -}}
 {{-   if env "SAUCE_NET_TOOLS" -}}{{- $netToolsDefault = eq (lower (env "SAUCE_NET_TOOLS")) "true" -}}{{- end -}}
 {{-   $netTools := promptBoolOnce . "netTools" "Install common network/security CLI tools (nmap, dig, nslookup, netcat, tcpdump, mtr, whois, ...)?" $netToolsDefault -}}
+{{-   $plymouthTheme := "none" -}}
+{{-   if and (eq $family "arch") (not $wsl) -}}
+{{-     $plymouthThemeChoices := list "arch" "grafana" "bgrt" "spinner" "none" -}}
+{{-     $plymouthThemeDefault := "arch" -}}
+{{-     if env "SAUCE_PLYMOUTH_THEME" -}}{{- $plymouthThemeDefault = lower (env "SAUCE_PLYMOUTH_THEME") -}}{{- end -}}
+{{-     if not (has $plymouthThemeDefault $plymouthThemeChoices) -}}
+{{-       $plymouthThemeChoices = append $plymouthThemeChoices $plymouthThemeDefault -}}
+{{-     end -}}
+{{-     $plymouthTheme = promptChoiceOnce . "plymouthTheme" "Boot splash theme (Plymouth; graphical LUKS prompt; \"none\" leaves boot text-only)" $plymouthThemeChoices $plymouthThemeDefault -}}
+{{-   end -}}
 
 sourceDir = "{{ .chezmoi.homeDir }}/.sauce"
 
@@ -99,7 +127,10 @@ sourceDir = "{{ .chezmoi.homeDir }}/.sauce"
     guiApps = {{ $guiApps | toJson }}
     flatpaks = {{ $flatpaks | toJson }}
     tools = {{ $tools | toJson }}
+    media = {{ $media | toJson }}
     desktop = {{ $desktop }}
     tailscale = {{ $tailscale }}
+    rslsync = {{ $rslsync }}
     netTools = {{ $netTools }}
+    plymouthTheme = {{ $plymouthTheme | quote }}
 {{- end }}

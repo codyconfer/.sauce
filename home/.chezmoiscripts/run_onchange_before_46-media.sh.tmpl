@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+
+set -uo pipefail
+{{- $media := (index . "media") | default (list) }}
+{{- if eq .chezmoi.os "darwin" }}
+MEDIA_CASKS="{{ range $media }}{{ with (index $.mediaCatalog . "cask") }}{{ . }} {{ end }}{{ end }}" \
+MEDIA_FORMULAE="{{ range $media }}{{ with (index $.mediaCatalog . "brew") }}{{ . }} {{ end }}{{ end }}" \
+    bash "$HOME/.sauce/scripts/onchange.sh" media
+{{- else }}
+FAMILY="{{ .family }}" \
+MEDIA_PKGS="{{ range $media }}{{ range (index $.mediaCatalog . "pkgs") }}{{ . }} {{ end }}{{ end }}" \
+    bash "$HOME/.sauce/scripts/onchange.sh" media
+{{- end }}

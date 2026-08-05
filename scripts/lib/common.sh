@@ -17,6 +17,17 @@ log_done()     { echo "✅ ${*:-Installation complete!}"; }
 
 ensure_dir() { mkdir -p "$1"; }
 
+require_sudo() {
+    [ "$(id -u)" -eq 0 ] && return 0
+    command -v sudo >/dev/null 2>&1 || { log_error "sudo is required but is not installed."; return 1; }
+    sudo -n true 2>/dev/null && return 0
+    [ -t 0 ] && return 0
+    [ -n "${SUDO_ASKPASS:-}" ] && [ -x "${SUDO_ASKPASS}" ] && return 0
+    log_error "root access is required, but there is no terminal to prompt on and SUDO_ASKPASS is unset."
+    log_hint "Re-run from a terminal, or point SUDO_ASKPASS at a helper — the sway session exports ~/.local/bin/sauce-askpass."
+    return 1
+}
+
 ensure_node() {
     export NVM_DIR="${NVM_DIR:-$HOME/.nvm}"
     if [ -s "$NVM_DIR/nvm.sh" ]; then

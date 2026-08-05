@@ -19,6 +19,8 @@ cleanup() {
 }
 dispatch_remove "$@"
 
+ensure_libfuse2 || true
+
 log_search "Fetching the latest LM Studio version..."
 FINAL=$(curl -fsIL -o /dev/null -w '%{url_effective}' "$URL")
 VERSION=$(echo "$FINAL" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+(-[0-9]+)?' | head -n1)

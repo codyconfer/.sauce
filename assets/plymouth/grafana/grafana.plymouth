@@ -1,0 +1,61 @@
+[Plymouth Theme]
+Name=Grafana
+Description=Grafana Labs splash with a graphical LUKS passphrase prompt
+ModuleName=two-step
+
+[two-step]
+Font=Inter 12
+TitleFont=Inter Light 28
+ImageDir=/usr/share/plymouth/themes/grafana
+WatermarkHorizontalAlignment=.5
+WatermarkVerticalAlignment=.38
+DialogHorizontalAlignment=.5
+DialogVerticalAlignment=.58
+TitleHorizontalAlignment=.5
+TitleVerticalAlignment=.46
+HorizontalAlignment=.5
+VerticalAlignment=.78
+Transition=none
+TransitionDuration=0.0
+BackgroundStartColor=0x181b1f
+BackgroundEndColor=0x111217
+ProgressBarBackgroundColor=0x22252b
+ProgressBarForegroundColor=0xFF8833
+MessageBelowAnimation=true
+
+[boot-up]
+UseEndAnimation=false
+
+[shutdown]
+UseEndAnimation=false
+
+[reboot]
+UseEndAnimation=false
+
+[updates]
+SuppressMessages=true
+ProgressBarShowPercentComplete=true
+UseProgressBar=true
+Title=Installing Updates...
+SubTitle=Do not turn off your computer
+
+[system-upgrade]
+SuppressMessages=true
+ProgressBarShowPercentComplete=true
+UseProgressBar=true
+Title=Upgrading System...
+SubTitle=Do not turn off your computer
+
+[firmware-upgrade]
+SuppressMessages=true
+ProgressBarShowPercentComplete=true
+UseProgressBar=true
+Title=Upgrading Firmware...
+SubTitle=Do not turn off your computer
+
+[system-reset]
+SuppressMessages=true
+ProgressBarShowPercentComplete=true
+UseProgressBar=true
+Title=Resetting System...
+SubTitle=Do not turn off your computer

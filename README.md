@@ -61,12 +61,17 @@ neovim, gcc, make, …), extras (pipx, htop, btop, fish, plus the Nerd Fonts and
 zsh-plugins), and the GitHub CLI. On first `init` you then pick from multi-select
 lists — emulators (Steam, Wine, QEMU), GUI apps (Firefox, Sway, Alacritty, GNU Radio, qdmr, VS Code,
 Zed, Cursor, Ghidra, JetBrains Toolbox, LM Studio, Obsidian, Docker, Codex, Bitwarden, 1Password), flatpaks
-(Slack, Discord, Signal, …), and CLI/dev tools (the "Access" cloud CLIs plus go, k9s,
-rustup, … — every `update-*.sh`) — plus yes/no questions:
+(Slack, Discord, Signal, …), CLI/dev tools (the "Access" cloud CLIs plus go, k9s,
+rustup, … — every `update-*.sh`), and media players/codecs (VLC, Audacious, Quod Libet,
+ffmpeg — the players only on a desktop host, ffmpeg everywhere) — plus yes/no questions:
 whether the machine is **headless** (skips the entire desktop layer — emulators, GUI
 apps, flatpaks — and adds `k3s` to the tool choices), whether to install the common
 network/security CLI tools (nmap, dig,
-netcat, tcpdump, mtr, whois, …), and whether to bring up Tailscale. (On macOS the same selections install via Homebrew — see
+netcat, tcpdump, mtr, whois, …), and whether to bring up Tailscale. On an Arch host
+you also pick a **boot splash theme** — `arch`, `grafana`, `bgrt`, `spinner`, or
+`none` (see [the Plymouth themes](#the-plymouth-themes)); `arch` is the default and
+`none` leaves boot text-only. Plymouth is never installed on any other family, or
+on WSL. (On macOS the same selections install via Homebrew — see
 [macOS notes](#macos-notes) below.) Everything defaults to selected, so accepting the
 defaults installs the full set. Answers are
 saved to `~/.config/chezmoi/chezmoi.toml`; re-run `chezmoi init` to change the
@@ -86,14 +91,14 @@ bash bootstrap.sh
 ```
 
 Booleans are `"true"`/`"false"` (e.g. `SAUCE_HEADLESS`, `SAUCE_NET_TOOLS`,
-`SAUCE_TAILSCALE`); list vars are space-separated (`SAUCE_TOOLS="go k9s rustup"`,
-`SAUCE_EMULATORS`, `SAUCE_GUI_APPS`, `SAUCE_FLATPAKS`, and `SAUCE_WIN_APPS`/
+`SAUCE_TAILSCALE`); `SAUCE_PLYMOUTH_THEME` takes a single theme name; list vars are space-separated (`SAUCE_TOOLS="go k9s rustup"`,
+`SAUCE_EMULATORS`, `SAUCE_GUI_APPS`, `SAUCE_FLATPAKS`, `SAUCE_MEDIA`, and `SAUCE_WIN_APPS`/
 `SAUCE_WIN_TOOLS` on Windows), with the literal `none` selecting an empty set. Unset
 vars keep the built-in defaults. Since the prompts are `*Once`, the value is recorded on
 first `init` only; `.env` is gitignored. See `.env.example` for the full list.
 
-> **Upgrading an existing install:** the prompt schema changed — `headless` and
-> `emulators` are new, the GUI-apps list now includes VS Code/Zed/qdmr, and the CLI/dev
+> **Upgrading an existing install:** the prompt schema changed — `headless`,
+> `emulators`, and `media` (VLC/Audacious/Quod Libet/ffmpeg) are new, the GUI-apps list now includes VS Code/Zed/qdmr, and the CLI/dev
 > tools list dropped the Access CLIs' always-on status and added `rustup`. Because these
 > only prompt once, run `chezmoi init` (accept the defaults) after pulling this change so
 > the new selections are recorded — otherwise a bare `chezmoi apply` treats the new keys
@@ -111,7 +116,7 @@ own directories aren't mistaken for things to deploy.
   .chezmoiroot                        # "home" — the source root
   home/
     .chezmoi.toml.tmpl                # generates ~/.config/chezmoi/chezmoi.toml (os/family, prompts)
-    .chezmoidata.yaml                 # package lists (essential/extras, netTools, sway, portals, flatpakCatalog, caskCatalog, winget)
+    .chezmoidata.yaml                 # package lists (essential/extras, netTools, sway, portals, flatpakCatalog, caskCatalog, mediaCatalog, winget)
     .chezmoiexternal.toml.tmpl        # download-only tools (none currently; see skills/add-tool-installer Path B)
     .chezmoiignore                    # per-OS / per-flag exclusions
     Documents/PowerShell/Microsoft.PowerShell_profile.ps1  # → ~/Documents/PowerShell/... (native Windows)
@@ -127,16 +132,63 @@ own directories aren't mistaken for things to deploy.
       swayimg/ mpv/ havoc/            #    "  (sway companion tools)
       way-displays/ waylogout/ zskins/ #   "
       xdg-desktop-portal/             #    "  (per-desktop portal backend preferences)
+      uwsm/env-sway                   #    "  (session env: GPU pick, cursor, SUDO_ASKPASS)
       alacritty/alacritty.toml        # → ~/.config/alacritty (Linux + macOS; ignored on Windows/WSL)
     create_dot_bashrc.local           # → ~/.bashrc.local (created once, never overwritten)
+    dot_local/bin/sauce-askpass       # → ~/.local/bin/sauce-askpass (SUDO_ASKPASS helper; fuzzel password prompt)
     dot_local/share/applications/     # AppImage .desktop launchers (obsidian; Linux only, ignored on macOS)
     .chezmoiscripts/                  # ordered run scripts (see below)
   scripts/
     lib/{config,common,distro,runner}.sh   # shared bash helpers
     update-*.sh                        # self-updating tools that need sudo / vendor installers
     update-all.sh                      # run every update-*.sh
+    render-plymouth-theme.sh           # regenerate the Plymouth theme art from assets/plymouth/src
+  assets/
+    plymouth/{grafana,arch}/           # → /usr/share/plymouth/themes/<theme> (installed by the plymouth step)
+    plymouth/src/                      # official Grafana + Arch SVG sources the art is rendered from
   skills/                              # authoring conventions (add-tool-installer, validate-scripts)
 ```
+
+### The Plymouth themes
+
+Two sauce themes live in `assets/plymouth/`, both [`two-step`](https://gitlab.freedesktop.org/plymouth/plymouth)
+themes with the same layout — logo watermark at 38% height, passphrase dialog at
+58%, throbber at 78% — differing only in art and palette:
+
+| Theme | Watermark | Palette |
+|---|---|---|
+| `grafana` | official Grafana horizontal lockup | canvas `#181b1f` → `#111217`, brand gradient `#F55F3E` → `#FF8833`, field `#22252b`/`#363940`, Inter |
+| `arch` | official Arch Linux inverted lockup | canvas `#1a1a1a` → `#0d0d0d`, Arch blue `#0f7ab5` → `#1793d1`, field `#242424`/`#3c3c3c`, Noto Sans |
+
+The plymouth step copies the selected one to `/usr/share/plymouth/themes/<theme>/`
+and installs its font package (`inter-font` / `noto-fonts`, best-effort — the
+mkinitcpio hook falls back to the default sans if it's missing). `arch` is the
+default; nothing about Plymouth is installed or configured outside an Arch host —
+the prompt is Arch-only, the run script is gated on `arch` and non-WSL, and
+`setup_plymouth` independently bails on a non-Arch family, on WSL, and when
+`mkinitcpio` or `/etc/mkinitcpio.conf` is absent.
+
+Sources in `assets/plymouth/src/` are unmodified official files: the Grafana
+lockup from `grafana.com/static/assets/img/grafana_logo.svg`, the padlock from
+`grafana/grafana`'s `public/img/icons/unicons/lock.svg`, and the Arch lockup from
+`archlinux.org/static/logos/archlinux-logo-light-scalable.svg`. Both projects'
+trademark policies allow scaling the marks but not recoloring or redrawing them,
+so the lockups are only ever scaled; the throbber, field, and bullets are
+original art in each project's colors.
+
+Regenerate after changing a source or a palette (needs `librsvg` + `imagemagick`).
+The `.plymouth` config files are generated too, so palettes live in one place:
+
+```bash
+bash scripts/render-plymouth-theme.sh              # both themes at 1x
+bash scripts/render-plymouth-theme.sh arch         # just one
+SCALE=2 FRAMES=45 bash scripts/render-plymouth-theme.sh
+```
+
+Art is authored at 1x logical size because Plymouth composites in logical
+coordinates and upscales on HiDPI panels (this one is 208 DPI, so it doubles).
+If the result looks soft, re-render at `SCALE=2` and boot with
+`PLYMOUTH_FORCE_SCALE=1`.
 
 ### The `.chezmoiscripts/` run scripts
 
@@ -147,13 +199,18 @@ written, `after_` scripts once everything is in place:
 |---|---|---|
 | `run_once_before_10-base-packages` | `install-base.sh` | once |
 | `run_once_before_15-paru` | `setup.sh` paru step — builds the `paru` AUR helper from source (Arch only) | once |
+| `run_once_before_17-default-kernel` | `setup.sh` default-kernel step — installs the mainline `linux` kernel and makes it the default systemd-boot entry, so unprivileged user namespaces (needed by Flatpak/bwrap) are available; `linux-hardened`/`linux-lts` stay in the boot menu (Arch only; set `DEFAULT_KERNEL=0` to skip) | once |
+| `run_before_18-wifi-powersave` | `setup.sh` wifi-powersave step — drops a NetworkManager conf.d file setting `wifi.powersave = 2` so Intel iwlwifi cards stop tripping mac80211's beacon-loss threshold (Linux, non-WSL; `WIFI_POWERSAVE=0` to skip). Re-checked on every apply — it exits immediately once its `# managed by sauce` marker is in place, so it can self-heal if the file is missing | every apply, no-op once present |
+| `run_once_before_19-plymouth` | `setup.sh` plymouth step — installs Plymouth and the theme picked by the `plymouthTheme` prompt, adds the `plymouth` hook ahead of `encrypt` so the LUKS unlock prompt is graphical, adds `quiet splash` to the kernel command line, and rebuilds the initramfs (Arch only; skipped when `plymouthTheme` is `none`, `PLYMOUTH=0` also skips it) | once |
 | `run_once_before_20-github-auth` | `setup.sh` github step | once |
 | `run_once_before_30-oh-my-posh` | `setup.sh` oh-my-posh step | once |
 | `run_onchange_before_38-emulators` | steam/wine/qemu installers (skipped if headless) | on change |
 | `run_once_before_36-clamav` | `setup.sh` clamav step — clamav + freshclam, `clamav-freshclam.service` for updates, and a weekly report-only scan timer (Linux, non-WSL; `CLAMAV=0` to skip) | once |
+| `run_once_before_37-rslsync` | `setup.sh` rslsync step — installs Resilio Sync from the AUR, creates `<rslsync-home>/sync` (setgid, group `rslsync`), adds your login user to the `rslsync` group, pins access + default ACLs for both accounts, and enables `rslsync.service` (Arch only, opt-in via `rslsync`) | once (opt-in) |
 | `run_once_before_39-nvidia` | `setup.sh` nvidia step — installs the NVIDIA open kernel modules + userspace when an NVIDIA GPU is on the PCI bus (Linux, non-WSL; set `NVIDIA=0` to skip) | once |
-| `run_onchange_before_40-gui-apps` | firefox/sway/alacritty/gnuradio installers (skipped if headless) | on change |
+| `run_onchange_before_40-gui-apps` | firefox/sway/alacritty/gnuradio/sourcegit installers (skipped if headless) | on change |
 | `run_onchange_before_45-net-tools` | network/security CLI tools (opt-in via `netTools`) | on change |
+| `run_onchange_before_46-media` | media players/codecs — vlc/audacious/quodlibet/ffmpeg, selected via `media` (enables RPM Fusion on Fedora, where vlc and the full ffmpeg build live) | on change |
 | `run_onchange_before_50-flatpaks` | flatpak `install-*.sh` (skipped if headless) | on change |
 | `run_after_05-zshrc-local` | scaffolds `~/.zshrc.local` when missing (never overwritten) | every apply, no-op once present |
 | `run_after_06-fish-user` | scaffolds `~/.config/fish/user.fish` when missing (never overwritten) | every apply, no-op once present |
@@ -194,7 +251,9 @@ Two mechanisms, by tool type:
   just a downloaded binary/tarball/AppImage into a user directory. chezmoi
   re-downloads each when its `refreshPeriod` lapses, or on
   `chezmoi apply --refresh-externals`. Currently: `sway-font-awesome`
-  (per-app window-title icons included by the sway config). See
+  (per-app window-title icons included by the sway config) and `herdr`
+  (a terminal workspace manager for coding agents — single binary into
+  `~/.local/bin`, opt-in via the `herdr` tools choice). See
   `skills/add-tool-installer` (Path B) to add one.
 - **`scripts/update-*.sh`** — tools that need `sudo`, install into `/usr/local`,
   run a vendor `curl | sh` installer, self-update, or are a plain binary download
@@ -266,6 +325,17 @@ Wayland desktop, three ways:
   at `/usr/local/share/wayland-sessions` and `xsessions`, `xinitrc`,
   `custom_sessions` and `shell` are switched off, so the greeter lists nothing
   but the uwsm sessions. The stock config is kept as `config.ini.dist-bak`.
+
+  **Greeter size.** ly is a TUI on a VT, so its text size is the console font —
+  `config.ini` has no scale, font or DPI key. The step therefore sets `FONT=` in
+  `/etc/vconsole.conf` (default `ter-124n`, Terminus 12x24 — exactly 1.5x the
+  8x16 built-in), reloads `systemd-vconsole-setup`, and rebuilds the initramfs
+  when `consolefont` is in `HOOKS` so the early console matches. `CONSOLE_FONT`
+  overrides it (`ter-128n` = 14x28, `ter-132n` = 16x32, `none` leaves the font
+  alone); `terminus-font` is installed on demand for any `ter-*` name. Run it
+  alone with `bash scripts/setup.sh console-font`. This scales every VT, not just
+  ly. On a 2560x1600 panel, 8x16 gives a 320x100 grid and `ter-124n` gives
+  213x66.
 
   The switch is real: the previous display manager is disabled, `getty@tty2` is
   disabled, `ly@tty2.service` is enabled and (on Debian family)

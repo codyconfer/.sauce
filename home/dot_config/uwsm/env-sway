@@ -1,7 +1,8 @@
 if [ -z "${WLR_DRM_DEVICES:-}" ]; then
     for _card in /dev/dri/by-path/pci-*-card; do
         [ -e "$_card" ] || continue
-        _sys="/sys/class/drm/$(basename "$(readlink -f "$_card")")"
+        _dev="$(readlink -f "$_card")"
+        _sys="/sys/class/drm/$(basename "$_dev")"
         case "$(cat "$_sys/device/vendor" 2>/dev/null)" in
             0x8086 | 0x1002) ;;
             *) continue ;;
@@ -9,13 +10,13 @@ if [ -z "${WLR_DRM_DEVICES:-}" ]; then
         for _status in "$_sys"-*/status; do
             [ -e "$_status" ] || continue
             if [ "$(cat "$_status")" = connected ]; then
-                export WLR_DRM_DEVICES="$_card"
+                export WLR_DRM_DEVICES="$_dev"
                 break
             fi
         done
         [ -n "${WLR_DRM_DEVICES:-}" ] && break
     done
-    unset _card _sys _status
+    unset _card _dev _sys _status
 fi
 
 export XCURSOR_THEME=Adwaita
@@ -24,6 +25,8 @@ export XCURSOR_SIZE=24
 export QT_WAYLAND_DISABLE_WINDOWDECORATION=1
 export QT_AUTO_SCREEN_SCALE_FACTOR=1
 export _JAVA_AWT_WM_NONREPARENTING=1
+
+export SUDO_ASKPASS="${HOME}/.local/bin/sauce-askpass"
 
 export EXPOSWAYDIR="${HOME}/.local/state/exposway/"
 export EXPOSWAYMON="${HOME}/.local/state/exposway/output"

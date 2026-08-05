@@ -55,6 +55,36 @@ remove_pkgs() {
     esac
 }
 
+ensure_libfuse2() {
+    ldconfig -p 2>/dev/null | grep -q 'libfuse\.so\.2' && return 0
+    local -a candidates
+    case "$(detect_family)" in
+        debian) candidates=(libfuse2t64 libfuse2) ;;
+        fedora) candidates=(fuse-libs) ;;
+        arch)   candidates=(fuse2) ;;
+        *)      return 0 ;;
+    esac
+    log_install "Installing libfuse2 (required to run AppImages)..."
+    local p
+    for p in "${candidates[@]}"; do
+        if install_pkgs "$p" >/dev/null 2>&1; then
+            log_done "libfuse2 ready ($p)."
+            return 0
+        fi
+    done
+    log_warn "Could not install libfuse2; AppImages will fail to launch until it is present."
+    return 1
+}
+
+ensure_rpmfusion() {
+    [ "$(detect_family)" = fedora ] || return 0
+    rpm -q rpmfusion-free-release >/dev/null 2>&1 && return 0
+    log_install "Enabling RPM Fusion (free + nonfree)..."
+    sudo dnf install -y \
+        "https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm" \
+        "https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm"
+}
+
 ensure_brew() {
     command -v brew >/dev/null 2>&1 && return 0
     local b

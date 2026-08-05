@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+
+set -uo pipefail
+{{- if and (eq .chezmoi.os "linux") (not .wsl) }}
+FAMILY="{{ .family }}" RSLSYNC="{{ index . "rslsync" | default false }}" \
+    bash "$HOME/.sauce/scripts/setup.sh" rslsync
+{{- end }}

@@ -58,6 +58,53 @@ onchange_gui_apps() {
         esac
     fi
 
+    if _has sourcegit; then
+        case "$family" in
+            macos)
+                install_cask sourcegit || log_warn "sourcegit install failed." ;;
+            arch)
+                local helper="" h
+                for h in paru yay; do
+                    command -v "$h" >/dev/null 2>&1 && { helper="$h"; break; }
+                done
+                if [ -z "$helper" ]; then
+                    log_warn "SourceGit ships as the AUR package 'sourcegit-bin' — install paru or yay first."
+                else
+                    log_install "Installing SourceGit from the AUR via $helper..."
+                    "$helper" -S --needed --noconfirm sourcegit-bin \
+                        || log_warn "sourcegit install failed."
+                fi ;;
+            debian|fedora)
+                local sg_tag sg_ver sg_asset="" sg_pkgpath
+                sg_tag=$(fetch https://api.github.com/repos/sourcegit-scm/sourcegit/releases/latest \
+                    | jq -r '.tag_name // empty')
+                sg_ver="${sg_tag#v}"
+                if [ -z "$sg_tag" ]; then
+                    log_warn "could not resolve the latest SourceGit release; skipping."
+                else
+                    case "$family:$ARCH" in
+                        debian:amd64) sg_asset="sourcegit_${sg_ver}-1_amd64.deb" ;;
+                        debian:arm64) sg_asset="sourcegit_${sg_ver}-1_arm64.deb" ;;
+                        fedora:amd64) sg_asset="sourcegit-${sg_ver}-1.x86_64.rpm" ;;
+                        fedora:arm64) sg_asset="sourcegit-${sg_ver}-1.aarch64.rpm" ;;
+                    esac
+                    if [ -z "$sg_asset" ]; then
+                        log_warn "SourceGit publishes no $family package for $ARCH; skipping."
+                    else
+                        sg_pkgpath="$CACHE/$sg_asset"
+                        ensure_dir "$CACHE"
+                        log_download "Downloading $sg_asset..."
+                        if download "https://github.com/sourcegit-scm/sourcegit/releases/download/$sg_tag/$sg_asset" "$sg_pkgpath"; then
+                            install_local_pkg "$sg_pkgpath" || log_warn "sourcegit install failed."
+                        else
+                            log_warn "could not download $sg_asset; skipping sourcegit."
+                        fi
+                        rm -f "$sg_pkgpath"
+                    fi
+                fi ;;
+        esac
+    fi
+
     if _has sway; then
         if [ "$family" = macos ]; then
             log_info "sway (Wayland WM) is Linux-only — skipping on macOS."
@@ -216,6 +263,61 @@ onchange_casks() {
     log_done "Casks installed."
 }
 
+onchange_media() {
+    local family
+    family="${FAMILY:-$(detect_family)}"
+
+    if [ "$family" = macos ]; then
+        local -a casks formulae
+        if [ -n "${MEDIA_CASKS+x}" ] || [ -n "${MEDIA_FORMULAE+x}" ]; then
+            read -ra casks <<<"${MEDIA_CASKS:-}"
+            read -ra formulae <<<"${MEDIA_FORMULAE:-}"
+        else
+            mapfile -t casks < <(_data '[.media[]? as $m | .mediaCatalog[$m].cask // empty] | .[]')
+            mapfile -t formulae < <(_data '[.media[]? as $m | .mediaCatalog[$m].brew // empty] | .[]')
+        fi
+        if [ "${#casks[@]}" -eq 0 ] && [ "${#formulae[@]}" -eq 0 ]; then
+            log_info "no media apps selected — skipping."
+            return 0
+        fi
+        log_install "Installing media apps: ${casks[*]:-} ${formulae[*]:-}"
+        local c f
+        for c in "${casks[@]:-}"; do
+            [ -n "$c" ] || continue
+            install_cask "$c" || log_warn "skipped (unavailable): $c"
+        done
+        for f in "${formulae[@]:-}"; do
+            [ -n "$f" ] || continue
+            install_pkgs "$f" || log_warn "skipped (unavailable): $f"
+        done
+        log_done "Media apps installed."
+        return 0
+    fi
+
+    local -a pkgs
+    if [ -n "${MEDIA_PKGS+x}" ]; then
+        read -ra pkgs <<<"${MEDIA_PKGS:-}"
+    else
+        mapfile -t pkgs < <(_data '[.media[]? as $m | .mediaCatalog[$m].pkgs[]?] | .[]')
+    fi
+
+    if [ "${#pkgs[@]}" -eq 0 ]; then
+        log_info "no media apps selected — skipping."
+        return 0
+    fi
+
+    ensure_rpmfusion || log_warn "could not enable RPM Fusion; vlc and the full ffmpeg build may be unavailable."
+
+    log_install "Installing media players/codecs (best-effort): ${pkgs[*]}"
+    pkg_refresh || true
+    local p
+    for p in "${pkgs[@]}"; do
+        [ -n "$p" ] || continue
+        install_pkgs "$p" || log_warn "skipped (unavailable): $p"
+    done
+    log_done "Media apps installed."
+}
+
 onchange_net_tools() {
     local -a pkgs
     if [ -n "${NET_TOOLS+x}" ]; then
@@ -268,12 +370,14 @@ case "${1:-all}" in
     gui-apps)       onchange_gui_apps ;;
     emulators)      onchange_emulators ;;
     flatpaks)       onchange_flatpaks ;;
+    media)          onchange_media ;;
     net-tools)      onchange_net_tools ;;
     nvim-bootstrap) onchange_nvim_bootstrap ;;
     all)
         onchange_emulators
         onchange_gui_apps
         onchange_flatpaks
+        onchange_media
         onchange_net_tools
         onchange_nvim_bootstrap
         ;;

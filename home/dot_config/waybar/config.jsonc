@@ -8,7 +8,7 @@
   "margin-right": 6,
   "modules-left": ["sway/workspaces", "sway/mode"],
   "modules-center": ["sway/window"],
-  "modules-right": ["pulseaudio", "battery", "network", "custom/weather", "clock", "tray"],
+  "modules-right": ["tray", "custom/weather", "pulseaudio", "battery", "clock"],
 
   "sway/workspaces": {
     "disable-scroll": true,

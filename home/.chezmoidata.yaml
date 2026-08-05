@@ -3,7 +3,7 @@ packages:
     common: [git, curl, wget, unzip, jq, figlet, zsh, neovim, gcc, make]
     debian: [xz-utils, build-essential]
     fedora: [xz]
-    arch: [xz, base-devel]
+    arch: [xz, base-devel, inetutils]
     macos: [xz, bash]
   extras:
     common:
@@ -13,7 +13,21 @@ packages:
     common: [nmap, traceroute, mtr, tcpdump, whois, socat, net-tools]
     debian: [dnsutils, netcat-openbsd, iputils-ping]
     fedora: [bind-utils, nmap-ncat, iputils]
-    arch: [bind, openbsd-netcat, iputils]
+    arch: [bind, openbsd-netcat, iputils, iw]
+
+mediaCatalog:
+  vlc:
+    pkgs: [vlc]
+    cask: vlc
+  audacious:
+    pkgs: [audacious, audacious-plugins]
+    brew: audacious
+  quodlibet:
+    pkgs: [quodlibet]
+    cask: quodlibet
+  ffmpeg:
+    pkgs: [ffmpeg]
+    brew: ffmpeg
 
 sway:
   common:
@@ -34,6 +48,7 @@ sway:
     - wlsunset
     - waypipe
     - uwsm
+    - rtkit
   debian:
     - grimshot
     - libnotify-bin
@@ -100,6 +115,9 @@ winget:
     retroarch: Libretro.RetroArch
     zoom: Zoom.Zoom
     1password: AgileBits.1Password
+    vlc: VideoLAN.VLC
+    audacious: Audacious.MediaPlayer
+    quodlibet: QuodLibet.QuodLibet
   tools:
     go: GoLang.Go
     dotnet: Microsoft.DotNet.SDK.9
@@ -118,3 +136,4 @@ winget:
     adb: Google.PlatformTools
     1password-cli: AgileBits.1Password.CLI
     bitwarden-cli: Bitwarden.CLI
+    ffmpeg: Gyan.FFmpeg

@@ -8,3 +8,10 @@
     stripComponents = 1
     refreshPeriod = "168h"
 {{- end }}
+{{- if and (has "herdr" $tools) (or (eq .chezmoi.os "linux") (eq .chezmoi.os "darwin")) }}
+[".local/bin/herdr"]
+    type = "file"
+    url = "https://github.com/herdrdev/herdr/releases/latest/download/herdr-{{ if eq .chezmoi.os "darwin" }}macos{{ else }}linux{{ end }}-{{ if eq .chezmoi.arch "arm64" }}aarch64{{ else }}x86_64{{ end }}"
+    executable = true
+    refreshPeriod = "168h"
+{{- end }}
