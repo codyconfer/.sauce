@@ -205,6 +205,7 @@ written, `after_` scripts once everything is in place:
 | `run_once_before_20-github-auth` | `setup.sh` github step | once |
 | `run_once_before_30-oh-my-posh` | `setup.sh` oh-my-posh step | once |
 | `run_onchange_before_38-emulators` | steam/wine/qemu installers (skipped if headless) | on change |
+| `run_before_35-fingerprint` | `setup.sh` fingerprint step — installs `fprintd` when a USB fingerprint reader is on the bus (matched by known reader vendor IDs or a `finger` product string in sysfs); PAM is left alone, so enroll with `fprintd-enroll` and wire `pam_fprintd.so` yourself (Linux, non-WSL; `FINGERPRINT=0` to skip). Re-checked on every apply so a reader that appears later still gets picked up, and it exits immediately once `fprintd-enroll` is on PATH | every apply, no-op once installed |
 | `run_once_before_36-clamav` | `setup.sh` clamav step — clamav + freshclam, `clamav-freshclam.service` for updates, and a weekly report-only scan timer (Linux, non-WSL; `CLAMAV=0` to skip) | once |
 | `run_once_before_37-rslsync` | `setup.sh` rslsync step — installs Resilio Sync from the AUR, creates `<rslsync-home>/sync` (setgid, group `rslsync`), adds your login user to the `rslsync` group, pins access + default ACLs for both accounts, and enables `rslsync.service` (Arch only, opt-in via `rslsync`) | once (opt-in) |
 | `run_once_before_39-nvidia` | `setup.sh` nvidia step — installs the NVIDIA open kernel modules + userspace when an NVIDIA GPU is on the PCI bus (Linux, non-WSL; set `NVIDIA=0` to skip) | once |

@@ -1051,6 +1051,13 @@ setup_plymouth() {
         log_info "PLYMOUTH=0 — leaving the boot splash alone."
         return 0
     fi
+    local theme="${PLYMOUTH_THEME:-}"
+    [ -n "$theme" ] || theme="$(_data '.plymouthTheme')"
+    [ -n "$theme" ] && [ "$theme" != null ] || theme=arch
+    if [ "$theme" = none ]; then
+        log_info "plymouthTheme is none — leaving boot text-only."
+        return 0
+    fi
     if [ ! -f "$MKINITCPIO_CONF" ]; then
         log_info "No $MKINITCPIO_CONF on this host — skipping the Plymouth boot splash."
         return 0
@@ -1070,7 +1077,6 @@ setup_plymouth() {
     fi
 
     local changed=0
-    local theme="${PLYMOUTH_THEME:-arch}"
     if plymouth_theme_is_sauce "$theme" && ! plymouth_theme_is_current "$theme"; then
         plymouth_theme_install "$theme" && changed=1
     fi
@@ -1160,6 +1166,70 @@ setup_wifi_powersave() {
     log_hint "Costs a little idle battery. Set WIFI_POWERSAVE=0 and delete $conf to revert."
 }
 
+FINGERPRINT_USB_VENDORS='05ba 06cb 08ff 138a 147e 1c7a 27c6 298d'
+
+fingerprint_pkgs() {
+    case "$1" in
+        debian) echo "fprintd libpam-fprintd" ;;
+        fedora) echo "fprintd fprintd-pam" ;;
+        arch)   echo "fprintd" ;;
+        *)      return 1 ;;
+    esac
+}
+
+fingerprint_reader() {
+    local dir vendor product name
+    for dir in /sys/bus/usb/devices/*/; do
+        [ -f "$dir/idVendor" ] || continue
+        vendor="$(cat "$dir/idVendor" 2>/dev/null)"
+        product="$(cat "$dir/idProduct" 2>/dev/null)"
+        name="$(cat "$dir/product" 2>/dev/null)"
+        case " $FINGERPRINT_USB_VENDORS " in
+            *" $vendor "*) echo "$vendor:$product"; return 0 ;;
+        esac
+        case "${name,,}" in
+            *finger*) echo "$vendor:$product ($name)"; return 0 ;;
+        esac
+    done
+    return 1
+}
+
+setup_fingerprint() {
+    if [ "${FINGERPRINT:-1}" = 0 ]; then
+        log_info "FINGERPRINT=0 — skipping the fingerprint reader step."
+        return 0
+    fi
+
+    local family pkglist
+    family="${FAMILY:-$(detect_family)}"
+    if ! pkglist="$(fingerprint_pkgs "$family")"; then
+        log_info "No fprintd packages known for family: $family — skipping the fingerprint reader step."
+        return 0
+    fi
+
+    local reader
+    if ! reader="$(fingerprint_reader)"; then
+        log_info "No USB fingerprint reader on this machine — skipping fprintd."
+        return 0
+    fi
+
+    if command -v fprintd-enroll >/dev/null 2>&1; then
+        log_info "fprintd is already installed for the reader at $reader."
+        return 0
+    fi
+
+    local -a pkgs=()
+    read -ra pkgs <<<"$pkglist"
+
+    log_found "Fingerprint reader $reader detected."
+    log_install "Installing fprintd (${pkgs[*]})..."
+    install_pkgs "${pkgs[@]}" || { log_error "fprintd install failed."; return 1; }
+
+    log_done "fprintd is installed; its service is D-Bus activated, so there is nothing to enable."
+    log_hint "Enroll with 'fprintd-enroll', then confirm with 'fprintd-verify'."
+    log_hint "PAM is left untouched — add 'auth sufficient pam_fprintd.so' above the existing auth line in /etc/pam.d/sudo or /etc/pam.d/login yourself, keeping a root shell open while you test. FINGERPRINT=0 skips this step."
+}
+
 case "${1:-all}" in
     base-packages) setup_base_packages ;;
     paru)          setup_paru ;;
@@ -1168,6 +1238,7 @@ case "${1:-all}" in
     console-font)  setup_console_font ;;
     wifi-powersave) setup_wifi_powersave ;;
     nvidia)        setup_nvidia ;;
+    fingerprint)   setup_fingerprint ;;
     clamav)        setup_clamav ;;
     rslsync)       setup_rslsync ;;
     github-auth)   setup_github_auth ;;
@@ -1184,6 +1255,7 @@ case "${1:-all}" in
         setup_plymouth
         setup_wifi_powersave
         setup_nvidia
+        setup_fingerprint
         setup_clamav
         setup_rslsync
         setup_github_auth
