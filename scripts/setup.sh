@@ -840,8 +840,14 @@ setup_portals() {
     for p in "${pkgs[@]}"; do
         install_pkgs "$p" || log_warn "skipped (unavailable): $p"
     done
-    log_done "Portal backends installed (wlr under sway, gtk under KDE Plasma)."
-    log_hint "Backend preferences live in ~/.config/xdg-desktop-portal/{sway,kde}-portals.conf; log out and back in to apply."
+    log_done "Portal backends installed (wlr under sway, kde under KDE Plasma)."
+
+    if [ -n "${XDG_RUNTIME_DIR:-}" ] && systemctl --user show-environment >/dev/null 2>&1; then
+        systemctl --user daemon-reload || log_warn "could not reload the systemd user manager."
+        systemctl --user try-restart xdg-desktop-portal-gtk.service xdg-desktop-portal.service \
+            || log_warn "could not restart the portal services; log out and back in instead."
+    fi
+    log_hint "Backend preferences live in ~/.config/xdg-desktop-portal/{sway,kde}-portals.conf; log out and back in if a portal still misbehaves."
 }
 
 setup_tailscale() {

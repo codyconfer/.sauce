@@ -69,7 +69,7 @@ sway:
 
 portals:
   sway: [xdg-desktop-portal, xdg-desktop-portal-wlr, xdg-desktop-portal-gtk]
-  kde: [xdg-desktop-portal, xdg-desktop-portal-gtk, xdg-desktop-portal-kde]
+  kde: [xdg-desktop-portal, xdg-desktop-portal-kde]
 
 flatpakCatalog:
   slack: com.slack.Slack

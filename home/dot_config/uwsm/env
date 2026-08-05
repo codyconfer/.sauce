@@ -23,8 +23,8 @@ unset _fp_share
 export XDG_DATA_DIRS
 
 export MOZ_ENABLE_WAYLAND=1
-export ELECTRON_OZONE_PLATFORM_HINT=auto
+export ELECTRON_OZONE_PLATFORM_HINT=wayland
 export SDL_VIDEODRIVER=wayland
 export CLUTTER_BACKEND=wayland
-export GDK_BACKEND=wayland,x11
-export QT_QPA_PLATFORM="wayland;xcb"
+export GDK_BACKEND=wayland
+export QT_QPA_PLATFORM=wayland

@@ -132,6 +132,7 @@ own directories aren't mistaken for things to deploy.
       swayimg/ mpv/ havoc/            #    "  (sway companion tools)
       way-displays/ waylogout/ zskins/ #   "
       xdg-desktop-portal/             #    "  (per-desktop portal backend preferences)
+      uwsm/env                        #    "  (session env: PATH/XDG_DATA_DIRS, Wayland-only toolkit backends)
       uwsm/env-sway                   #    "  (session env: GPU pick, cursor, SUDO_ASKPASS)
       alacritty/alacritty.toml        # → ~/.config/alacritty (Linux + macOS; ignored on Windows/WSL)
     create_dot_bashrc.local           # → ~/.bashrc.local (created once, never overwritten)
@@ -217,7 +218,7 @@ written, `after_` scripts once everything is in place:
 | `run_after_06-fish-user` | scaffolds `~/.config/fish/user.fish` when missing (never overwritten) | every apply, no-op once present |
 | `run_once_after_70-run-updaters` | `setup.sh` update loop (always runs fonts + zsh-plugins; installs the `update-*.sh`-backed GUI apps — vscode/zed/qdmr/claude/cursor/ghidra/jetbrains-toolbox/lmstudio/obsidian/docker/codex — when selected; adds `sway-tools` when sway is selected; adds `fleet` when FLEET_URL + FLEET_ENROLL_SECRET are set — there is no prompt for it) | once |
 | `run_once_after_75-sway-session` | ly + uwsm login stack, with ly enabled as the default display manager (sway selected, not headless/WSL) | once |
-| `run_once_after_76-portals` | `setup.sh` portals step — xdg-desktop-portal backends (wlr for sway, gtk for KDE Plasma) | once |
+| `run_once_after_76-portals` | `setup.sh` portals step — xdg-desktop-portal backends (wlr for sway, kde for KDE Plasma) | once |
 | `run_onchange_after_80-nvim-bootstrap` | `build-nvim.sh` sync tail | on lockfile/toolchain change |
 | `run_once_after_90-chsh-zsh` | `setup.sh` chsh | once |
 | `run_once_after_95-tailscale` | `setup.sh` tailscale | once (opt-in) |
@@ -301,10 +302,16 @@ Wayland desktop, three ways:
   `startplasma-wayland`, so a Plasma box gets the gtk backend even without sway
   selected). The preference per desktop is pinned by
   `~/.config/xdg-desktop-portal/{sway,kde}-portals.conf`: under sway `wlr` owns
-  every available portal interface (including Screenshot/ScreenCast), so the GTK
-  backend is not activated in a sway session. Under KDE `gtk` is preferred with
-  `kde` as the fallback and `kwallet` kept for Secret. Since wlr does not
-  implement FileChooser, sway sessions do not provide that portal interface.
+  Screenshot/ScreenCast and `gtk` is the default for everything else (FileChooser
+  included, which wlr does not implement). Under KDE `kde` owns every interface
+  with `kwallet` for Secret and no GTK fallback — the GTK backend segfaults in
+  GTK3's X11 event path when it drives dialogs on a Plasma Wayland session, and
+  the Qt backend implements every interface the GTK one does except the
+  GNOME-only Lockdown. `xdg-desktop-portal-gtk` is therefore not installed for
+  KDE (it stays on disk anyway as a hard dependency of `gtk4` and
+  `kde-gtk-config`), and where sway does need it a systemd drop-in
+  (`~/.config/systemd/user/xdg-desktop-portal-gtk.service.d/override.conf`) pins
+  it to `GDK_BACKEND=wayland` so it cannot fall back to X11.
 - **`update-sway-tools.sh`** — companions with no Ubuntu/Debian package, built
   from source into `~/.local/bin` and re-run like any updater
   (`update-sway-tools`): wayshot, sway-overfocus, wl-clip-persist, lumactl,

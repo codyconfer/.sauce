@@ -104,10 +104,14 @@ grep -Fxq 'org.freedesktop.impl.portal.Screenshot=wlr' \
     "$SAUCE_DIR/home/dot_config/xdg-desktop-portal/sway-portals.conf"
 grep -Fxq 'org.freedesktop.impl.portal.ScreenCast=wlr' \
     "$SAUCE_DIR/home/dot_config/xdg-desktop-portal/sway-portals.conf"
-grep -Fq 'default=gtk;kde' "$SAUCE_DIR/home/dot_config/xdg-desktop-portal/kde-portals.conf"
+grep -Fxq 'default=kde' "$SAUCE_DIR/home/dot_config/xdg-desktop-portal/kde-portals.conf"
+grep -Fxq 'Environment=GDK_BACKEND=wayland' \
+    "$SAUCE_DIR/home/dot_config/systemd/user/xdg-desktop-portal-gtk.service.d/override.conf"
+grep -Fxq 'export GDK_BACKEND=wayland' "$SAUCE_DIR/home/dot_config/uwsm/env"
+grep -Fxq 'export QT_QPA_PLATFORM=wayland' "$SAUCE_DIR/home/dot_config/uwsm/env"
 jq -e '.portals.sway == ["xdg-desktop-portal", "xdg-desktop-portal-wlr", "xdg-desktop-portal-gtk"]' \
     <<<"$DATA" >/dev/null
-jq -e '.portals.kde == ["xdg-desktop-portal", "xdg-desktop-portal-gtk", "xdg-desktop-portal-kde"]' \
+jq -e '.portals.kde == ["xdg-desktop-portal", "xdg-desktop-portal-kde"]' \
     <<<"$DATA" >/dev/null
 
 RENDERED_UPDATERS="$("$CHEZMOI" execute-template --source="$SAUCE_DIR" \
