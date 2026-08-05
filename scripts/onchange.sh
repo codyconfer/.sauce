@@ -240,6 +240,19 @@ onchange_flatpaks() {
     for id in "${ids[@]}"; do
         install_flatpak "$id" || log_warn "flatpak install failed: $id"
     done
+
+    for id in "${ids[@]}"; do
+        [ "$id" = org.signal.Signal ] || continue
+        if secret_service_available; then
+            log_install "Pointing Signal at the system keyring for its database key..."
+            flatpak override --user --env=SIGNAL_PASSWORD_STORE=gnome-libsecret org.signal.Signal \
+                || log_warn "could not set SIGNAL_PASSWORD_STORE; Signal will keep its key unencrypted on disk."
+        else
+            log_warn "no Secret Service on the session bus — Signal will keep its database key unencrypted on disk."
+            log_hint "Install gnome-keyring (or kwallet + kwallet-pam) and re-apply to encrypt it."
+        fi
+    done
+
     log_done "Flatpaks installed."
 }
 

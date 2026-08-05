@@ -173,3 +173,9 @@ install_flatpak() {
 }
 
 remove_flatpak() { flatpak uninstall --user -y "$@"; }
+
+secret_service_available() {
+    command -v busctl >/dev/null 2>&1 || return 1
+    busctl --user list --no-legend --no-pager 2>/dev/null \
+        | awk '{ print $1 }' | grep -qx org.freedesktop.secrets
+}
